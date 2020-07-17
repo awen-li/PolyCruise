@@ -81,7 +81,7 @@ VOID RunPasses (vector<string> &ModulePathVec)
         return;
     }
 
-    Source S (&ModuleMng, "main", "strtol", 1<<31);
+    Source S (&ModuleMng, "ProcessEntry", "strtol", TAINT_RET);
     Lda lda (&ModuleMng, &S);
 
     printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());

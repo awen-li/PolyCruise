@@ -8,6 +8,7 @@ set(SOURCES
 	common/SoftPara.cpp
 	common/Stat.cpp	
 	ModuleSet.cpp
+	ExternalLib.cpp
     )
 
 #add_llvm_loadable_module(ldi ${SOURCES})

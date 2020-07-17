@@ -25,6 +25,15 @@
 #define FUNC_MODULE         ("Func_Module.map")
 
 
+#define TAINT_NONE          (unsigned)(0)
+#define TAINT_RET           (unsigned)(1 << (32-1))
+#define TAINT_ARG0          (unsigned)(1 << (32-2))
+#define TAINT_ARG1          (unsigned)(1 << (32-3))
+#define TAINT_ARG2          (unsigned)(1 << (32-4))
+#define TAINT_ARG3          (unsigned)(1 << (32-5))
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////
 #define KNRM  "\x1B[1;0m"

@@ -25,6 +25,7 @@
 #include "LLVMInst.h"
 #include "ModuleSet.h"
 #include "common/WorkList.h"
+#include "ExternalLib.h"
 
 
 using namespace llvm;
@@ -226,7 +227,7 @@ private:
         return;
     }
 
-    inline void UpdateFuncTaintBit (Function *F, unsigned Bits)
+    inline unsigned GetFuncTaintBits (Function *F)
     {
         unsigned TaintBit;
         
@@ -239,6 +240,13 @@ private:
         {
             TaintBit = It->second;
         }
+
+        return TaintBit;
+    }
+
+    inline void UpdateFuncTaintBit (Function *F, unsigned Bits)
+    {
+        unsigned TaintBit = GetFuncTaintBits (F);
 
         TaintBit |= Bits;
         m_FTaintBits[F] = TaintBit;
@@ -279,7 +287,7 @@ private:
         return;
     }
 
-    inline void PrintFuncTaintBit (Function *F)
+    inline void PrintFuncTaintBit (string Tag, Function *F)
     {
         unsigned TaintBit;
         
@@ -293,7 +301,7 @@ private:
             TaintBit = It->second;
         }
 
-        printf ("\t=====> %s TaintBits = %#x \r\n", F->getName ().data(), TaintBit);
+        printf ("[%s] %s TaintBits = %#x \r\n", Tag.c_str(), F->getName ().data(), TaintBit);
     }
 
     inline void AddTaintValue (set<Value*> *LexSet, Value *Val)
@@ -324,13 +332,49 @@ private:
         return TaintBit;
     }
 
+    inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
+    {
+        Function *Callee = LI->GetCallee();
+        if  (Callee != NULL)
+        {
+            UpdateFuncTaintBit (Callee, TaintBits);
+            
+            PrintFuncTaintBit ("Call_Begin", Callee);
+
+            Flda (Callee);
+
+            /* actual arguments */
+            unsigned FTaintBits = GetFuncTaintBits (Callee);
+            unsigned BitNo = 2;
+            for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
+            {
+                Value *U = *It;
+
+                if (IS_TAINTED(FTaintBits, BitNo))
+                {
+                    LexSet->insert (U);
+                }
+            }
+
+            /* return value */
+            if (IsRetTainted (Callee))
+            {
+                AddTaintValue (LexSet, LI->GetDef ());
+            }
+
+            PrintFuncTaintBit ("Call_End", Callee);
+        }
+        else
+        {
+        }
+    }
+
     inline void Flda (Function *Func)
     {
         set<Value*> LocalLexSet;
 
         errs()<<"Process "<<Func->getName ()<<"\r\n";
         InitCriterions (Func, &LocalLexSet);
-        assert (LocalLexSet.size() != 0);
         
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
         {
@@ -345,57 +389,50 @@ private:
             unsigned TaintedBits = GetTaintedBits (&LI, &LocalLexSet);
             if (TaintedBits == 0)
             {
-                continue;
-            }
-
-            errs ()<<"LDA: "<<*Inst<<"\r\n";
-            if (LI.IsRet ())
-            {
-                UpdateFuncTaintBit (Func, 1<<31);
-            }
-            else if (LI.IsCall ()) 
-            {
-                Function *Callee = LI.GetCallee();
-                if  (Callee != NULL)
+                if (!LI.IsCall ())
                 {
-                    printf("[ Call ]: %s, TaintBits: %#x \r\n", Callee->getName ().data(), TaintedBits);
-                    UpdateFuncTaintBit (Callee, TaintedBits);
-
-                    Flda (Callee);
-                    if (IsRetTainted (Callee))
-                    {
-                        AddTaintValue (&LocalLexSet, LI.GetDef ());
-                    }
-
-                    PrintFuncTaintBit (Callee);
+                    continue;
                 }
-                else
-                {
-                }
+
+                ProcessCall (&LI, TaintedBits, &LocalLexSet);
             }
             else
             {
-                Value *Val = LI.GetDef ();
-                CheckOutArgTainted (Func, Val);
 
-                AddTaintValue (&LocalLexSet, Val);
+                errs ()<<"LDA: "<<*Inst<<"\r\n";
+                if (LI.IsRet ())
+                {
+                    UpdateFuncTaintBit (Func, 1<<31);
+                }
+                else if (LI.IsCall ()) 
+                {
+                    ProcessCall (&LI, TaintedBits, &LocalLexSet);                    
+                }
+                else
+                {
+                    Value *Val = LI.GetDef ();
+                    CheckOutArgTainted (Func, Val);
+
+                    AddTaintValue (&LocalLexSet, Val);
+                }
+
+                if (LI.IsPHI ())
+                {
+                    continue;
+                }
+
+                m_InstSet.insert (Inst);
+                errs ()<<"\tTainted Inst: "<<Inst<<"\r\n";
             }
-
-            if (LI.IsPHI ())
-            {
-                continue;
-            }
-
-            m_InstSet.insert (Inst);
-            errs ()<<"\tTainted Inst: "<<Inst<<"\r\n";
         }
     }
 
     inline void Compute ()
-    {
-        Function *F = m_Source->GetSrcCaller ();
+    {       
+        Function *Entry = m_Ms->GetEntryFunction ();
+        assert (Entry != NULL);
 
-        Flda (F);
+        Flda (Entry);
     }
 
     inline void Print (set <Value*>& S)
