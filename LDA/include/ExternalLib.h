@@ -29,12 +29,6 @@
 
 using namespace std;
 
-typedef enum
-{
-    TAINT_NULL = 0,
-
-}TAINT_TYPE;
-
 struct LibTaintBits
 {
     string FName;
@@ -61,9 +55,29 @@ public:
     }
 
 private:
-
-    TAINT_TYPE Search (string FuncName);
     VOID InitExtLib ();
+
+
+public:
+    inline unsigned ComputeTaintBits (string FuncName, unsigned InTaintBits)
+    {
+        auto It = m_ExtFuncMap.find(FuncName);
+        if (It == m_ExtFuncMap.end())
+        {
+            return TAINT_NONE;
+        }
+
+        LibTaintBits *Ltb = It->second;
+        if (Ltb->InTaintBit & InTaintBits)
+        {
+            return (InTaintBits | Ltb->OutTaintBit);
+        }
+        else
+        {
+            return TAINT_NONE;
+        }
+    }
+    
 
     
 };

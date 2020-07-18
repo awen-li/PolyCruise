@@ -25,12 +25,22 @@
 #define FUNC_MODULE         ("Func_Module.map")
 
 
+#define RET_NO              (unsigned)(1)
+#define ARG0_NO             (unsigned)(2)  
+#define ARG1_NO             (unsigned)(3) 
+#define ARG2_NO             (unsigned)(4) 
+#define ARG3_NO             (unsigned)(5) 
+
+
+
 #define TAINT_NONE          (unsigned)(0)
-#define TAINT_RET           (unsigned)(1 << (32-1))
-#define TAINT_ARG0          (unsigned)(1 << (32-2))
-#define TAINT_ARG1          (unsigned)(1 << (32-3))
-#define TAINT_ARG2          (unsigned)(1 << (32-4))
-#define TAINT_ARG3          (unsigned)(1 << (32-5))
+#define TAINT_BIT(Bit)      (unsigned)(1 << (32-Bit))
+
+#define TAINT_RET           TAINT_BIT(RET_NO)
+#define TAINT_ARG0          TAINT_BIT(ARG0_NO)
+#define TAINT_ARG1          TAINT_BIT(ARG1_NO)
+#define TAINT_ARG2          TAINT_BIT(ARG2_NO)
+#define TAINT_ARG3          TAINT_BIT(ARG3_NO)
 
 
 

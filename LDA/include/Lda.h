@@ -160,15 +160,20 @@ private:
 
     Source *m_Source;
 
+    ExternalLib *ExtLib;
+
 public:
     
     Lda(ModuleManage *Ms, Source *S)
     {
         m_Ms = Ms;
-        m_Fs = new Fts(Ms);
+        m_Fs = new Fts (Ms);
         assert (m_Fs != NULL);
 
         m_Source = S;
+
+        ExtLib = new ExternalLib ();
+        assert (ExtLib != NULL);
 
         Compute ();
     }
@@ -179,6 +184,12 @@ public:
         {
             delete m_Fs;
             m_Fs = NULL;
+        }
+
+        if (ExtLib)
+        {
+            delete ExtLib;
+            ExtLib = NULL;
         }
     }
 
@@ -194,7 +205,7 @@ public:
     
 private:
 
-    inline void InitCriterions (Function *Func, set<Value*> *LexSet)
+    inline void InitCriterions (Function *Func, unsigned TaintBit, set<Value*> *LexSet)
     {
         if (Func == m_Source->GetSrcCaller ())
         {
@@ -203,15 +214,8 @@ private:
                 LexSet->insert (*It);
             }
         }
-        
-        auto It = m_FTaintBits.find (Func);
-        if (It == m_FTaintBits.end())
-        {
-            return;
-        }
-
-        unsigned TaintBit = It->second;        
-        unsigned BitNo = 2;
+      
+        unsigned BitNo = ARG0_NO;
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++) 
         {
             Argument *Formal = &(*Ita);
@@ -254,54 +258,20 @@ private:
         return;
     }
 
-    inline bool IsRetTainted (Function *F)
+    inline unsigned CheckOutArgTaint (Function *Func, Value *Val)
     {
-        unsigned TaintBit;
-        
-        auto It = m_FTaintBits.find (F);
-        if (It == m_FTaintBits.end())
-        {
-            return false;
-        }
-        else
-        {
-            TaintBit = It->second;
-            return IS_TAINTED (TaintBit, 1);
-        }
-    }
-
-    inline void CheckOutArgTainted (Function *Func, Value *Val)
-    {
-        unsigned BitNo = 2;
+        unsigned BitNo = ARG0_NO;
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
         {
             Argument *Formal = &(*Ita);
 
             if (Formal == Val)
             {
-                UpdateFuncTaintBit (Func, (1 << (32-BitNo)));
-                return;
+                return TAINT_BIT(BitNo);
             }
         }
 
-        return;
-    }
-
-    inline void PrintFuncTaintBit (string Tag, Function *F)
-    {
-        unsigned TaintBit;
-        
-        auto It = m_FTaintBits.find (F);
-        if (It == m_FTaintBits.end())
-        {
-            TaintBit = 0;
-        }
-        else
-        {
-            TaintBit = It->second;
-        }
-
-        printf ("[%s] %s TaintBits = %#x \r\n", Tag.c_str(), F->getName ().data(), TaintBit);
+        return TAINT_NONE;
     }
 
     inline void AddTaintValue (set<Value*> *LexSet, Value *Val)
@@ -316,7 +286,7 @@ private:
     inline unsigned GetTaintedBits (LLVMInst *Inst, set<Value*> *LexSet)
     {
         unsigned TaintBit = 0;
-        unsigned BitNo = 2;
+        unsigned BitNo = ARG0_NO;
         for (auto It = Inst->begin (); It != Inst->end(); It++, BitNo++)
         {
             Value *U = *It;
@@ -334,18 +304,22 @@ private:
 
     inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
     {
+        unsigned FTaintBits;
         Function *Callee = LI->GetCallee();
         if  (Callee != NULL)
         {
-            UpdateFuncTaintBit (Callee, TaintBits);
-            
-            PrintFuncTaintBit ("Call_Begin", Callee);
+            if (Callee->isDeclaration ())
+            {
+                FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), TaintBits);
+                //printf ("[CALL Library] %s -> TaintBits = %#x \r\n", Callee->getName ().data(), FTaintBits);
+            }
+            else
+            {
+                FTaintBits = Flda (Callee, TaintBits);
+            }      
 
-            Flda (Callee);
-
-            /* actual arguments */
-            unsigned FTaintBits = GetFuncTaintBits (Callee);
-            unsigned BitNo = 2;
+            /* actual arguments */       
+            unsigned BitNo = ARG0_NO;
             for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
             {
                 Value *U = *It;
@@ -357,24 +331,22 @@ private:
             }
 
             /* return value */
-            if (IsRetTainted (Callee))
+            if (IS_TAINTED(FTaintBits, RET_NO))
             {
                 AddTaintValue (LexSet, LI->GetDef ());
             }
-
-            PrintFuncTaintBit ("Call_End", Callee);
         }
         else
         {
         }
     }
 
-    inline void Flda (Function *Func)
+    inline unsigned Flda (Function *Func, unsigned FTaintBits)
     {
         set<Value*> LocalLexSet;
 
-        errs()<<"Process "<<Func->getName ()<<"\r\n";
-        InitCriterions (Func, &LocalLexSet);
+        printf ("=>Entry %s: FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
+        InitCriterions (Func, FTaintBits, &LocalLexSet);
         
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
         {
@@ -398,20 +370,22 @@ private:
             }
             else
             {
-
-                errs ()<<"LDA: "<<*Inst<<"\r\n";
                 if (LI.IsRet ())
                 {
-                    UpdateFuncTaintBit (Func, 1<<31);
+                    FTaintBits |= TAINT_BIT (RET_NO);
                 }
                 else if (LI.IsCall ()) 
                 {
                     ProcessCall (&LI, TaintedBits, &LocalLexSet);                    
                 }
+                else if (LI.IsIcmp ())
+                {
+                    continue;
+                }
                 else
                 {
                     Value *Val = LI.GetDef ();
-                    CheckOutArgTainted (Func, Val);
+                    FTaintBits |= CheckOutArgTaint (Func, Val);
 
                     AddTaintValue (&LocalLexSet, Val);
                 }
@@ -422,9 +396,12 @@ private:
                 }
 
                 m_InstSet.insert (Inst);
-                errs ()<<"\tTainted Inst: "<<Inst<<"\r\n";
+                errs ()<<"\tTainted Inst: "<<*Inst<<"\r\n";
             }
         }
+
+        printf ("=>Exit %s: FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
+        return FTaintBits;
     }
 
     inline void Compute ()
@@ -432,7 +409,7 @@ private:
         Function *Entry = m_Ms->GetEntryFunction ();
         assert (Entry != NULL);
 
-        Flda (Entry);
+        Flda (Entry, TAINT_NONE);
     }
 
     inline void Print (set <Value*>& S)

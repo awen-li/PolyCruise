@@ -63,6 +63,11 @@ public:
         return (m_InstOp == Instruction::Ret);
     }
 
+    inline bool IsIcmp ()
+    {
+        return (m_InstOp == Instruction::ICmp);
+    }
+
     inline bool IsCall ()
     {
         if (m_InstOp == Instruction::Call ||
