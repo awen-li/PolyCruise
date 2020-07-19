@@ -81,9 +81,14 @@ VOID RunPasses (vector<string> &ModulePathVec)
         return;
     }
 
+    StField Sf;
+    Sf.AddStFields ("struct.bz_stream", 0);
+    Sf.AddStFields ("struct.bz_stream", 8);
+    Sf.AddStFields ("struct.EState", 0);
+
     //Source S (&ModuleMng, "ProcessEntry", "strtol", TAINT_RET);
     Source S (&ModuleMng, "compress", "fread", TAINT_ARG0);
-    Lda lda (&ModuleMng, &S);
+    Lda lda (&ModuleMng, &S, &Sf);
 
     printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());
 

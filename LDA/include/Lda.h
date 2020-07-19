@@ -26,6 +26,7 @@
 #include "ModuleSet.h"
 #include "common/WorkList.h"
 #include "ExternalLib.h"
+#include "StField.h"
 
 
 using namespace llvm;
@@ -48,8 +49,8 @@ private:
     ModuleManage *m_Ms;
 
 public:
-    Source (ModuleManage *Ms, string ScFName, 
-              string ApiName, unsigned TaintBit)
+    Source (ModuleManage *Ms,
+              string ScFName, string ApiName, unsigned TaintBit)
     {
         m_Ms = Ms;
 
@@ -162,11 +163,18 @@ private:
 
     ExternalLib *ExtLib;
 
+    set <Function *> m_RunStack;
+
+    map<Value*, Value*> m_EqualVal;
+
+    StField *m_Sf;
+
 public:
     
-    Lda(ModuleManage *Ms, Source *S)
+    Lda(ModuleManage *Ms, Source *S, StField *Sf)
     {
         m_Ms = Ms;
+        m_Sf = Sf;
         m_Fs = new Fts (Ms);
         assert (m_Fs != NULL);
 
@@ -176,6 +184,8 @@ public:
         assert (ExtLib != NULL);
 
         Compute ();
+
+        printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
     }
 
     ~Lda ()
@@ -205,6 +215,36 @@ public:
     
 private:
 
+    inline bool IsActiveFields (LLVMInst *Inst)
+    {
+        unsigned Index = 0;
+        Value *Val = Inst->GetValue (0);
+        
+        Type *Ty = Val->getType ();
+        if (!Ty->isPointerTy ())
+        {
+            return true;            
+        }
+
+        Type *Rty = cast<PointerType>(Ty)->getElementType();
+        if (!Rty->isStructTy ())
+        {
+            return true;
+        }
+
+        Value *Ival = Inst->GetValue (2);
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(Ival)) 
+        {
+            Index = (unsigned)CI->getSExtValue();
+        }
+        else
+        {
+            return true;
+        }
+
+        return m_Sf->IsActiveFields (Rty->getStructName ().data(), Index);
+    }
+
     inline void InitCriterions (Function *Func, unsigned TaintBit, set<Value*> *LexSet)
     {
         if (Func == m_Source->GetSrcCaller ())
@@ -231,33 +271,6 @@ private:
         return;
     }
 
-    inline unsigned GetFuncTaintBits (Function *F)
-    {
-        unsigned TaintBit;
-        
-        auto It = m_FTaintBits.find (F);
-        if (It == m_FTaintBits.end())
-        {
-            TaintBit = 0;
-        }
-        else
-        {
-            TaintBit = It->second;
-        }
-
-        return TaintBit;
-    }
-
-    inline void UpdateFuncTaintBit (Function *F, unsigned Bits)
-    {
-        unsigned TaintBit = GetFuncTaintBits (F);
-
-        TaintBit |= Bits;
-        m_FTaintBits[F] = TaintBit;
-
-        return;
-    }
-
     inline unsigned CheckOutArgTaint (Function *Func, Value *Val)
     {
         unsigned BitNo = ARG0_NO;
@@ -276,11 +289,22 @@ private:
 
     inline void AddTaintValue (set<Value*> *LexSet, Value *Val)
     {
-        if (Val != NULL)
+        if (Val == NULL)
         {
-            errs ()<<"\t Insert Lex: "<<Val<<"\r\n";
+            return;
+        }
+
+        auto It = m_EqualVal.find (Val);
+        if (It != m_EqualVal.end ())
+        {
+            LexSet->insert (It->second);
+        }
+        else
+        {
             LexSet->insert (Val);
         }
+
+        return;
     }
 
     inline unsigned GetTaintedBits (LLVMInst *Inst, set<Value*> *LexSet)
@@ -291,15 +315,32 @@ private:
         {
             Value *U = *It;
 
-            if (LexSet->find (U) == LexSet->end())
+            if (LexSet->find (U) != LexSet->end())
             {
-                continue;
+                SET_TAINTED (TaintBit, BitNo);
             }
-
-            SET_TAINTED (TaintBit, BitNo);
+            else
+            {
+                auto  Eq = m_EqualVal.find (U);
+                if ((Eq  != m_EqualVal.end ()) && (LexSet->find (Eq ->second) != LexSet->end()))
+                {
+                    SET_TAINTED (TaintBit, BitNo);
+                }
+            }
         }
 
         return TaintBit;
+    }
+
+    inline bool IsInStack (Function *Func)
+    {
+        auto It = m_RunStack.find (Func);
+        if (It == m_RunStack.end())
+        {
+            return false;
+        }
+
+        return true;
     }
 
     inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
@@ -315,7 +356,14 @@ private:
             }
             else
             {
-                FTaintBits = Flda (Callee, TaintBits);
+                if (!IsInStack (Callee))
+                {
+                    FTaintBits = Flda (Callee, TaintBits);
+                }
+                else
+                {
+                    FTaintBits = TaintBits;
+                }
             }      
 
             /* actual arguments */       
@@ -345,20 +393,30 @@ private:
     {
         set<Value*> LocalLexSet;
 
-        printf ("=>Entry %s: FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
+        m_RunStack.insert (Func);
+
+        printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
         
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
         {
             Instruction *Inst = &*ItI;
             
-            LLVMInst LI (Inst);
-            if (LI.IsIntrinsic())
+            LLVMInst LI (Inst);          
+            if (LI.IsIntrinsic() || LI.IsUnReachable())
             {
                 continue;
             }
 
             unsigned TaintedBits = GetTaintedBits (&LI, &LocalLexSet);
+            if (LI.IsBitCast())
+            {
+                Value *Def = LI.GetDef ();
+                Value *Use = LI.GetValue (0);
+                m_EqualVal[Def] = Use;
+                continue;
+            }
+            
             if (TaintedBits == 0)
             {
                 if (!LI.IsCall ())
@@ -370,29 +428,44 @@ private:
             }
             else
             {
-                if (LI.IsRet ())
+                switch (Inst->getOpcode ())
                 {
-                    FTaintBits |= TAINT_BIT (RET_NO);
-                }
-                else if (LI.IsCall ()) 
-                {
-                    ProcessCall (&LI, TaintedBits, &LocalLexSet);                    
-                }
-                else if (LI.IsIcmp ())
-                {
-                    continue;
-                }
-                else
-                {
-                    Value *Val = LI.GetDef ();
-                    FTaintBits |= CheckOutArgTaint (Func, Val);
+                    case Instruction::Ret:
+                    {
+                        FTaintBits |= TAINT_BIT (RET_NO);
+                        break;
+                    }
+                    case Instruction::Call:
+                    case Instruction::Invoke:
+                    {
+                        ProcessCall (&LI, TaintedBits, &LocalLexSet); 
+                        break;
+                    }
+                    case Instruction::ICmp:
+                    {
+                        continue;
+                    }
+                    case Instruction::GetElementPtr:
+                    {
+                        if (!IsActiveFields (&LI))
+                        {
+                            continue;                            
+                        }                 
+                    }
+                    default:
+                    {
+                        Value *Val = LI.GetDef ();
+                        FTaintBits |= CheckOutArgTaint (Func, Val);
 
-                    AddTaintValue (&LocalLexSet, Val);
-                }
+                        AddTaintValue (&LocalLexSet, Val);
 
-                if (LI.IsPHI ())
-                {
-                    continue;
+                        if (LI.IsPHI ())
+                        {
+                            continue;
+                        }
+
+                        break;
+                    }
                 }
 
                 m_InstSet.insert (Inst);
@@ -401,6 +474,8 @@ private:
         }
 
         printf ("=>Exit %s: FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
+
+        m_RunStack.erase (Func);
         return FTaintBits;
     }
 

@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "ModuleSet.h"
 
 using namespace std;
@@ -83,7 +84,7 @@ private:
                 Argument *Formal = &(*Ita);
 
                 Type *VType = Formal->getType();
-                FuncType += to_string (GetTypeId (VType));
+                FuncType += "." + to_string (GetTypeId (VType));
             }
 
             errs()<<Func->getName ()<<" -> "<<FuncType<<"\r\n";  
@@ -92,7 +93,18 @@ private:
         errs ()<<"\r\n================= Type List =================\r\n";
         for (auto It = m_Type2Id.begin(); It != m_Type2Id.end(); It++)
         {
-            errs()<<*(It->first)<<" -> "<<It->second<<"\r\n";
+            Type *VType = It->first;
+
+            if (VType->isPointerTy ())
+            {
+                Type *PType = cast<PointerType>(VType)->getElementType();
+                if (PType->isStructTy ())
+                {
+                    errs()<<"[Structure "<<PType->getStructName ()<<"]";
+                }
+            }
+            
+            errs()<<*VType<<" -> "<<It->second<<"\r\n";
         }
         
         return;

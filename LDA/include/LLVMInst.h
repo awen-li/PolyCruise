@@ -79,6 +79,12 @@ public:
         return false;
     }
 
+    inline bool IsUnReachable ()
+    {
+        return (m_InstOp == Instruction::Unreachable);
+    }
+
+    
     inline Function* GetCallee ()
     {
         return m_CallFunc;
@@ -99,9 +105,9 @@ public:
         return (m_InstOp == Instruction::Br);
     }
 
-    inline bool IsConst (Value *V)
-    {
-        return (isa<Constant>(V) && !dyn_cast<GlobalValue>(V));
+    inline bool IsBitCast ()
+    {     
+        return (m_InstOp == Instruction::BitCast);
     }
 
     inline bool IsIntrinsic ()
@@ -109,14 +115,19 @@ public:
         return isa<DbgInfoIntrinsic>(m_Inst);
     }
 
-    inline Value* GetRetValue ()
+    inline bool IsConst (Value *V)
+    {
+        return (isa<Constant>(V) && !dyn_cast<GlobalValue>(V));
+    }
+
+    inline Value* GetValue (unsigned Index)
     {
         if (m_Use.size() == 0)
         {
             return NULL;
         }
 
-        return m_Use[0];
+        return m_Use[Index];
     }
 
     inline Value* GetDef ()
