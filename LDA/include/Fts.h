@@ -25,16 +25,19 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "ModuleSet.h"
+#include "LLVMInst.h"
 
 using namespace std;
 using namespace llvm;
 
+typedef set <Function*> FUNC_SET;
     
 class Fts
 {
 private:
     map<Type*, unsigned> m_Type2Id;
     map<Function*, string> m_Func2Typs;
+    map<string, FUNC_SET>  m_Type2Funcs;
     
     ModuleManage *m_Ms;
     
@@ -50,6 +53,26 @@ public:
     }
 
 public:
+    FUNC_SET* GetCalleeFuncs (LLVMInst *CI)
+    {
+        Value *val = CI->GetDef ();
+        string FuncType = to_string (GetTypeId (val->getType ()));
+
+        for (auto It = CI->begin (); It != CI->end(); It++) 
+        {
+            val = *It;
+            FuncType += "." + to_string (GetTypeId (val->getType ()));
+        }
+
+        errs()<<*(CI->GetInst())<<" ---> Type = "<<FuncType<<"\r\n";
+        auto Fit = m_Type2Funcs.find (FuncType);
+        if (Fit != m_Type2Funcs.end ())
+        {
+            return &(Fit->second);
+        }
+        
+        return NULL;
+    }
     
 
 private:
@@ -67,6 +90,27 @@ private:
         {
             return It->second;
         }
+    }
+
+    inline void Show ()
+    {
+        errs ()<<"\r\n================= Type List =================\r\n";
+        for (auto It = m_Type2Id.begin(); It != m_Type2Id.end(); It++)
+        {
+            Type *VType = It->first;
+
+            if (VType->isPointerTy ())
+            {
+                Type *PType = cast<PointerType>(VType)->getElementType();
+                if (PType->isStructTy ())
+                {
+                    errs()<<"[Structure "<<PType->getStructName ()<<"]";
+                }
+            }
+            
+            errs()<<*VType<<" -> "<<It->second<<"\r\n";
+        }
+        errs ()<<"=============================================\r\n";
     }
     
     inline void Summarize ()
@@ -87,25 +131,13 @@ private:
                 FuncType += "." + to_string (GetTypeId (VType));
             }
 
+            m_Func2Typs[Func]  = FuncType;
+            m_Type2Funcs[FuncType].insert (Func);
+
             errs()<<Func->getName ()<<" -> "<<FuncType<<"\r\n";  
         }
 
-        errs ()<<"\r\n================= Type List =================\r\n";
-        for (auto It = m_Type2Id.begin(); It != m_Type2Id.end(); It++)
-        {
-            Type *VType = It->first;
-
-            if (VType->isPointerTy ())
-            {
-                Type *PType = cast<PointerType>(VType)->getElementType();
-                if (PType->isStructTy ())
-                {
-                    errs()<<"[Structure "<<PType->getStructName ()<<"]";
-                }
-            }
-            
-            errs()<<*VType<<" -> "<<It->second<<"\r\n";
-        }
+        Show ();
         
         return;
     }

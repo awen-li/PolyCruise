@@ -58,6 +58,11 @@ public:
 
 
 public:
+    inline Instruction* GetInst ()
+    {
+        return m_Inst;
+    }
+    
     inline bool IsRet ()
     {
         return (m_InstOp == Instruction::Ret);
@@ -112,7 +117,7 @@ public:
 
     inline bool IsIntrinsic ()
     {
-        return isa<DbgInfoIntrinsic>(m_Inst);
+        return isa<IntrinsicInst>(m_Inst);
     }
 
     inline bool IsConst (Value *V)
@@ -156,7 +161,7 @@ private:
         
         CallSite Cs(const_cast<Instruction*>(Inst));
         
-        return dyn_cast<Function>(Cs.getCalledValue()->stripPointerCasts());;
+        return dyn_cast<Function>(Cs.getCalledValue()->stripPointerCasts());
     }
     
     inline void Decode ()

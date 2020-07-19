@@ -22,8 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/InstIterator.h"
-#include "LLVMInst.h"
-#include "ModuleSet.h"
 #include "common/WorkList.h"
 #include "ExternalLib.h"
 #include "StField.h"
@@ -149,7 +147,7 @@ private:
 class Lda
 {
 private:
-    Fts *m_Fs;
+    Fts *m_Fts;
     map <Function*, unsigned> m_FTaintBits;
     
     set<Value*> m_GlobalLexSet;
@@ -173,12 +171,12 @@ public:
     
     Lda(ModuleManage *Ms, Source *S, StField *Sf)
     {
-        m_Ms = Ms;
-        m_Sf = Sf;
-        m_Fs = new Fts (Ms);
-        assert (m_Fs != NULL);
-
+        m_Ms  = Ms;
+        m_Sf  = Sf;
         m_Source = S;
+
+        m_Fts = new Fts (Ms);
+        assert (m_Fts != NULL);
 
         ExtLib = new ExternalLib ();
         assert (ExtLib != NULL);
@@ -190,10 +188,10 @@ public:
 
     ~Lda ()
     {
-        if (m_Fs)
+        if (m_Fts)
         {
-            delete m_Fs;
-            m_Fs = NULL;
+            delete m_Fts;
+            m_Fts = NULL;
         }
 
         if (ExtLib)
@@ -343,50 +341,70 @@ private:
         return true;
     }
 
-    inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
+    inline void ExeFunction (LLVMInst *LI, Function *Callee, unsigned TaintBits, set<Value*> *LexSet)
     {
         unsigned FTaintBits;
-        Function *Callee = LI->GetCallee();
-        if  (Callee != NULL)
+        
+        if (Callee->isDeclaration ())
         {
-            if (Callee->isDeclaration ())
-            {
-                FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), TaintBits);
-                //printf ("[CALL Library] %s -> TaintBits = %#x \r\n", Callee->getName ().data(), FTaintBits);
-            }
-            else
-            {
-                if (!IsInStack (Callee))
-                {
-                    FTaintBits = Flda (Callee, TaintBits);
-                }
-                else
-                {
-                    FTaintBits = TaintBits;
-                }
-            }      
-
-            /* actual arguments */       
-            unsigned BitNo = ARG0_NO;
-            for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
-            {
-                Value *U = *It;
-
-                if (IS_TAINTED(FTaintBits, BitNo))
-                {
-                    LexSet->insert (U);
-                }
-            }
-
-            /* return value */
-            if (IS_TAINTED(FTaintBits, RET_NO))
-            {
-                AddTaintValue (LexSet, LI->GetDef ());
-            }
+            FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), TaintBits);
+            //printf ("[CALL Library] %s -> TaintBits = %#x \r\n", Callee->getName ().data(), FTaintBits);
         }
         else
         {
+            if (!IsInStack (Callee))
+            {
+                FTaintBits = Flda (Callee, TaintBits);
+            }
+            else
+            {
+                FTaintBits = TaintBits;
+            }
+        }      
+
+        /* actual arguments */       
+        unsigned BitNo = ARG0_NO;
+        for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
+        {
+            Value *U = *It;
+
+            if (IS_TAINTED(FTaintBits, BitNo))
+            {
+                LexSet->insert (U);
+            }
         }
+
+        /* return value */
+        if (IS_TAINTED(FTaintBits, RET_NO))
+        {
+            AddTaintValue (LexSet, LI->GetDef ());
+        }
+
+        return;
+    }
+
+    inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
+    {
+        Function *Callee = LI->GetCallee();
+        if  (Callee != NULL)
+        {
+            ExeFunction (LI, Callee, TaintBits, LexSet);
+        }
+        else
+        {
+            //errs()<<"Indirect: "<<*(LI->GetInst ())<<"\r\n";
+            FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
+            assert (Fset != NULL);
+
+            for (auto Fit = Fset->begin(), End = Fset->end(); Fit != End; Fit++)
+            {
+                Callee = *Fit;
+                errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
+                ExeFunction (LI, Callee, TaintBits, LexSet);
+            }
+        }
+
+        return;
     }
 
     inline unsigned Flda (Function *Func, unsigned FTaintBits)
