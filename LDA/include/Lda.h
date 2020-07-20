@@ -22,7 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/InstIterator.h"
-#include "common/WorkList.h"
+#include "Source.h"
 #include "ExternalLib.h"
 #include "StField.h"
 
@@ -30,132 +30,76 @@
 using namespace llvm;
 using namespace std;
 
-
 typedef set<Instruction*>::iterator sii_iterator;
-typedef set<Value*>::iterator svi_iterator;
 
-#define IS_TAINTED(TaintBit, BitNo) (TaintBit & (1 << (32-BitNo)))
-#define SET_TAINTED(TaintBit, BitNo) (TaintBit |= (1 << (32-BitNo)))
+struct CSTaint
+{
+    CSTaint (unsigned InTaintBits)
+    {
+        m_InTaintBits = InTaintBits;
+    }
 
+    ~CSTaint ()
+    {
+    }
+    
+    set <Function*> m_Callees;
+    unsigned m_InTaintBits;
+    unsigned m_OutTaintBits;
+};
 
-class Source
+class Flda
 {
 private:
-    Function *m_ScCaller;
-    set<Value *> m_Criterion;
-
-    ModuleManage *m_Ms;
-
-public:
-    Source (ModuleManage *Ms,
-              string ScFName, string ApiName, unsigned TaintBit)
-    {
-        m_Ms = Ms;
-
-        Function* ScF = GetScFunc (ScFName);
-        assert ((ScF != NULL) && "Source Caller should exists!");
-        
-        Compute (ScF, ApiName, TaintBit);
-        m_ScCaller = ScF;
-
-        assert (m_Criterion.size() != 0);
-    }
+    Function *m_CurFunc;
+    map <Instruction*, CSTaint> m_CallSite2Cst;
+    set <Instruction*> m_TaintInsts;
 
 public:
-    inline Function* GetSrcCaller ()
+    Flda (Function *Func)
     {
-        return m_ScCaller;
+        m_CurFunc = Func;
     }
 
-    inline svi_iterator begin ()
+    ~Flda ()
     {
-        return m_Criterion.begin();
+
     }
 
-    inline svi_iterator end ()
+    inline void InsertInst (Instruction* TaintInst)
     {
-        return m_Criterion.end();
+        m_TaintInsts.insert (TaintInst);
     }
 
-private:
-    inline Function* GetScFunc (string ScFName)
+    inline CSTaint* InsertCst (Instruction* CI, unsigned InTaintBits)
     {
-        for (auto ItF = m_Ms->func_begin(), End = m_Ms->func_end(); ItF != End; ++ItF)
+        auto It = m_CallSite2Cst.find (CI);
+        if (It == m_CallSite2Cst.end())
         {
-            Function *F = *ItF;  
-            if (F->isIntrinsic())
-            {
-                continue;
-            }
+            auto Pit = m_CallSite2Cst.insert (make_pair(CI, CSTaint (InTaintBits)));
+            assert (Pit.second == true);
 
-            if (!ScFName.compare(F->getName ().data()))
-            {
-                return F;
-            }
+            return &(Pit.first->second);
         }
-
-        return NULL;
-    }
-    
-    
-    inline void Compute (Function* ScF, string ApiName, unsigned TaintBit)
-    {
-        for (auto ItI = inst_begin(*ScF), Ed = inst_end(*ScF); ItI != Ed; ++ItI) 
+        else
         {
-            Function *Callee = NULL;
-            Instruction *Inst = &*ItI;
-
-            LLVMInst LI (Inst);
-            if (!LI.IsCall () || ((Callee = LI.GetCallee ()) == NULL))
-            {
-                continue;
-            }
-
-            if (ApiName.compare(Callee->getName ().data()))
-            {
-                continue;
-            }
-
-            errs()<<*Inst<<"=========> ";
-
-            unsigned BitNo = 1;
-            if (IS_TAINTED (TaintBit, BitNo))
-            {
-                m_Criterion.insert (LI.GetDef ());
-                errs()<<" "<<BitNo;
-            }
-
-            BitNo++;
-            for (auto It = LI.begin (); It != LI.end(); It++)
-            {
-                Value *U = *It;
-                if (IS_TAINTED (TaintBit, BitNo))
-                {
-                    errs()<<" "<<BitNo;
-                    m_Criterion.insert(U);
-                }
-       
-                BitNo++;                        
-            }
-
-            errs()<<"\r\n";
+            return &(It->second);
         }
     }
 };
-
 
 class Lda
 {
 private:
     Fts *m_Fts;
-    map <Function*, unsigned> m_FTaintBits;
+
+    map <Function*, Flda> m_Func2Flda;
     
     set<Value*> m_GlobalLexSet;
     
     set <Instruction*> m_InstSet;
 
     ModuleManage *m_Ms;
-    ComQueue <Function *> m_FuncList;
 
     Source *m_Source;
 
@@ -212,6 +156,22 @@ public:
     }
     
 private:
+
+    inline Flda* GetFlda (Function *Func)
+    {
+        auto It = m_Func2Flda.find (Func);
+        if (It == m_Func2Flda.end())
+        {
+            auto Pit = m_Func2Flda.insert (make_pair(Func, Flda (Func)));
+            assert (Pit.second == true);
+
+            return &(Pit.first->second);
+        }
+        else
+        {
+            return &(It->second);
+        }
+    }
 
     inline bool IsActiveFields (LLVMInst *Inst)
     {
@@ -341,26 +301,27 @@ private:
         return true;
     }
 
-    inline void ExeFunction (LLVMInst *LI, Function *Callee, unsigned TaintBits, set<Value*> *LexSet)
+    inline void ExeFunction (LLVMInst *LI, Function *Callee, CSTaint *Cst, set<Value*> *LexSet)
     {
         unsigned FTaintBits;
         
         if (Callee->isDeclaration ())
         {
-            FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), TaintBits);
+            FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), Cst->m_InTaintBits);
             //printf ("[CALL Library] %s -> TaintBits = %#x \r\n", Callee->getName ().data(), FTaintBits);
         }
         else
         {
             if (!IsInStack (Callee))
             {
-                FTaintBits = Flda (Callee, TaintBits);
+                FTaintBits = ComputeFlda (Callee, Cst->m_InTaintBits);
             }
             else
             {
-                FTaintBits = TaintBits;
+                FTaintBits = Cst->m_InTaintBits;
             }
-        }      
+        }
+        Cst->m_OutTaintBits = FTaintBits;
 
         /* actual arguments */       
         unsigned BitNo = ARG0_NO;
@@ -383,12 +344,13 @@ private:
         return;
     }
 
-    inline void ProcessCall (LLVMInst *LI, unsigned TaintBits, set<Value*> *LexSet)
+    inline void ProcessCall (LLVMInst *LI, CSTaint *Cst, set<Value*> *LexSet)
     {
         Function *Callee = LI->GetCallee();
         if  (Callee != NULL)
-        {
-            ExeFunction (LI, Callee, TaintBits, LexSet);
+        {   
+            ExeFunction (LI, Callee, Cst, LexSet);
+            Cst->m_Callees.insert(Callee);
         }
         else
         {
@@ -400,18 +362,20 @@ private:
             {
                 Callee = *Fit;
                 errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
-                ExeFunction (LI, Callee, TaintBits, LexSet);
+                ExeFunction (LI, Callee, Cst, LexSet);
+                Cst->m_Callees.insert(Callee);
             }
         }
 
         return;
     }
 
-    inline unsigned Flda (Function *Func, unsigned FTaintBits)
+    inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
     {
         set<Value*> LocalLexSet;
 
         m_RunStack.insert (Func);
+        Flda *fd = GetFlda (Func);
 
         printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
@@ -442,7 +406,10 @@ private:
                     continue;
                 }
 
-                ProcessCall (&LI, TaintedBits, &LocalLexSet);
+                CSTaint *Cst = fd->InsertCst (Inst, TaintedBits);
+                assert (Cst != NULL);
+                
+                ProcessCall (&LI, Cst, &LocalLexSet);
             }
             else
             {
@@ -456,7 +423,10 @@ private:
                     case Instruction::Call:
                     case Instruction::Invoke:
                     {
-                        ProcessCall (&LI, TaintedBits, &LocalLexSet); 
+                        CSTaint *Cst = fd->InsertCst (Inst, TaintedBits);
+                        assert (Cst != NULL);
+                        
+                        ProcessCall (&LI, Cst, &LocalLexSet); 
                         break;
                     }
                     case Instruction::ICmp:
@@ -487,6 +457,7 @@ private:
                 }
 
                 m_InstSet.insert (Inst);
+                fd->InsertInst (Inst);
                 errs ()<<"\tTainted Inst: "<<*Inst<<"\r\n";
             }
         }
@@ -502,7 +473,7 @@ private:
         Function *Entry = m_Ms->GetEntryFunction ();
         assert (Entry != NULL);
 
-        Flda (Entry, TAINT_NONE);
+        ComputeFlda (Entry, TAINT_NONE);
     }
 
     inline void Print (set <Value*>& S)
