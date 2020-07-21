@@ -90,6 +90,11 @@ public:
         return (m_InstOp == Instruction::Br);
     }
 
+    inline bool IsCmp ()
+    {
+        return (m_InstOp == Instruction::ICmp);
+    }
+
     inline bool IsConst (Value *V)
     {
         return (isa<Constant>(V) && !dyn_cast<GlobalValue>(V));

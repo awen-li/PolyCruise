@@ -35,7 +35,7 @@ public:
 };
 
 
-class IBSFunc:public HookFunc
+class TraceFunc:public HookFunc
 {
 public:
 
@@ -43,13 +43,13 @@ public:
     {
         LLVMContext &context = M->getContext();
 
-        /* void IBS_track (char* Op, int Def, int Use1, int Use2) */      
+        /* void IBS_track (int Def, int Use1, int Use2) */      
         Type *ArgTypes[] = {Type::getInt32Ty(M->getContext()),
                             Type::getInt32Ty(M->getContext()),
                             Type::getInt32Ty(M->getContext())};
-        FunctionType *IBS_track = FunctionType::get(Type::getVoidTy(context), ArgTypes, false);
+        FunctionType *TRC_track = FunctionType::get(Type::getVoidTy(context), ArgTypes, false);
             
-        return M->getOrInsertFunction("IBS_track", IBS_track);
+        return M->getOrInsertFunction("TRC_track", TRC_track);
     }
 
  
@@ -58,9 +58,9 @@ public:
         LLVMContext &context = M->getContext();
 
         /* void IBS_init () */
-        FunctionType *IBS_init = FunctionType::get(Type::getInt32Ty(context), false);
+        FunctionType *TRC_init = FunctionType::get(Type::getInt32Ty(context), false);
             
-        return M->getOrInsertFunction("IBS_init", IBS_init);
+        return M->getOrInsertFunction("TRC_init", TRC_init);
     }
 
 
@@ -69,9 +69,9 @@ public:
         LLVMContext &context = M->getContext();
 
         /* void IBS_exit () */
-        FunctionType *IBS_exit = FunctionType::get(Type::getVoidTy(context), false);
+        FunctionType *TRC_exit = FunctionType::get(Type::getVoidTy(context), false);
             
-        return M->getOrInsertFunction("IBS_exit", IBS_exit);
+        return M->getOrInsertFunction("TRC_exit", TRC_exit);
     }
 
 };

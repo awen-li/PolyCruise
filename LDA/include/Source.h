@@ -38,6 +38,8 @@ class Source
 private:
     Function *m_ScCaller;
     set<Value *> m_Criterion;
+    set<Instruction*> m_SInsts;
+    
 
     ModuleManage *m_Ms;
 
@@ -70,6 +72,19 @@ public:
     inline svi_iterator end ()
     {
         return m_Criterion.end();
+    }
+
+    inline bool IsSrcInst (Instruction *Inst)
+    {
+        auto It = m_SInsts.find (Inst);
+        if (It == m_SInsts.end ())
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
 private:
@@ -113,10 +128,11 @@ private:
 
             errs()<<*Inst<<"=========> ";
 
-            unsigned BitNo = 1;
+            unsigned BitNo = RET_NO;
             if (IS_TAINTED (TaintBit, BitNo))
             {
                 m_Criterion.insert (LI.GetDef ());
+                m_SInsts.insert (Inst);
                 errs()<<" "<<BitNo;
             }
 
@@ -128,6 +144,7 @@ private:
                 {
                     errs()<<" "<<BitNo;
                     m_Criterion.insert(U);
+                    m_SInsts.insert (Inst);
                 }
        
                 BitNo++;                        

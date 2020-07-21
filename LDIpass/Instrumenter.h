@@ -11,6 +11,7 @@
 
 #ifndef LLVM_LIB_TRANSFORMS_INSTRUMENTATION_INSTRUMENTER_H
 #define LLVM_LIB_TRANSFORMS_INSTRUMENTATION_INSTRUMENTER_H
+#include <set>
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
@@ -20,16 +21,79 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "Queue.h"
 #include "HookFunc.h"
 #include "LLVMInst.h"
-#include "BS.h"
-#include "SymDependence.h"
+#include "LdaBin.h"
 
 
 using namespace llvm;
 using namespace std;
 
+struct CSTaint
+{
+    CSTaint ()
+    {
+        m_InTaintBits  = 0;
+        m_OutTaintBits = 0;
+    }
+    
+    set <string> m_Callees;
+    unsigned m_InTaintBits;
+    unsigned m_OutTaintBits;
+};
+
+class Flda
+{
+private:
+    string m_FuncName;
+    map <unsigned, CSTaint> m_CsID2Cst;
+    set <unsigned> m_TaintInstIDs;
+
+public:
+    Flda (string FuncName)
+    {
+        m_FuncName = FuncName;
+    }
+
+    ~Flda ()
+    {
+
+    }
+
+    inline CSTaint* AddCst (unsigned Id)
+    {
+        auto It = m_CsID2Cst.find (Id);
+        if (It == m_CsID2Cst.end())
+        {
+            auto Pit = m_CsID2Cst.insert (make_pair(Id, CSTaint ()));
+            assert (Pit.second == true);
+
+            return &(Pit.first->second);
+        }
+        else
+        {
+            return &(It->second);
+        }
+    }
+
+    inline bool IsInstTainted (unsigned Id)
+    {
+        auto It = m_TaintInstIDs.find (Id);
+        if (It == m_TaintInstIDs.end())
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    inline void AddInstID (unsigned Id)
+    {
+         m_TaintInstIDs.insert (Id);
+    }
+};
 
 class Instrumenter
 {
@@ -40,13 +104,7 @@ private:
     Constant *m_InitFunc;
     Constant *m_ExitFunc;
 
-    Instruction* m_Source;
-    set<Value *> m_Criterion;
-    
-    Instruction* m_Sink;
-
-    int m_Type;
-
+    map <string, Flda> m_Fname2Flda;
 
 public:
     
@@ -54,450 +112,114 @@ public:
     {
         m_Module = M;
 
-        m_Source    = NULL;
 
-        m_Sink = NULL;
-
-        IBSFunc Ibs;
-        m_TackFunc = Ibs.geHookFunction (M);
+        TraceFunc Trb;
+        m_TackFunc = Trb.geHookFunction (M);
         assert (m_TackFunc != NULL);
-        m_InitFunc = Ibs.geInitFunction (M);
-        m_ExitFunc = Ibs.geExitFunction (M);
-
-        m_Type = 4;
+        m_InitFunc = Trb.geInitFunction (M);
+        m_ExitFunc = Trb.geExitFunction (M);
     } 
 
     void RunInstrm ()
     {
+        LoadLdaBin ();
+        
         VisitFunction ();
     }
     
 private:
-        
-    inline void AddTrackCall (Instruction* Inst)
+
+    inline Flda* GetFlda (string Fname)
     {
-        assert (isa<CallInst>(Inst) || isa<InvokeInst>(Inst));
-        errs()<<"AddTrackCall: "<<*Inst<<"\r\n";
-
-        IRBuilder<> Builder(Inst);
-
-        Value *Args[4];
-
-        // call
-        Args[0] = Builder.CreateGlobalStringPtr("begin-call", "");
-
-        // parameter
-        unsigned Index = 0;
-        unsigned OpNum = Inst->getNumOperands ()-1;
-        while (Index < OpNum)
+        auto It = m_Fname2Flda.find (Fname);
+        if (It == m_Fname2Flda.end())
         {
-            Args[Index+1] = Inst->getOperand (Index);
-            Index++;
+            return NULL;
         }
-        Type *I32ype = IntegerType::getInt32Ty(m_Module->getContext());
-        Args[3] = ConstantInt::get(I32ype, 0, true);
+        else
+        {
+            return &(It->second);
+        }
+    }
 
-        // create
-        //CallInst::Create (m_TackFunc, Args, None, "", Inst);
-        Builder.CreateCall(m_TackFunc, Args);
+    inline Flda* AddFlda (string Fname)
+    {
+        Flda* Fd = GetFlda (Fname);
+        if (Fd == NULL)
+        {
+            auto Pit = m_Fname2Flda.insert (make_pair(Fname, Flda (Fname)));
+            assert (Pit.second == true);
+
+            return &(Pit.first->second);
+        }
+        else
+        {
+            return Fd;
+        }
+    }
+
+    inline void LoadLdaBin ()
+    {
+        FILE *Bf = fopen ("LdaBin.bin", "rb");
+        assert (Bf != NULL);
+        
+        unsigned FldaNum = 0;
+        (void)fread (&FldaNum, sizeof(FldaNum), 1, Bf);
+        printf ("FldaNum = %u \r\n", FldaNum);
+
+        for (unsigned Fid = 0; Fid < FldaNum; Fid++)
+        {
+            FldaBin Fdb = {0};
+            (void)fread (&Fdb, sizeof(Fdb), 1, Bf);
+            Flda *Fd = AddFlda (Fdb.FuncName);
+
+            printf ("Load Function: %s\r\n", Fdb.FuncName);
+            for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
+            {
+                unsigned Id = 0;
+                (void)fread (&Id, sizeof(Id), 1, Bf);
+                Fd->AddInstID (Id);
+                printf ("\tTaintInst: %u\r\n", Id);
+            }        
+
+            for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
+            {
+                CSTaintBin Cstb;
+                (void)fread (&Cstb, sizeof(Cstb), 1, Bf);
+
+                CSTaint *Cst = Fd->AddCst (Cstb.InstID);
+                Cst->m_InTaintBits  = Cstb.InTaintBits;
+                Cst->m_OutTaintBits = Cstb.OutTaintBits;
+                
+                for (unsigned Fid = 0; Fid < Cstb.CalleeNum; Fid++)
+                {
+                    char CalleeName[F_NAME_LEN] = {0};
+                    (void)fread (CalleeName, sizeof(CalleeName), 1, Bf);
+                    Cst->m_Callees.insert (CalleeName);
+                }
+            }
+        }
+
+        fclose (Bf);
+    }
+
+    inline void AddTrack (Instruction* inst)
+    {
+        IRBuilder<> Builder(inst);
+
+        llvm::Type *I32ype = llvm::IntegerType::getInt32Ty(m_Module->getContext());
+
+        Value *vDef  = llvm::ConstantInt::get(I32ype, 0, true);
+        Value *vUse1 = llvm::ConstantInt::get(I32ype, 0, true);
+        Value *vUse2 = llvm::ConstantInt::get(I32ype, 0, true);
+
+        Builder.CreateCall(m_TackFunc, {vDef, vUse1, vUse2});
 
         return;
     }
 
-    inline void AddTrackDefault (Instruction* Inst)
+    inline void VisitFunction ()
     {
-        IRBuilder<> Builder(Inst);
-
-        Value *Args[3];
-        Type *I32ype = IntegerType::getInt32Ty(m_Module->getContext());
-        Args[0] = ConstantInt::get(I32ype, 0, true);
-        Args[1] = ConstantInt::get(I32ype, 0, true);
-        Args[2] = ConstantInt::get(I32ype, 0, true);
-        Builder.CreateCall(m_TackFunc, Args);
-
-        return;
-    }
-
-    inline void AddTrackCallEnd (BS *bs)
-    {
-        Instruction *Site = bs->GetBsSite();
-        assert (Site != NULL);
-        errs()<<"AddTrackCallEnd: "<<*Site<<"\r\n";
-
-        IRBuilder<> Builder(Site);
-        
-        Value *Args[4];
-
-        unsigned Index = 0;
-        // end-call
-        Args[Index++] = Builder.CreateGlobalStringPtr("end-call", "");
-
-        // in-put
-        for (auto In = bs->in_begin (); In != bs->in_end (); In++)
-        {
-            Args[Index++] = *In;
-            errs()<<"InType: "<<*((*In)->getType ())<<"\r\n";
-        }
-
-        // out-put
-        for (auto Out = bs->out_begin (); Out != bs->out_end (); Out++)
-        {
-            Args[Index++] = *Out;
-            errs()<<"OutType: "<<*((*Out)->getType ())<<"\r\n";
-        }
-
-        Type *I32ype = IntegerType::getInt32Ty(m_Module->getContext());
-        while (Index < 4)
-        {       
-            Args[Index++] = ConstantInt::get(I32ype, 0, true);
-        }
-
-        Builder.CreateCall(m_TackFunc, Args);
-        return;        
-    }
-
-    inline void BsInstrument (BS *bs)
-    {
-        // instrument call
-        for (auto It = bs->begin (); It != bs->end(); It++)
-        {
-            Instruction *CI = *It;
-            AddTrackCall (CI);
-        }
-
-        // instrument current call results
-        AddTrackCallEnd (bs);
-    }
-
-    void VisitInst (BasicBlock *B)
-    {
-        for (auto It = B->begin (); It != B->end (); It++)
-        {
-            Instruction *Inst = &(*It);
-            
-            LLVMInst LI (Inst);
-            if (LI.IsPHI () || LI.IsIntrinsic())
-            {
-                continue;
-            }
-
-            AddTrackDefault (Inst);
-        }
-    }
-
-    void VisitBlock (Function *F)
-    {
-        ComQueue<BasicBlock*> Q;
-        set <BasicBlock*> Visited;
-        BasicBlock* BH = &F->getEntryBlock();
-
-        Q.InQueue (BH);
-        Visited.insert (BH);
-        while (!Q.IsEmpty ())
-        {
-            BasicBlock *B = Q.OutQueue ();
-            for (BasicBlock* sucBB : successors(B)) 
-            {
-                if (Visited.find (sucBB) != Visited.end())
-                {
-                    continue;
-                }
-                
-                Q.InQueue (sucBB);
-                Visited.insert (sucBB);
-            }
-
-            errs() <<"Block:  "<<B<<"\r\n";
-            VisitInst (B);
-
-            //BS bs (B);
-            //BsInstrument (&bs);
-        }
-    }
-
-
-    inline void GetCriterion (Function* F)
-    {
-        map <string, unsigned> Func2Ta;
-
-        switch (m_Type)
-        {
-            case 0:
-            {
-                Func2Ta ["compress"] = 1;
-                Func2Ta ["uncompress"] = 1;
-                Func2Ta ["copyFileName"] = 1;
-                Func2Ta ["containsDubiousChars"] = 1;
-                Func2Ta ["fileExists"] = 1;
-                Func2Ta ["notAStandardFile"] = 1;
-                Func2Ta ["countHardLinks"] = 1;
-                Func2Ta ["saveInputFileMetaInfo"] = 1;
-                Func2Ta ["uncompressStream"] = 1;
-                Func2Ta ["applySavedTimeInfoToOutputFile"] = 1;
-                break;
-            }
-            case 1:
-            {
-                Func2Ta ["GetKey"] = 1 | (1<<8);
-                Func2Ta ["CheckKey"] = 1;
-                break;
-            }
-            case 2:
-            {
-                Func2Ta ["BZ2_bzWrite"] = (1<<2);
-                Func2Ta ["BZ2_bzCompress"] = (1<<0);
-                Func2Ta ["handle_compress"] = (1<<0);
-                Func2Ta ["BZ2_compressBlock"] = (1<<0);
-                Func2Ta ["BZ2_blockSort"] = (1<<0);
-                Func2Ta ["bsPutUChar"] = (1<<0);
-                
-                break;
-            }
-            case 3:
-            {           
-                break;
-            }
-            case 4:
-            {
-                Func2Ta ["BZ2_bzWriteOpen"] = (1<<1);
-                Func2Ta ["BZ2_bzWrite"] = (1<<1);
-                Func2Ta ["BZ2_bzWriteClose64"] = (1<<1);
-                break;
-            }
-            default:
-            {
-                break;
-            }
-        }
-
-        auto It = Func2Ta.find (F->getName ().data());
-        if (It == Func2Ta.end())
-        {
-            return;
-        }
-
-        errs()<<"--->"<<m_Type<<" GetCriterion for "<<F->getName ()<<"\r\n";
-        unsigned ArgBit = It->second;
-
-        unsigned Index = 0;
-        for (Function::arg_iterator itr = F->arg_begin(); itr != F->arg_end(); ++itr) 
-        {
-            if (ArgBit & (1 << Index))
-            {
-                m_Criterion.insert (&(*itr));
-                errs ()<<"Func: "<<F->getName ()<<"Criterion: argument"<<Index<<"\r\n";
-                break;
-            }
-            Index++;
-        }
-        
-    }
-
-    inline bool IsWhereSource (Function *F)
-    {  
-        switch (m_Type)
-        {
-            case 0:
-            {
-                /* in main */
-                if (strcmp("main", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 1:
-            {
-                /* in main */
-                if (strcmp("main", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 2:
-            {
-                /* compress */
-                if (strcmp("compress", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 3:
-            {
-                /* compress */
-                if (strcmp("compress", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 4:
-            {
-                /* compress */
-                if (strcmp("compress", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            default:
-            {
-                break;                
-            }
-        }
-
-        return false;
-    }
-
-    inline bool IsSourceFunc (Function *F)
-    {   
-        switch (m_Type)
-        {
-            case 0:
-            {
-                /* in main */
-                if (strcmp("addFlagsFromEnvVar", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 1:
-            {
-                /* in main */
-                if (strcmp("strtol", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 2:
-            {
-                /* compress */
-                if (strcmp("fread", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 3:
-            {
-                /* compress */
-                if (strcmp("fopen64", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            case 4:
-            {
-                /* compress */
-                if (strcmp("fdopen", F->getName ().data()) == 0)
-                {
-                    return true;
-                }
-                break;
-            }
-            default:
-            {
-                break;                
-            }
-        }
-
-        return false;
-        
-    }
-
-
-    
-    inline void InitSource ()
-    {
-        for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it)
-        {
-            Function *F = &*it;  
-            if (F->isIntrinsic() || F->isDeclaration ())
-            {
-                continue;
-            }
-
-            if (!IsWhereSource (F))
-            {
-                continue;
-            }
-
-            for (inst_iterator ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI) 
-            {
-                Function *Callee = NULL;
-                Instruction *Inst = &*ItI;
-                
-                LLVMInst LI (Inst);
-                if (!LI.IsCall (&Callee))
-                {
-                    continue;
-                }
-
-                if (Callee == NULL)
-                {
-                    continue;
-                }
-
-                errs()<<"from "<<F->getName ()<<" call "<<Callee->getName ()<<"\r\n";
-
-                if (!IsSourceFunc (Callee))
-                {
-                    continue;
-                }
-
-                errs()<<"-------------->"<<Callee->getName ()<<"\r\n";
-
-                
-                if (m_Type >= 3)
-                {
-                    m_Source = Inst;
-                    m_Criterion.insert (LI.GetDef ());
-                }
-                else
-                {
-                    for (auto It = LI.begin (); It != LI.end(); It++)
-                    {
-                        Value *U = *It;
-                        if (U->hasName ())
-                        {
-                            errs ()<<"==> Add Source: "<<U->getName ()<<"\r\n";
-                        }
-                        else
-                        {
-                            errs ()<<"==> Add Source: "<<U<<"\r\n";
-                        }
-
-                        m_Source = Inst;
-                        m_Criterion.insert(U);
-                        break;                        
-                    }
-                }
-            }
-        }
-    }
-
-    inline void InitSink ()
-    {
-        for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it)
-        {
-            Function *F = &*it;  
-            if (F->isIntrinsic() || F->isDeclaration ())
-            {
-                continue;
-            }
-        }
-    }
-    
-
-    void VisitFunction ()
-    {
-        InitSource ();
-  
         for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
         {
             Function *F = &*it;  
@@ -506,21 +228,27 @@ private:
                 continue;
             }
 
-            GetCriterion (F);
-
-            //VisitBlock (F);
-            errs() <<"Process "<<F->getName ()<<", m_Criterion = "<<m_Criterion.size()<<"\r\n";
-            SymDependence SD (F, m_Criterion);
-
-            for (auto it = SD.begin(); it != SD.end (); it++)
+            Flda *Fd = GetFlda (F->getName ().data());
+            if (Fd == NULL)
             {
-                Instruction *Inst = *it;
-                if (Inst->getOpcode() == Instruction::ICmp)
+                continue;
+            }
+            
+            unsigned InstId = 0;
+            errs()<<"Process Function: "<<F->getName ()<<"\r\n";
+            for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
+            {
+                if (!Fd->IsInstTainted (InstId))
                 {
                     continue;
                 }
-                AddTrackDefault (Inst);
+
+                Instruction *Inst = &*ItI;
+                AddTrack (Inst);
+
+                printf ("\t TaintInst: %u \r\n", InstId);
             }
+
         }
 
         return;

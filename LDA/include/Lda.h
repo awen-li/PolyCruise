@@ -1,4 +1,4 @@
-//===-- SymDependence.h - symbol dependence computation --------------------===//
+//===-- Lda.h - lexical dependence analysis -------------------------------===//
 //
 // Copyright (C) <2019-2024>  <Wen Li>
 //
@@ -25,12 +25,14 @@
 #include "Source.h"
 #include "ExternalLib.h"
 #include "StField.h"
+#include "LdaBin.h"
 
 
 using namespace llvm;
 using namespace std;
 
 typedef set<Instruction*>::iterator sii_iterator;
+typedef map <Instruction*, unsigned>::iterator miu_iterator;
 
 struct CSTaint
 {
@@ -48,12 +50,15 @@ struct CSTaint
     unsigned m_OutTaintBits;
 };
 
+
+typedef map <Instruction*, CSTaint>::iterator mic_iterator;
+
 class Flda
 {
 private:
     Function *m_CurFunc;
     map <Instruction*, CSTaint> m_CallSite2Cst;
-    set <Instruction*> m_TaintInsts;
+    map <Instruction*, unsigned> m_TaintInsts2ID;
 
 public:
     Flda (Function *Func)
@@ -66,9 +71,49 @@ public:
 
     }
 
-    inline void InsertInst (Instruction* TaintInst)
+    inline char* GetName ()
     {
-        m_TaintInsts.insert (TaintInst);
+        return (char*)m_CurFunc->getName ().data();
+    }
+
+    inline unsigned GetInstID (Instruction *Inst)
+    {
+        return m_TaintInsts2ID[Inst];
+    }
+
+    inline unsigned GetCINum ()
+    {
+        return (unsigned)m_CallSite2Cst.size();
+    }
+
+    inline unsigned GetTaintInstNum ()
+    {
+        return (unsigned)m_TaintInsts2ID.size();
+    }
+
+    inline miu_iterator inst_begin ()
+    {
+        return m_TaintInsts2ID.begin();
+    }
+
+    inline miu_iterator inst_end ()
+    {
+        return m_TaintInsts2ID.end();
+    }
+
+    inline void InsertInst (Instruction* TaintInst, unsigned InstID)
+    {
+        m_TaintInsts2ID[TaintInst] = InstID;
+    }
+
+    inline mic_iterator ic_begin ()
+    {
+        return m_CallSite2Cst.begin();
+    }
+
+    inline mic_iterator ic_end ()
+    {
+        return m_CallSite2Cst.end();
     }
 
     inline CSTaint* InsertCst (Instruction* CI, unsigned InTaintBits)
@@ -128,6 +173,8 @@ public:
         Compute ();
 
         printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
+
+        Dump ();
     }
 
     ~Lda ()
@@ -379,14 +426,23 @@ private:
 
         printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
-        
-        for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
+
+        unsigned InstID = 0;
+        for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstID++) 
         {
             Instruction *Inst = &*ItI;
             
             LLVMInst LI (Inst);          
             if (LI.IsIntrinsic() || LI.IsUnReachable())
             {
+                continue;
+            }
+
+            if (m_Source->IsSrcInst (Inst))
+            {
+                errs ()<<"Add Source: "<<*Inst<<"\r\n";
+                m_InstSet.insert (Inst);
+                fd->InsertInst (Inst, InstID);
                 continue;
             }
 
@@ -457,8 +513,8 @@ private:
                 }
 
                 m_InstSet.insert (Inst);
-                fd->InsertInst (Inst);
-                errs ()<<"\tTainted Inst: "<<*Inst<<"\r\n";
+                fd->InsertInst (Inst, InstID);
+                errs ()<<"\t["<<InstID<<"]Tainted Inst: "<<*Inst<<"\r\n";
             }
         }
 
@@ -476,13 +532,74 @@ private:
         ComputeFlda (Entry, TAINT_NONE);
     }
 
-    inline void Print (set <Value*>& S)
+
+    /////////////////////////////////////////////////////////////////////
+    //// LdaBin.bin
+    /////////////////////////////////////////////////////////////////////
+    ///  unsigned FuncNum;
+	//   FldaBin[]
+	//            char FuncName[F_NAME_LEN];
+	//            unsigned TaintInstNum;
+	//            unsigned TaintCINum;
+	//            unsigned InstID[]
+	//            unsigned TaintCI[] 
+	//                              unsigned InstID;
+	//                              unsigned InTaintBits;
+	//                              unsigned OutTaintBits;
+	//                              unsigned CalleeNum;
+	//                              char FuncName[F_NAME_LEN][]
+	/////////////////////////////////////////////////////////////////////
+
+    inline void Dump ()
     {
-        for (auto It = S.begin(); It != S.end(); It++)
+        FILE *Bf = fopen ("LdaBin.bin", "wb");
+        assert (Bf != NULL);
+        
+        unsigned FldaNum = m_Func2Flda.size();
+        printf ("FldaNum = %u \r\n", FldaNum);
+
+        fwrite (&FldaNum, sizeof(unsigned), 1, Bf);
+        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
         {
-            Value *V = *It;
-            errs () <<*V<<"  --->  "<<V<<"\r\n";
+            Flda *Fd = &(It->second);
+            
+            FldaBin Fdb = {0};
+            strcpy (Fdb.FuncName, Fd->GetName());
+            Fdb.TaintCINum = Fd->GetCINum ();
+            Fdb.TaintInstNum = Fd->GetTaintInstNum ();
+            fwrite (&Fdb, sizeof(Fdb), 1, Bf);
+
+            unsigned *IID = new unsigned [Fdb.TaintInstNum];
+            assert (IID != NULL);
+            unsigned Index = 0;
+            for (auto Iit = Fd->inst_begin (); Iit != Fd->inst_end (); Iit++)
+            {
+                IID [Index++] = Iit->second;
+            }
+            fwrite (IID, sizeof(unsigned), Index, Bf);
+            delete IID;
+
+            for (auto Cit = Fd->ic_begin (); Cit != Fd->ic_end (); Cit++)
+            {
+                CSTaint *Cst = &(Cit->second);
+
+                CSTaintBin Cstb;
+                Cstb.InstID = Fd->GetInstID (Cit->first);
+                Cstb.InTaintBits  = Cst->m_InTaintBits;
+                Cstb.OutTaintBits = Cst->m_OutTaintBits;
+                Cstb.CalleeNum    = Cst->m_Callees.size();
+                fwrite (&Cstb, sizeof(Cstb), 1, Bf);
+
+                for (auto Fit = Cst->m_Callees.begin(); Fit != Cst->m_Callees.end(); Fit++)
+                {
+                    char CalleeName[F_NAME_LEN] = {0};
+                    strcpy (CalleeName, (*Fit)->getName().data());
+                    fwrite (CalleeName, sizeof(CalleeName), 1, Bf);
+                }
+            }
         }
+
+        fclose (Bf);
     }  
 };
 
