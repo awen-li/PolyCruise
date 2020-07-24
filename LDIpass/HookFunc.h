@@ -43,11 +43,9 @@ public:
     {
         LLVMContext &context = M->getContext();
 
-        /* void IBS_track (int Def, int Use1, int Use2) */      
-        Type *ArgTypes[] = {Type::getInt32Ty(M->getContext()),
-                            Type::getInt32Ty(M->getContext()),
-                            Type::getInt32Ty(M->getContext())};
-        FunctionType *TRC_track = FunctionType::get(Type::getVoidTy(context), ArgTypes, false);
+        /* void TRC_track (char *Data) */      
+        Type *ArgTypes[] = {Type::getInt8PtrTy(M->getContext()), };
+        FunctionType *TRC_track = FunctionType::get(Type::getVoidTy(context), ArgTypes, true);
             
         return M->getOrInsertFunction("TRC_track", TRC_track);
     }

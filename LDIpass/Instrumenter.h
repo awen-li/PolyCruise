@@ -42,6 +42,7 @@ struct CSTaint
     unsigned m_OutTaintBits;
 };
 
+typedef map <unsigned, CSTaint>::iterator mcs_iterator;
 class Flda
 {
 private:
@@ -58,6 +59,19 @@ public:
     ~Flda ()
     {
 
+    }
+
+    inline CSTaint* GetCsTaint (unsigned InstId)
+    {
+        auto It = m_CsID2Cst.find (InstId);
+        if (It == m_CsID2Cst.end ())
+        {
+            return NULL;
+        }
+        else
+        {
+            return &(It->second);
+        }
     }
 
     inline CSTaint* AddCst (unsigned Id)
@@ -106,6 +120,10 @@ private:
 
     map <string, Flda> m_Fname2Flda;
 
+    map<StringRef, Value*> m_GlobalPtrMap;
+
+    map <Value*, unsigned> m_Value2Id;
+
 public:
     
     Instrumenter(Module *M)
@@ -128,6 +146,21 @@ public:
     }
     
 private:
+
+    Value* GetGlobalPtr(StringRef strRef, IRBuilder<> *IRB)
+    {
+        auto It = m_GlobalPtrMap.find(strRef);
+        if(It != m_GlobalPtrMap.end())
+        {
+            return It->second;
+        }
+        else
+        {
+            Value* VStr = IRB->CreateGlobalStringPtr(strRef);
+            m_GlobalPtrMap[strRef] = VStr;
+            return VStr;
+        }
+  }
 
     inline Flda* GetFlda (string Fname)
     {
@@ -160,24 +193,28 @@ private:
 
     inline void LoadLdaBin ()
     {
+        size_t N;
         FILE *Bf = fopen ("LdaBin.bin", "rb");
         assert (Bf != NULL);
         
         unsigned FldaNum = 0;
-        (void)fread (&FldaNum, sizeof(FldaNum), 1, Bf);
+        N = fread (&FldaNum, sizeof(FldaNum), 1, Bf);
+        assert (N == 1);
         printf ("FldaNum = %u \r\n", FldaNum);
 
         for (unsigned Fid = 0; Fid < FldaNum; Fid++)
         {
             FldaBin Fdb = {0};
-            (void)fread (&Fdb, sizeof(Fdb), 1, Bf);
+            N = fread (&Fdb, sizeof(Fdb), 1, Bf);
+            assert (N == 1);
             Flda *Fd = AddFlda (Fdb.FuncName);
 
             printf ("Load Function: %s\r\n", Fdb.FuncName);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
             {
                 unsigned Id = 0;
-                (void)fread (&Id, sizeof(Id), 1, Bf);
+                N = fread (&Id, sizeof(Id), 1, Bf);
+                assert (N == 1);
                 Fd->AddInstID (Id);
                 printf ("\tTaintInst: %u\r\n", Id);
             }        
@@ -185,7 +222,8 @@ private:
             for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
             {
                 CSTaintBin Cstb;
-                (void)fread (&Cstb, sizeof(Cstb), 1, Bf);
+                N = fread (&Cstb, sizeof(Cstb), 1, Bf);
+                assert (N == 1);
 
                 CSTaint *Cst = Fd->AddCst (Cstb.InstID);
                 Cst->m_InTaintBits  = Cstb.InTaintBits;
@@ -194,7 +232,8 @@ private:
                 for (unsigned Fid = 0; Fid < Cstb.CalleeNum; Fid++)
                 {
                     char CalleeName[F_NAME_LEN] = {0};
-                    (void)fread (CalleeName, sizeof(CalleeName), 1, Bf);
+                    N = fread (CalleeName, sizeof(CalleeName), 1, Bf);
+                    assert (N == 1);
                     Cst->m_Callees.insert (CalleeName);
                 }
             }
@@ -203,17 +242,227 @@ private:
         fclose (Bf);
     }
 
-    inline void AddTrack (Instruction* inst)
+    inline string GetValueType (Instruction* Inst, Value *Val)
     {
-        IRBuilder<> Builder(inst);
+        unsigned VType = Val->getType ()->getTypeID ();
+        switch (VType)
+        {
+            case Type::VoidTyID:
+            {
+                return "";
+            }
+            case Type::HalfTyID:
+            {
+                printf ("Type=> [HalfTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::FloatTyID:
+            {
+                printf ("Type=> [FloatTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::DoubleTyID:
+            {
+                printf ("Type=> [DoubleTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::X86_FP80TyID:
+            {
+                printf ("Type=> [X86_FP80TyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::FP128TyID:
+            {
+                printf ("Type=> [FP128TyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::PPC_FP128TyID:
+            {
+                printf ("Type=> [PPC_FP128TyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::LabelTyID:
+            {
+                printf ("Type=> [LabelTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::MetadataTyID:
+            {
+                printf ("Type=> [MetadataTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::X86_MMXTyID:
+            {
+                printf ("Type=> [X86_MMXTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::TokenTyID:
+            {
+                printf ("Type=> [TokenTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::IntegerTyID:
+            {
+                return "%u";
+            }
+            case Type::FunctionTyID:
+            {
+                printf ("Type=> [FunctionTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::StructTyID:
+            {
+                printf ("Type=> [StructTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::ArrayTyID:
+            {
+                printf ("Type=> [ArrayTyID]:%u \r\n", VType);
+                break;
+            }
+            case Type::PointerTyID:
+            {
+                return "%p";
+                break;
+            }
+            case Type::VectorTyID:
+            {
+                printf ("Type=> [VectorTyID]:%u \r\n", VType);
+                break;
+            }
+            default:
+            {
+                assert (0);
+            }
+        }
 
-        llvm::Type *I32ype = llvm::IntegerType::getInt32Ty(m_Module->getContext());
+        return "";
+    }
 
-        Value *vDef  = llvm::ConstantInt::get(I32ype, 0, true);
-        Value *vUse1 = llvm::ConstantInt::get(I32ype, 0, true);
-        Value *vUse2 = llvm::ConstantInt::get(I32ype, 0, true);
+    inline string GetValueName (Value *Val)
+    {
+        if (Val->hasName ())
+        {
+            return Val->getName ().data();
+        }
+        
+        unsigned Id;
+        auto It = m_Value2Id.find (Val);
+        if (It != m_Value2Id.end ())
+        {
+            Id = It->second;
+        }
+        else
+        {
+            Id = m_Value2Id.size()+1;
+            m_Value2Id[Val] = Id;
+        }
 
-        Builder.CreateCall(m_TackFunc, {vDef, vUse1, vUse2});
+        return  "Val" + to_string(Id);
+    }
+
+
+    inline unsigned GetArgNo (unsigned TaintBit)
+    {
+        unsigned No = 1;
+        while (TaintBit != 0)
+        {
+            TaintBit = TaintBit << 1;
+            if (TaintBit & (1<<31))
+            {
+                return No;
+            }
+
+            No++;
+        }
+
+        return 0;
+    }
+
+    inline unsigned GetInstrPara (Flda *Fd, unsigned InstNo, Instruction* Inst, 
+                                      string &Format, Value **ArgBuf)
+    { 
+        Value *Def = NULL;
+        unsigned ArgIndex = 0;
+        
+        LLVMInst LI (Inst);
+        
+        Format = "{[";
+        Format += to_string (InstNo) + "]";
+        
+        Def = LI.GetDef ();
+        if (Def != NULL)
+        {
+            ArgBuf [ArgIndex++] = Def;            
+            Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+        }
+        else
+        {
+            errs()<<*Inst<<"\r\n";
+            if (LI.IsRet ())
+            {
+                Format += "Ret=";
+            }
+            else
+            {
+                CSTaint *Cst = Fd->GetCsTaint (InstNo);
+                unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
+                unsigned OutArg  =  GetArgNo(Outbits);
+                assert (OutArg != 0);
+
+                Def = LI.GetUse (OutArg-1);
+                assert (Def != NULL);
+                
+                ArgBuf [ArgIndex++] = Def;            
+                Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+            }   
+        }
+
+        for (auto It = LI.begin (); It != LI.end(); It++)
+        {
+            Value *Val = *It;
+            if (Val == Def)
+            {
+                continue;
+            }
+            
+            ArgBuf [ArgIndex++] = Val;
+            Format += GetValueName (Val) + ":" + GetValueType (Inst, Val) + ",";
+        }
+        Format += "}";
+
+        errs()<<"\tTrg: "<<Format<<"\r\n";
+
+        return ArgIndex;
+    }
+
+    inline void AddTrack (Instruction* Inst, string Format, Value **ArgBuf, unsigned ArgNum)
+    { 
+        IRBuilder<> Builder(Inst);
+
+        Value *TFormat = GetGlobalPtr(Format, &Builder);
+        switch (ArgNum)
+        {
+            case 1:
+            {
+                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0]});
+                break;
+            }
+            case 2:
+            {
+                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0], ArgBuf[1]});
+                break;
+            }
+            case 3:
+            {
+                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0], ArgBuf[1], ArgBuf[2]});
+                break;
+            }
+            default:
+            {
+                assert (0);
+            }
+        }
 
         return;
     }
@@ -235,18 +484,26 @@ private:
             }
             
             unsigned InstId = 0;
+            m_Value2Id.clear ();
             errs()<<"Process Function: "<<F->getName ()<<"\r\n";
+
+            string Format = "";
+            Value *ArgBuf[4];
+            unsigned ArgNum = 0;
             for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
             {
-                if (!Fd->IsInstTainted (InstId))
-                {
-                    continue;
-                }
-
                 Instruction *Inst = &*ItI;
-                AddTrack (Inst);
 
-                printf ("\t TaintInst: %u \r\n", InstId);
+                if (Format != "")
+                {
+                    AddTrack (Inst, Format, ArgBuf, ArgNum);
+                    Format = "";
+                }
+                
+                if (Fd->IsInstTainted (InstId))
+                {
+                    ArgNum = GetInstrPara (Fd, InstId, Inst, Format, ArgBuf);
+                }
             }
 
         }

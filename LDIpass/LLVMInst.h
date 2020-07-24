@@ -105,14 +105,14 @@ public:
         return isa<DbgInfoIntrinsic>(m_Inst);
     }
 
-    inline Value* GetRetValue ()
+    inline Value* GetUse (unsigned Index)
     {
-        if (m_Use.size() == 0)
+        if (m_Use.size() < Index+1)
         {
             return NULL;
         }
 
-        return m_Use[0];
+        return m_Use[Index];
     }
 
     inline Value* GetDef ()
@@ -142,6 +142,25 @@ private:
         CallSite Cs(const_cast<Instruction*>(Inst));
         
         return dyn_cast<Function>(Cs.getCalledValue()->stripPointerCasts());;
+    }
+
+    inline void SetUse (unsigned OpNum)
+    {
+        unsigned Index = 0;                
+        while (Index < OpNum)
+        {
+            Value *U = m_Inst->getOperand (Index);
+            if(IsConst(U))
+            {
+                Index++;
+                continue;                        
+            } 
+
+            m_Use.push_back(U);
+            Index++;
+        }
+
+        return;
     }
     
     inline void Decode ()
@@ -179,8 +198,15 @@ private:
                     return;
                 }
                 
-                OpNum--;
                 m_CallFunc = Func;
+                SetUse (OpNum-1);
+
+                if (!m_Inst->getType ()->isVoidTy())
+                {
+                    m_Def = m_Inst;
+                }
+
+                break;
             }
             case Instruction::PHI:
             case Instruction::Load:
@@ -219,20 +245,8 @@ private:
             case Instruction::SRem:
             {
                 m_Def = m_Inst;
-
-                unsigned Index = 0;                
-                while (Index < OpNum)
-                {
-                    Value *U = m_Inst->getOperand (Index);
-                    if(IsConst(U))
-                    {
-                        Index++;
-                        continue;                        
-                    } 
-
-                    m_Use.push_back(U);
-                    Index++;
-                }
+                SetUse (OpNum);
+                break;
             }
             default: 
             {
