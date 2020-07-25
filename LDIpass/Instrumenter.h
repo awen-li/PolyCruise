@@ -40,6 +40,11 @@ struct CSTaint
     set <string> m_Callees;
     unsigned m_InTaintBits;
     unsigned m_OutTaintBits;
+
+    inline string GetName ()
+    {
+        return *(m_Callees.begin());
+    }
 };
 
 typedef map <unsigned, CSTaint>::iterator mcs_iterator;
@@ -47,6 +52,7 @@ class Flda
 {
 private:
     string m_FuncName;
+    unsigned m_Id;
     map <unsigned, CSTaint> m_CsID2Cst;
     set <unsigned> m_TaintInstIDs;
 
@@ -59,6 +65,21 @@ public:
     ~Flda ()
     {
 
+    }
+
+    inline unsigned GetId ()
+    {
+        return m_Id;
+    }
+
+    inline void SetId (unsigned Id)
+    {
+        m_Id = Id;
+    }
+
+    inline string GetName ()
+    {
+        return m_FuncName;
     }
 
     inline CSTaint* GetCsTaint (unsigned InstId)
@@ -141,8 +162,10 @@ public:
     void RunInstrm ()
     {
         LoadLdaBin ();
-        
+ 
         VisitFunction ();
+
+        InitInstrumenter ();
     }
     
 private:
@@ -175,7 +198,7 @@ private:
         }
     }
 
-    inline Flda* AddFlda (string Fname)
+    inline Flda* AddFlda (string Fname, unsigned Id)
     {
         Flda* Fd = GetFlda (Fname);
         if (Fd == NULL)
@@ -183,12 +206,12 @@ private:
             auto Pit = m_Fname2Flda.insert (make_pair(Fname, Flda (Fname)));
             assert (Pit.second == true);
 
-            return &(Pit.first->second);
+            Fd = &(Pit.first->second);
+
+            Fd->SetId (Id);
         }
-        else
-        {
-            return Fd;
-        }
+
+        return Fd;
     }
 
     inline void LoadLdaBin ()
@@ -197,17 +220,17 @@ private:
         FILE *Bf = fopen ("LdaBin.bin", "rb");
         assert (Bf != NULL);
         
-        unsigned FldaNum = 0;
-        N = fread (&FldaNum, sizeof(FldaNum), 1, Bf);
+        LdaBin Lb;
+        N = fread (&Lb, sizeof(Lb), 1, Bf);
         assert (N == 1);
-        printf ("FldaNum = %u \r\n", FldaNum);
+        printf ("FldaNum = %u \r\n", Lb.FuncNum);
 
-        for (unsigned Fid = 0; Fid < FldaNum; Fid++)
+        for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
         {
             FldaBin Fdb = {0};
             N = fread (&Fdb, sizeof(Fdb), 1, Bf);
             assert (N == 1);
-            Flda *Fd = AddFlda (Fdb.FuncName);
+            Flda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
 
             printf ("Load Function: %s\r\n", Fdb.FuncName);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
@@ -379,43 +402,69 @@ private:
         return 0;
     }
 
-    inline unsigned GetInstrPara (Flda *Fd, unsigned InstNo, Instruction* Inst, 
-                                      string &Format, Value **ArgBuf)
+    
+
+    inline void GetInstrPara (Flda *Fd, unsigned InstNo, Instruction* Inst, 
+                                  string &Format, Value **ArgBuf, unsigned *ArgNum)
     { 
         Value *Def = NULL;
         unsigned ArgIndex = 0;
         
         LLVMInst LI (Inst);
+
+        /*
+        [Fid:Iid:0]def:value=use:value,use:value.....
+        [Fid:Iid:1]func=def:use=use:value,use:value.....
+        [Fid:Iid:2]ret=use:value
+        */
+
+        errs()<<*Inst<<"\r\n";
         
         Format = "{[";
-        Format += to_string (InstNo) + "]";
-        
-        Def = LI.GetDef ();
-        if (Def != NULL)
+        Format += to_string (Fd->GetId ()) + ":" + to_string (InstNo) + ":";
+        if (LI.IsRet ())
         {
-            ArgBuf [ArgIndex++] = Def;            
-            Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+            Format += "2]ret=";
         }
-        else
+        else if (LI.IsCall ())
         {
-            errs()<<*Inst<<"\r\n";
-            if (LI.IsRet ())
+            CSTaint *Cst = Fd->GetCsTaint (InstNo);
+            if (Cst != NULL)
             {
-                Format += "Ret=";
+                Format += "1]" + Cst->GetName () + ",";
+                
+                unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
+                unsigned OutArg  =  GetArgNo(Outbits);
+                if (OutArg != 0)
+                {
+                    Def = LI.GetUse (OutArg-1);
+                    assert (Def != NULL);
+                        
+                    ArgBuf [ArgIndex++] = Def;            
+                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                }
             }
             else
             {
-                CSTaint *Cst = Fd->GetCsTaint (InstNo);
-                unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
-                unsigned OutArg  =  GetArgNo(Outbits);
-                assert (OutArg != 0);
-
-                Def = LI.GetUse (OutArg-1);
-                assert (Def != NULL);
-                
+                Format += "1]" + LI.GetCallName () + ",";
+                Def = LI.GetDef ();
+                if (Def != NULL)
+                {
+                    ArgBuf [ArgIndex++] = Def;            
+                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                }
+            }
+        }
+        else
+        {
+            Format += "0]";
+            
+            Def = LI.GetDef ();
+            if (Def != NULL)
+            {
                 ArgBuf [ArgIndex++] = Def;            
                 Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
-            }   
+            }
         }
 
         for (auto It = LI.begin (); It != LI.end(); It++)
@@ -430,10 +479,11 @@ private:
             Format += GetValueName (Val) + ":" + GetValueType (Inst, Val) + ",";
         }
         Format += "}";
+        *ArgNum = ArgIndex;
 
-        errs()<<"\tTrg: "<<Format<<"\r\n";
-
-        return ArgIndex;
+        errs()<<"\tTrg: "<<Format<<", ArgNum="<<*ArgNum<<"\r\n";
+  
+        return;
     }
 
     inline void AddTrack (Instruction* Inst, string Format, Value **ArgBuf, unsigned ArgNum)
@@ -460,9 +510,30 @@ private:
             }
             default:
             {
+                errs()<<*Inst;
+                printf ("ArgNum = %u\r\n", ArgNum);
                 assert (0);
             }
         }
+
+        return;
+    }
+
+
+    inline void AddCallTrack (Function* F, Flda *Fd)
+    {
+        BasicBlock *entryBlock = &F->front();
+        Instruction *Site = entryBlock->getFirstNonPHI();
+        
+        IRBuilder<> Builder(Site);
+
+        /*
+        [Fid:0:3]FunctionName
+        */
+        string Format = "{[" + to_string (Fd->GetId ()) + ":0:3]" + Fd->GetName () + "}";
+        Value *TFormat = GetGlobalPtr(Format, &Builder);
+
+        Builder.CreateCall(m_TackFunc, {TFormat});
 
         return;
     }
@@ -482,8 +553,8 @@ private:
             {
                 continue;
             }
-            
-            unsigned InstId = 0;
+
+            unsigned InstId = 1;
             m_Value2Id.clear ();
             errs()<<"Process Function: "<<F->getName ()<<"\r\n";
 
@@ -502,12 +573,26 @@ private:
                 
                 if (Fd->IsInstTainted (InstId))
                 {
-                    ArgNum = GetInstrPara (Fd, InstId, Inst, Format, ArgBuf);
+                    GetInstrPara (Fd, InstId, Inst, Format, ArgBuf, &ArgNum);
                 }
             }
 
+            AddCallTrack (F, Fd);
         }
 
+        return;
+    }
+    
+    inline void InitInstrumenter ()
+    {
+        Function *mainFunc     = m_Module->getFunction("main");
+        if (NULL == mainFunc)
+        {
+            return;
+        }
+                
+        BasicBlock *entryBlock = &mainFunc->front();
+        CallInst::Create(m_InitFunc, "", entryBlock->getFirstNonPHI());
         return;
     }
 };

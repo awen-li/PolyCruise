@@ -427,7 +427,7 @@ private:
         printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
 
-        unsigned InstID = 0;
+        unsigned InstID = 1;
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstID++) 
         {
             Instruction *Inst = &*ItI;
@@ -554,18 +554,22 @@ private:
     {
         FILE *Bf = fopen ("LdaBin.bin", "wb");
         assert (Bf != NULL);
-        
-        unsigned FldaNum = m_Func2Flda.size();
-        printf ("FldaNum = %u \r\n", FldaNum);
 
-        fwrite (&FldaNum, sizeof(unsigned), 1, Bf);
-        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
+        LdaBin Lb;
+        Lb.Version = 1;
+        Lb.FuncNum = m_Func2Flda.size();
+        printf ("FldaNum = %u \r\n", Lb.FuncNum);
+        fwrite (&Lb, sizeof(Lb), 1, Bf);
+
+        unsigned FuncId = 1;
+        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++, FuncId++)
         {
             Flda *Fd = &(It->second);
             
             FldaBin Fdb = {0};
             strcpy (Fdb.FuncName, Fd->GetName());
-            Fdb.TaintCINum = Fd->GetCINum ();
+            Fdb.FuncId       = FuncId;
+            Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
 

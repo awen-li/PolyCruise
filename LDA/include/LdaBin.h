@@ -28,6 +28,7 @@ struct CSTaintBin
 struct FldaBin
 {
     char FuncName[F_NAME_LEN];
+    unsigned FuncId;
 	unsigned TaintInstNum;
 	unsigned TaintCINum;
 	//unsigned InstID[]
@@ -36,6 +37,7 @@ struct FldaBin
 
 struct LdaBin
 {
+    unsigned Version;
 	unsigned FuncNum;
 	//FldaBin[]
 };

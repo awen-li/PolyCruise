@@ -55,8 +55,8 @@ public:
     {
         LLVMContext &context = M->getContext();
 
-        /* void IBS_init () */
-        FunctionType *TRC_init = FunctionType::get(Type::getInt32Ty(context), false);
+        /* void TRC_init () */
+        FunctionType *TRC_init = FunctionType::get(Type::getVoidTy(context), false);
             
         return M->getOrInsertFunction("TRC_init", TRC_init);
     }
@@ -66,7 +66,7 @@ public:
     {
         LLVMContext &context = M->getContext();
 
-        /* void IBS_exit () */
+        /* void TRC_exit () */
         FunctionType *TRC_exit = FunctionType::get(Type::getVoidTy(context), false);
             
         return M->getOrInsertFunction("TRC_exit", TRC_exit);

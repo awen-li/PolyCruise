@@ -63,12 +63,11 @@ public:
         return (m_InstOp == Instruction::Ret);
     }
 
-    inline bool IsCall (Function** Func)
+    inline bool IsCall ()
     {
         if (m_InstOp == Instruction::Call ||
             m_InstOp == Instruction::Invoke)
         {
-            *Func = m_CallFunc;
             return true;
         }
 
@@ -128,6 +127,18 @@ public:
     inline use_iterator end ()
     {
         return m_Use.end();
+    }
+
+    inline string GetCallName ()
+    {
+        if (m_CallFunc == NULL)
+        {
+            return "";
+        }
+        else
+        {
+            return m_CallFunc->getName ().data();
+        }
     }
 
 private:
