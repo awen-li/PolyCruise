@@ -8,9 +8,7 @@
 ************************************************************/
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "MacroDef.h"
 
 
 #define  BUF_SIZE  (128)

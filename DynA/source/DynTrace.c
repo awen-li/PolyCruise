@@ -1,17 +1,11 @@
 /***********************************************************
  * Author: Wen Li
  * Date  : 7/24/2020
- * Describe: Queue.c - FIFO Queue
+ * Describe: DynTrace.c  
  * History:
    <1> 7/24/2020 , create
 ************************************************************/
 #include "Queue.h"
-
-void TRC_init ()
-{
-    InitQueue (4096);
-}
-
 
 void TRC_track (char* Format, ...)
 {
@@ -29,7 +23,7 @@ void TRC_track (char* Format, ...)
     (void)vsnprintf (Node->QBuf, sizeof(Node->QBuf), Format, ap);
     va_end(ap);
 
-    printf ("%s \r\n", Node->QBuf);
+    printf ("[%u]%s \r\n", getpid(), Node->QBuf);
 
     return;   
 }
