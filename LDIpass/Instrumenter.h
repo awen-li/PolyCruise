@@ -24,12 +24,11 @@
 #include "HookFunc.h"
 #include "LLVMInst.h"
 #include "LdaBin.h"
+#include "Event.h"
 
 
 using namespace llvm;
 using namespace std;
-
-#define INST_ID(EID) (unsigned)(EID & 0xFFFFFF)
 
 struct CSTaint
 {
@@ -100,7 +99,7 @@ public:
 
     inline CSTaint* AddCst (unsigned long EventId)
     {
-        unsigned InstId = INST_ID(EventId);
+        unsigned InstId = R_EID2IID(EventId);
         auto It = m_CsID2Cst.find (InstId);
         if (It == m_CsID2Cst.end())
         {
@@ -129,7 +128,7 @@ public:
 
     inline void AddInstID (unsigned long EventId)
     {
-        unsigned InstId = INST_ID(EventId);
+        unsigned InstId = R_EID2IID(EventId);
         m_TaintInstID2EventID[InstId] = EventId;
 
         return;
@@ -146,6 +145,16 @@ public:
         {
             return It->second;
         }
+    }
+
+    inline void SetEventType (unsigned    InstId, unsigned long Type)
+    {
+        unsigned long EId = GetEventID (InstId);
+        assert (EId != 0);
+
+        m_TaintInstID2EventID[InstId] = EId | F_ETY2EID (Type);
+
+        return;
     }
 };
 
@@ -258,7 +267,7 @@ private:
                 N = fread (&Id, sizeof(Id), 1, Bf);
                 assert (N == 1);
                 Fd->AddInstID (Id);
-                printf ("\tTaintInst:[%u] %lu\r\n", INST_ID (Id), Id);
+                printf ("\tTaintInst:[%u] %lu\r\n", R_EID2IID (Id), Id);
             }        
 
             for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
@@ -345,7 +354,7 @@ private:
             }
             case Type::IntegerTyID:
             {
-                return "%u";
+                return "U";
             }
             case Type::FunctionTyID:
             {
@@ -364,8 +373,7 @@ private:
             }
             case Type::PointerTyID:
             {
-                return "%p";
-                break;
+                return "P";
             }
             case Type::VectorTyID:
             {
@@ -423,7 +431,7 @@ private:
 
     
 
-    inline void GetInstrPara (Flda *Fd, unsigned InstNo, Instruction* Inst, 
+    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, 
                                   string &Format, Value **ArgBuf, unsigned *ArgNum)
     { 
         Value *Def = NULL;
@@ -439,18 +447,19 @@ private:
 
         errs()<<*Inst<<"\r\n";
         
-        Format = "{[";
-        Format += to_string (Fd->GetId ()) + ":" + to_string (InstNo) + ":";
+        Format = "{";
         if (LI.IsRet ())
         {
-            Format += "2]ret=";
+            Fd->SetEventType (InstId, EVENT_RET);
+            Format += "R=";
         }
         else if (LI.IsCall ())
         {
-            CSTaint *Cst = Fd->GetCsTaint (InstNo);
+            Fd->SetEventType (InstId, EVENT_CALL);
+            CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
-            {
-                Format += "1]" + Cst->GetName () + ",";
+            {          
+                Format += Cst->GetName () + ",";
                 
                 unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
                 unsigned OutArg  =  GetArgNo(Outbits);
@@ -465,7 +474,7 @@ private:
             }
             else
             {
-                Format += "1]" + LI.GetCallName () + ",";
+                Format += LI.GetCallName () + ",";
                 Def = LI.GetDef ();
                 if (Def != NULL)
                 {
@@ -476,7 +485,7 @@ private:
         }
         else
         {
-            Format += "0]";
+            Fd->SetEventType (InstId, EVENT_NR);
             
             Def = LI.GetDef ();
             if (Def != NULL)
@@ -491,11 +500,16 @@ private:
             Value *Val = *It;
             if (Val == Def)
             {
-                continue;
+                //continue;
             }
             
             ArgBuf [ArgIndex++] = Val;
-            Format += GetValueName (Val) + ":" + GetValueType (Inst, Val) + ",";
+            Format += GetValueName (Val) + ":" + GetValueType (Inst, Val);
+
+            if ((It+1) != LI.end())
+            {
+                Format += ",";
+            }
         }
         Format += "}";
         *ArgNum = ArgIndex;
@@ -511,7 +525,7 @@ private:
         IRBuilder<> Builder(Inst);
 
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
-        Value *Ev = ConstantInt::get(I64ype, EventId, true);
+        Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
         Value *TFormat = GetGlobalPtr(Format, &Builder);
         switch (ArgNum)
@@ -550,13 +564,14 @@ private:
         
         IRBuilder<> Builder(Site);
 
+        unsigned long EventId = F_LANG2EID (CLANG_TY) | F_ETY2EID (EVENT_FENTRY);
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
-        Value *Ev = ConstantInt::get(I64ype, 0, true);
+        Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
         /*
-        [Fid:0:3]FunctionName
+        FunctionName
         */
-        string Format = "{[" + to_string (Fd->GetId ()) + ":0:3]" + Fd->GetName () + "}";
+        string Format = "{" + Fd->GetName () + "}";
         Value *TFormat = GetGlobalPtr(Format, &Builder);
 
         Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
@@ -593,7 +608,8 @@ private:
 
                 if (Format != "")
                 {
-                    AddTrack (0, Inst, Format, ArgBuf, ArgNum);
+                    unsigned long EventId = Fd->GetEventID (InstId-1);
+                    AddTrack (EventId, Inst, Format, ArgBuf, ArgNum);
                     Format = "";
                 }
                 

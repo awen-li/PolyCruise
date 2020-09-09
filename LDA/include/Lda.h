@@ -26,14 +26,11 @@
 #include "ExternalLib.h"
 #include "StField.h"
 #include "LdaBin.h"
+#include "Event.h"
 
 
 using namespace llvm;
 using namespace std;
-
-#define CLANG_T  (1L)
-#define NORMAL_EVENT (1L)
-#define BRANCH_EVENT (2L)
 
 
 typedef set<Instruction*>::iterator sii_iterator;
@@ -168,11 +165,11 @@ private:
         
         unsigned long EventId = 0;
 
-        unsigned long F  = m_FuncId;
-        unsigned long BB = GetBBId (Inst);
+        unsigned long FID = m_FuncId;
+        unsigned long BID = GetBBId (Inst);
 
-        EventId = (CLANG_T << 60) | (NORMAL_EVENT << 56) | 
-                  (F << 36) | (BB << 24) | InstID;
+        EventId = F_LANG2EID (CLANG_TY) | F_ETY2EID (EVENT_DF) |
+                  F_FID2EID (FID) | F_BID2EID (BID) | F_IID2EID (InstID);
         
         return EventId;
     }

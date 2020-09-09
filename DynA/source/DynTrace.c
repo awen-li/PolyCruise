@@ -7,7 +7,7 @@
 ************************************************************/
 #include "Queue.h"
 
-void TRC_trace (ULONG EventId, CHAR* Format, ...)
+void TRC_trace (ULONG EventId, const char* Format, ...)
 {
 	va_list ap;
 
@@ -23,7 +23,7 @@ void TRC_trace (ULONG EventId, CHAR* Format, ...)
     (void)vsnprintf (Node->QBuf, sizeof(Node->QBuf), Format, ap);
     va_end(ap);
 
-    printf ("[%lu]%s \r\n", EventId, Node->QBuf);
+    printf ("[%lx]%s \r\n", EventId, Node->QBuf);
 
     return;   
 }
