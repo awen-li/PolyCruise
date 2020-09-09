@@ -9,7 +9,7 @@
 #define _DBTATBL_H_
 #include "MacroDef.h"
 
-#define M_BASE_DATA_NUM        (10000)
+#define M_BASE_DATA_NUM        (100000)
 
 #define mutex_lock_t           pthread_mutex_t
 #define mutex_lock_init(x)     pthread_mutex_init(x, NULL)

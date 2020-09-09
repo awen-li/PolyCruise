@@ -13,7 +13,7 @@ static DbTableManage g_tTableManage = {0};
 
 INLINE VOID* db_Malloc(ULONG ulMemSize)
 {
-	return NULL;
+	return malloc (ulMemSize);
 }
 
 
@@ -42,8 +42,6 @@ INLINE DWORD db_PailNum(DWORD dwDataNum)
 	}
 
 	return dwPailNum;
-
-	return 0;
 }
 
 
@@ -623,10 +621,7 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
 }
 
 
-INLINE DWORD DbCreateTable(DWORD dwDataType,                              
-                               DWORD dwDataLen,
-                               DWORD dwKeyLen,
-                               DWORD dwDataNum)
+INLINE DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum)
 {
 	DWORD dwAvgThrCap;
 	ULONG ulMemSize;

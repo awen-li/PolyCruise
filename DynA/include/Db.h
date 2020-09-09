@@ -12,7 +12,7 @@
 
 enum DB_TYPE
 {
-    DB_TYPE_DEFAULT=1,
+    DB_TYPE_EVENT=1,
     DB_TYPE_END
 };
 
@@ -21,7 +21,6 @@ typedef struct tag_DbReq
     BYTE* pKeyCtx;
 	DWORD dwKeyLen;
 	DWORD dwDataType;
-	DWORD dwThreadNo;
 	DWORD dwDataId;
 }DbReq;
 
@@ -42,6 +41,9 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck);
 
 
 DWORD DeleteDataByID(DbReq* ptDelReq);
+
+DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum);
+
 
 
 #endif

@@ -59,4 +59,11 @@ QNode* OutQueue ()
 }
 
 
+DWORD IsQueueEmpty ()
+{
+    Queue* Q = &g_Queue;
+    
+    return (DWORD)((Q->Hindex+1)%Q->NodeNum == Q->Tindex);
+}
+
 

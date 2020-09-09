@@ -18,12 +18,14 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
         printf ("Queue Full\r\n");
         exit (0);
     }
+
+    Node->EventId = EventId;
 	
 	va_start(ap, Format);
     (void)vsnprintf (Node->QBuf, sizeof(Node->QBuf), Format, ap);
     va_end(ap);
 
-    printf ("[%lx]%s \r\n", EventId, Node->QBuf);
+    //printf ("[%lx]%s \r\n", EventId, Node->QBuf);
 
     return;   
 }

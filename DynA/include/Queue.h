@@ -15,6 +15,7 @@
 
 typedef struct tag_QNode
 {
+    ULONG EventId;
     char QBuf [BUF_SIZE];
 }QNode;
 
@@ -30,6 +31,7 @@ typedef struct tag_Queue
 void InitQueue (unsigned QueueNum);
 QNode* InQueue ();
 QNode* OutQueue ();
+DWORD IsQueueEmpty ();
 
 
 #endif 

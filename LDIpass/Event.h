@@ -9,10 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_INSTRUMENTATION_EVENT_H
-#define LLVM_LIB_TRANSFORMS_INSTRUMENTATION_EVENT_H
-#include <utility>
-#include <vector>
+#ifndef _EVENT_H_
+#define _EVENT_H_
 
 /*
     Event Id definition:
@@ -44,4 +42,4 @@
 #define CLANG_TY          (1UL)
 
 
-#endif // LLVM_LIB_TRANSFORMS_INSTRUMENTATION_EVENT_H
+#endif // _EVENT_H_

@@ -173,6 +173,8 @@ private:
 
     map <Value*, unsigned> m_Value2Id;
 
+    set<Instruction *> m_ExitInsts;
+
 public:
     
     Instrumenter(Module *M)
@@ -440,9 +442,9 @@ private:
         LLVMInst LI (Inst);
 
         /*
-        [Fid:Iid:0]def:value=use:value,use:value.....
-        [Fid:Iid:1]func=def:use=use:value,use:value.....
-        [Fid:Iid:2]ret=use:value
+        def:value=use:value,use:value.....
+        func,def:use=use:value,use:value.....
+        ret=use:value
         */
 
         errs()<<*Inst<<"\r\n";
@@ -606,6 +608,8 @@ private:
             {
                 Instruction *Inst = &*ItI;
 
+                GetProgramExitInsts (Inst);
+
                 if (Format != "")
                 {
                     unsigned long EventId = Fd->GetEventID (InstId-1);
@@ -624,10 +628,44 @@ private:
 
         return;
     }
+
+    inline Instruction *GetTermInstofFunction(Function *Func) 
+    {
+        BasicBlock &termbBlock = Func->back();
+        Instruction *retInst   = termbBlock.getTerminator();
+
+        assert(isa<ReturnInst>(retInst) ||
+               isa<UnreachableInst>(retInst) &&
+               "Last instruction is not return or exit() instruction");
+            
+        return retInst;
+    }
+
+    void GetProgramExitInsts(Instruction *Inst) 
+    {
+        CallInst *Ci = dyn_cast<CallInst>(Inst);
+        if (Ci == NULL)
+        {
+            return;
+        }
+            
+        Function *CalledFunc = Ci->getCalledFunction();
+        if (CalledFunc == NULL || !CalledFunc->hasName())
+        {
+            return;
+        }
+        
+        if (CalledFunc->getName().str() == "exit") 
+        {
+            m_ExitInsts.insert(Inst);
+        }     
+
+        return;
+    }
     
     inline void InitInstrumenter ()
     {
-        Function *mainFunc     = m_Module->getFunction("main");
+        Function *mainFunc = m_Module->getFunction("main");
         if (NULL == mainFunc)
         {
             return;
@@ -635,6 +673,13 @@ private:
                 
         BasicBlock *entryBlock = &mainFunc->front();
         CallInst::Create(m_InitFunc, "", entryBlock->getFirstNonPHI());
+
+        m_ExitInsts.insert(GetTermInstofFunction(mainFunc));
+        for (auto it = m_ExitInsts.begin(); it != m_ExitInsts.end(); ++it) 
+        {
+            Instruction *Inst = *it;
+            CallInst::Create(m_ExitFunc, "", Inst);
+        }
         return;
     }
 };
