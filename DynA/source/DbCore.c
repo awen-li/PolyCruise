@@ -430,7 +430,7 @@ INLINE VOID db_MoveNode2BusyEnd(DbTable* ptDataTable, HashNode* ptBusyNode)
     return;
 }
 
-DWORD db_CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck)
+DWORD CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 {
 	HashNode* ptHashNode;
 	DbTable* ptDataTable;
@@ -471,7 +471,7 @@ DWORD db_CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 }
 
 
-DWORD db_CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck)
+DWORD CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 {
 	HashNode* ptHashNode;
 	DbTable* ptDataTable;
@@ -500,7 +500,7 @@ DWORD db_CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 }
 
 
-DWORD db_DeleteDataByID(DbReq* ptDelReq)
+DWORD DeleteDataByID(DbReq* ptDelReq)
 {
 	HashNode* ptHashNode;
 	DbTable* ptDataTable0;
@@ -546,7 +546,7 @@ DWORD db_DeleteDataByID(DbReq* ptDelReq)
 	return R_SUCCESS;
 }
 
-DWORD db_QueryDataByKey(DbReq* ptQueryReq, DbAck* pQueryAck)
+DWORD QueryDataByKey(DbReq* ptQueryReq, DbAck* pQueryAck)
 {
 	HashNode* ptHashNode;
 	DbTable* ptDataTable;
@@ -586,7 +586,7 @@ DWORD db_QueryDataByKey(DbReq* ptQueryReq, DbAck* pQueryAck)
 }
 
 
-DWORD db_QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
+DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
 {
 	HashNode* ptHashNode;
 	DbTable* ptDataTable;

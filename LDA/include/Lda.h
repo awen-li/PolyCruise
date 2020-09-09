@@ -31,8 +31,13 @@
 using namespace llvm;
 using namespace std;
 
+#define CLANG_T  (1L)
+#define NORMAL_EVENT (1L)
+#define BRANCH_EVENT (2L)
+
+
 typedef set<Instruction*>::iterator sii_iterator;
-typedef map <Instruction*, unsigned>::iterator miu_iterator;
+typedef map <Instruction*, unsigned long>::iterator miu_iterator;
 
 struct CSTaint
 {
@@ -53,17 +58,27 @@ struct CSTaint
 
 typedef map <Instruction*, CSTaint>::iterator mic_iterator;
 
+
 class Flda
 {
 private:
+    unsigned m_FuncId;
     Function *m_CurFunc;
     map <Instruction*, CSTaint> m_CallSite2Cst;
-    map <Instruction*, unsigned> m_TaintInsts2ID;
+    map <Instruction*, unsigned long> m_TaintInsts2ID;
+    map <BasicBlock*, unsigned> m_BB2Id;
 
 public:
-    Flda (Function *Func)
+    Flda (unsigned FuncId, Function *Func)
     {
         m_CurFunc = Func;
+        m_FuncId  = FuncId;
+
+        unsigned Id = 1;
+        for (auto Bit = Func->begin(), Bend = Func->end(); Bit != Bend; ++Bit) 
+        {
+            m_BB2Id [&*Bit] = Id++;
+        }
     }
 
     ~Flda ()
@@ -76,7 +91,7 @@ public:
         return (char*)m_CurFunc->getName ().data();
     }
 
-    inline unsigned GetInstID (Instruction *Inst)
+    inline unsigned long GetInstID (Instruction *Inst)
     {
         return m_TaintInsts2ID[Inst];
     }
@@ -103,7 +118,10 @@ public:
 
     inline void InsertInst (Instruction* TaintInst, unsigned InstID)
     {
-        m_TaintInsts2ID[TaintInst] = InstID;
+        unsigned long EventId = GetEventId (TaintInst, InstID);
+        m_TaintInsts2ID[TaintInst] = EventId;
+
+        return;
     }
 
     inline mic_iterator ic_begin ()
@@ -130,6 +148,33 @@ public:
         {
             return &(It->second);
         }
+    }
+
+private:
+    inline unsigned GetBBId (Instruction* Inst)
+    {
+        auto It = m_BB2Id.find (Inst->getParent ());
+        assert (It != m_BB2Id.end());
+
+        return It->second;
+    }
+
+    inline unsigned long GetEventId(Instruction* Inst, unsigned InstID)
+    {
+        /*
+        Event Id definition:
+        |4b language|4b reserve|20b FunctionId|12b Blockid|24b Instructionid|
+        */
+        
+        unsigned long EventId = 0;
+
+        unsigned long F  = m_FuncId;
+        unsigned long BB = GetBBId (Inst);
+
+        EventId = (CLANG_T << 60) | (NORMAL_EVENT << 56) | 
+                  (F << 36) | (BB << 24) | InstID;
+        
+        return EventId;
     }
 };
 
@@ -209,7 +254,8 @@ private:
         auto It = m_Func2Flda.find (Func);
         if (It == m_Func2Flda.end())
         {
-            auto Pit = m_Func2Flda.insert (make_pair(Func, Flda (Func)));
+            unsigned FuncId = m_Func2Flda.size () + 1;
+            auto Pit = m_Func2Flda.insert (make_pair(Func, Flda (FuncId, Func)));
             assert (Pit.second == true);
 
             return &(Pit.first->second);
@@ -573,14 +619,14 @@ private:
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
 
-            unsigned *IID = new unsigned [Fdb.TaintInstNum];
+            unsigned long *IID = new unsigned long [Fdb.TaintInstNum];
             assert (IID != NULL);
             unsigned Index = 0;
             for (auto Iit = Fd->inst_begin (); Iit != Fd->inst_end (); Iit++)
             {
                 IID [Index++] = Iit->second;
             }
-            fwrite (IID, sizeof(unsigned), Index, Bf);
+            fwrite (IID, sizeof(unsigned long), Index, Bf);
             delete IID;
 
             for (auto Cit = Fd->ic_begin (); Cit != Fd->ic_end (); Cit++)

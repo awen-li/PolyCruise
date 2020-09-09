@@ -18,7 +18,7 @@
 
 struct CSTaintBin
 {
-	unsigned InstID;
+	unsigned long InstID;
 	unsigned InTaintBits;
 	unsigned OutTaintBits;
 	unsigned CalleeNum;
@@ -31,7 +31,7 @@ struct FldaBin
     unsigned FuncId;
 	unsigned TaintInstNum;
 	unsigned TaintCINum;
-	//unsigned InstID[]
+	//unsigned long InstID[]
 	//unsigned TaintCI[] 
 };
 

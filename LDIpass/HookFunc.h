@@ -29,7 +29,7 @@ using namespace std;
 class HookFunc
 {
 public:
-    virtual inline Constant *geHookFunction(Module *M) = 0;
+    virtual inline Constant *geTraceFunction(Module *M) = 0;
     virtual inline Constant *geInitFunction(Module *M) = 0;
     virtual inline Constant *geExitFunction(Module *M) = 0;
 };
@@ -39,15 +39,16 @@ class TraceFunc:public HookFunc
 {
 public:
 
-    inline Constant *geHookFunction(Module *M) 
+    inline Constant *geTraceFunction(Module *M) 
     {
         LLVMContext &context = M->getContext();
 
-        /* void TRC_track (char *Data) */      
-        Type *ArgTypes[] = {Type::getInt8PtrTy(M->getContext()), };
-        FunctionType *TRC_track = FunctionType::get(Type::getVoidTy(context), ArgTypes, true);
+        /* void TRC_track (unsigned long EventId, char *Data) */      
+        Type *ArgTypes[] = {Type::getInt64Ty (M->getContext()), Type::getInt8PtrTy(M->getContext()), };
+        //Type *ArgTypes[] = {Type::getInt8PtrTy(M->getContext()), };
+        FunctionType *TRC_trace = FunctionType::get(Type::getVoidTy(context), ArgTypes, true);
             
-        return M->getOrInsertFunction("TRC_track", TRC_track);
+        return M->getOrInsertFunction("TRC_trace", TRC_trace);
     }
 
  

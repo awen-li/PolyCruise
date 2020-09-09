@@ -29,6 +29,8 @@
 using namespace llvm;
 using namespace std;
 
+#define INST_ID(EID) (unsigned)(EID & 0xFFFFFF)
+
 struct CSTaint
 {
     CSTaint ()
@@ -53,8 +55,9 @@ class Flda
 private:
     string m_FuncName;
     unsigned m_Id;
-    map <unsigned, CSTaint> m_CsID2Cst;
-    set <unsigned> m_TaintInstIDs;
+    map <unsigned long, CSTaint> m_CsID2Cst;
+    map <unsigned, unsigned long> m_TaintInstID2EventID;
+    set <unsigned long> m_TaintInstIDs;
 
 public:
     Flda (string FuncName)
@@ -95,12 +98,13 @@ public:
         }
     }
 
-    inline CSTaint* AddCst (unsigned Id)
+    inline CSTaint* AddCst (unsigned long EventId)
     {
-        auto It = m_CsID2Cst.find (Id);
+        unsigned InstId = INST_ID(EventId);
+        auto It = m_CsID2Cst.find (InstId);
         if (It == m_CsID2Cst.end())
         {
-            auto Pit = m_CsID2Cst.insert (make_pair(Id, CSTaint ()));
+            auto Pit = m_CsID2Cst.insert (make_pair(InstId, CSTaint ()));
             assert (Pit.second == true);
 
             return &(Pit.first->second);
@@ -111,10 +115,9 @@ public:
         }
     }
 
-    inline bool IsInstTainted (unsigned Id)
+    inline bool IsInstTainted (unsigned InstId)
     {
-        auto It = m_TaintInstIDs.find (Id);
-        if (It == m_TaintInstIDs.end())
+        if (GetEventID (InstId) == 0)
         {
             return false;
         }
@@ -124,9 +127,25 @@ public:
         }
     }
 
-    inline void AddInstID (unsigned Id)
+    inline void AddInstID (unsigned long EventId)
     {
-         m_TaintInstIDs.insert (Id);
+        unsigned InstId = INST_ID(EventId);
+        m_TaintInstID2EventID[InstId] = EventId;
+
+        return;
+    }
+
+    inline unsigned long GetEventID (unsigned    InstId)
+    {
+        auto It = m_TaintInstID2EventID.find (InstId);
+        if (It == m_TaintInstID2EventID.end())
+        {
+            return 0;
+        }
+        else
+        {
+            return It->second;
+        }
     }
 };
 
@@ -135,7 +154,7 @@ class Instrumenter
 private:
     Module *m_Module;
 
-    Constant *m_TackFunc;
+    Constant *m_TaceFunc;
     Constant *m_InitFunc;
     Constant *m_ExitFunc;
 
@@ -153,8 +172,8 @@ public:
 
 
         TraceFunc Trb;
-        m_TackFunc = Trb.geHookFunction (M);
-        assert (m_TackFunc != NULL);
+        m_TaceFunc = Trb.geTraceFunction (M);
+        assert (m_TaceFunc != NULL);
         m_InitFunc = Trb.geInitFunction (M);
         m_ExitFunc = Trb.geExitFunction (M);
     } 
@@ -235,11 +254,11 @@ private:
             printf ("Load Function: %s\r\n", Fdb.FuncName);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
             {
-                unsigned Id = 0;
+                unsigned long Id = 0;
                 N = fread (&Id, sizeof(Id), 1, Bf);
                 assert (N == 1);
                 Fd->AddInstID (Id);
-                printf ("\tTaintInst: %u\r\n", Id);
+                printf ("\tTaintInst:[%u] %lu\r\n", INST_ID (Id), Id);
             }        
 
             for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
@@ -486,26 +505,30 @@ private:
         return;
     }
 
-    inline void AddTrack (Instruction* Inst, string Format, Value **ArgBuf, unsigned ArgNum)
+    inline void AddTrack (unsigned long EventId, Instruction* Inst, 
+                             string Format, Value **ArgBuf, unsigned ArgNum)
     { 
         IRBuilder<> Builder(Inst);
+
+        Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
+        Value *Ev = ConstantInt::get(I64ype, EventId, true);
 
         Value *TFormat = GetGlobalPtr(Format, &Builder);
         switch (ArgNum)
         {
             case 1:
             {
-                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0]});
                 break;
             }
             case 2:
             {
-                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0], ArgBuf[1]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0], ArgBuf[1]});
                 break;
             }
             case 3:
             {
-                Builder.CreateCall(m_TackFunc, {TFormat, ArgBuf[0], ArgBuf[1], ArgBuf[2]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0], ArgBuf[1], ArgBuf[2]});
                 break;
             }
             default:
@@ -527,13 +550,16 @@ private:
         
         IRBuilder<> Builder(Site);
 
+        Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
+        Value *Ev = ConstantInt::get(I64ype, 0, true);
+
         /*
         [Fid:0:3]FunctionName
         */
         string Format = "{[" + to_string (Fd->GetId ()) + ":0:3]" + Fd->GetName () + "}";
         Value *TFormat = GetGlobalPtr(Format, &Builder);
 
-        Builder.CreateCall(m_TackFunc, {TFormat});
+        Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
 
         return;
     }
@@ -554,20 +580,20 @@ private:
                 continue;
             }
 
-            unsigned InstId = 1;
             m_Value2Id.clear ();
             errs()<<"Process Function: "<<F->getName ()<<"\r\n";
 
             string Format = "";
             Value *ArgBuf[4];
             unsigned ArgNum = 0;
+            unsigned InstId = 1;
             for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
             {
                 Instruction *Inst = &*ItI;
 
                 if (Format != "")
                 {
-                    AddTrack (Inst, Format, ArgBuf, ArgNum);
+                    AddTrack (0, Inst, Format, ArgBuf, ArgNum);
                     Format = "";
                 }
                 

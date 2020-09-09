@@ -33,15 +33,15 @@ typedef struct tag_DbAck
 }DbAck;
 
 
-DWORD db_CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck);
-DWORD db_QueryDataByKey(DbReq* ptQueryKey, DbAck* pQueryAck);
+DWORD CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck);
+DWORD QueryDataByKey(DbReq* ptQueryKey, DbAck* pQueryAck);
 
 
-DWORD db_CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck);
-DWORD db_QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck);
+DWORD CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck);
+DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck);
 
 
-DWORD db_DeleteDataByID(DbReq* ptDelReq);
+DWORD DeleteDataByID(DbReq* ptDelReq);
 
 
 #endif
