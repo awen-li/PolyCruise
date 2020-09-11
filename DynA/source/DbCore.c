@@ -274,13 +274,15 @@ INLINE HashNode* db_GetIdleNode(DbTable* ptDataTable)
 			pIdleManage->pHashNodeTail = NULL;
 		}
 		mutex_unlock(ptDataTable->ptIdleTableLock);
-
-		ptHashNode->dwThrNo = ptDataTable->dwThreadNo;
 	}
 	else
 	{
-		mutex_unlock(ptDataTable->ptIdleTableLock);			
-		return NULL;
+		mutex_unlock(ptDataTable->ptIdleTableLock);
+
+        ptHashNode = ptDataTable->ptBusyDataTable->pHashNodeHdr;
+		memset(DataArea(ptHashNode, ptDataTable->dwKeyLen), 0, sizeof(ptDataTable->dwDataLen));
+
+		return ptHashNode;
 	}
 
 	pBusyManage = ptDataTable->ptBusyDataTable;

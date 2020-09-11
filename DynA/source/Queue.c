@@ -29,6 +29,8 @@ void InitQueue (unsigned QueueNum)
         Q->NodeNum = QueueNum;
     }
 
+    mutex_lock_init(&Q->InLock);
+
     return;
 }
 
@@ -36,17 +38,20 @@ void InitQueue (unsigned QueueNum)
 QNode* InQueue ()
 {
     Queue* Q = &g_Queue;
-    
-    if ((Q->Tindex+1)%Q->NodeNum == Q->Hindex)
-    {
-        return NULL;
-    }
+    QNode* Node = NULL;
 
-    return (Q->NodeList + Q->Tindex++);
+    mutex_lock(&Q->InLock);
+    if ((Q->Tindex+1)%Q->NodeNum != Q->Hindex)
+    {
+        Node = Q->NodeList + Q->Tindex++;
+        Node->Flag = FALSE;
+    }
+    mutex_unlock(&Q->InLock);
+    
+    return Node;
 }
 
-
-QNode* OutQueue ()
+QNode* FrontQueue ()
 {
     Queue* Q = &g_Queue;
     
@@ -55,7 +60,18 @@ QNode* OutQueue ()
         return NULL;
     }
 
-    return (Q->NodeList + Q->Hindex++);
+    return (Q->NodeList + Q->Hindex);
+}
+
+
+
+void OutQueue ()
+{
+    Queue* Q = &g_Queue;
+    
+    Q->Hindex++;
+
+    return;
 }
 
 

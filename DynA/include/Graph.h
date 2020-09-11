@@ -42,7 +42,6 @@ typedef struct tag_Edge
     Node *Src;
     Node *Dst;
     
-    DWORD Attr;
 }Edge;
 
 

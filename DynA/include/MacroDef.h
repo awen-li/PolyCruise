@@ -22,6 +22,10 @@
 #define R_SUCCESS                 (0)
 #define R_FAIL                    (1)
 
+#define TRUE                      (1)
+#define FALSE                     (0)
+
+
 #define ALIGN_8(x)                (((x)%8)?(((x)&~7) + 8):(x))
 
 #define INLINE                    inline
@@ -43,6 +47,12 @@
 #else
 #define DEBUG(format, ...) 
 #endif
+
+
+#define mutex_lock_t           pthread_mutex_t
+#define mutex_lock_init(x)     pthread_mutex_init(x, NULL)
+#define mutex_lock(x)          pthread_mutex_lock(x);
+#define mutex_unlock(x)        pthread_mutex_unlock(x); 
 
 
 #endif

@@ -14,19 +14,21 @@
 
 /*
     Event Id definition:
-    |4b language|4b type|20b FunctionId|12b Blockid|24b Instructionid|
+    |4b language|4b type|2b soure/sink|18b FunctionId|12b Blockid|24b Instructionid|
 */
 
 #define F_IID2EID(IID)    (IID)
 #define F_BID2EID(BID)    (BID << 24)
 #define F_FID2EID(FID)    (FID << 36)
+#define F_SSD2EID(SSD)    (SSD << 54)
 #define F_ETY2EID(ETY)    (ETY << 56)
 #define F_LANG2EID(LANG)  (LANG << 60)
 
 
 #define R_EID2IID(EID)    (unsigned)(EID & 0xFFFFFF)
 #define R_EID2BID(EID)    (unsigned)((EID >> 24) & 0xFFF)
-#define R_EID2FID(EID)    (unsigned)((EID >> 36) & 0xFFFFF)
+#define R_EID2FID(EID)    (unsigned)((EID >> 36) & 0x3FFFF)
+#define R_EID2SSD(EID)    (unsigned)((EID >> 54) & 0x3)
 #define R_EID2ETY(EID)    (unsigned)((EID >> 56) & 0x0F)
 #define R_EID2LANG(EID)   (unsigned)((EID >> 56) & 0xF0)
 
@@ -40,6 +42,9 @@
 
 
 #define CLANG_TY          (1UL)
+
+#define SOURCE_TY         (1UL)
+#define SINK_TY           (2UL)
 
 
 

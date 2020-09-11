@@ -11,11 +11,6 @@
 
 #define M_BASE_DATA_NUM        (100000)
 
-#define mutex_lock_t           pthread_mutex_t
-#define mutex_lock_init(x)     pthread_mutex_init(x, NULL)
-#define mutex_lock(x)          pthread_mutex_lock(x);
-#define mutex_unlock(x)        pthread_mutex_unlock(x); 
-
 
 typedef struct tag_HashNode
 {
@@ -65,10 +60,7 @@ typedef struct tag_DbTable
 	DWORD dwMaxDataNum;
 
 	DWORD dwInitDataNum;
-	DWORD dwRev;
-
 	DWORD dwKeyLen;                      
-	DWORD dwThreadNo;
 
 	DWORD dwCreateNum;
 	DWORD dwDeleteNum;

@@ -19,11 +19,14 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
         exit (0);
     }
 
+
     Node->EventId = EventId;
 	
 	va_start(ap, Format);
     (void)vsnprintf (Node->QBuf, sizeof(Node->QBuf), Format, ap);
     va_end(ap);
+
+    Node->Flag = TRUE;
 
     //printf ("[%lx]%s \r\n", EventId, Node->QBuf);
 

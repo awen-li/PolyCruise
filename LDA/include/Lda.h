@@ -113,9 +113,10 @@ public:
         return m_TaintInsts2ID.end();
     }
 
-    inline void InsertInst (Instruction* TaintInst, unsigned InstID)
+    inline void InsertInst (Instruction* TaintInst, unsigned InstID, unsigned long SSD)
     {
-        unsigned long EventId = GetEventId (TaintInst, InstID);
+        unsigned long EventId = GetEventId (TaintInst, InstID, SSD);
+        //printf ("---> %lx \r\n", EventId);
         m_TaintInsts2ID[TaintInst] = EventId;
 
         return;
@@ -156,11 +157,11 @@ private:
         return It->second;
     }
 
-    inline unsigned long GetEventId(Instruction* Inst, unsigned InstID)
+    inline unsigned long GetEventId(Instruction* Inst, unsigned InstID, unsigned long SSD)
     {
         /*
-        Event Id definition:
-        |4b language|4b reserve|20b FunctionId|12b Blockid|24b Instructionid|
+         Event Id definition:
+         |4b language|4b type|2b soure/sink|18b FunctionId|12b Blockid|24b Instructionid|
         */
         
         unsigned long EventId = 0;
@@ -168,7 +169,7 @@ private:
         unsigned long FID = m_FuncId;
         unsigned long BID = GetBBId (Inst);
 
-        EventId = F_LANG2EID (CLANG_TY) | F_ETY2EID (EVENT_DF) |
+        EventId = F_LANG2EID (CLANG_TY) | F_ETY2EID (EVENT_DF) | F_SSD2EID (SSD) |
                   F_FID2EID (FID) | F_BID2EID (BID) | F_IID2EID (InstID);
         
         return EventId;
@@ -485,7 +486,7 @@ private:
             {
                 errs ()<<"Add Source: "<<*Inst<<"\r\n";
                 m_InstSet.insert (Inst);
-                fd->InsertInst (Inst, InstID);
+                fd->InsertInst (Inst, InstID, SOURCE_TY);
                 continue;
             }
 
@@ -556,7 +557,7 @@ private:
                 }
 
                 m_InstSet.insert (Inst);
-                fd->InsertInst (Inst, InstID);
+                fd->InsertInst (Inst, InstID, 0);
                 errs ()<<"\t["<<InstID<<"]Tainted Inst: "<<*Inst<<"\r\n";
             }
         }

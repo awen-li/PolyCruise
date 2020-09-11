@@ -269,7 +269,7 @@ private:
                 N = fread (&Id, sizeof(Id), 1, Bf);
                 assert (N == 1);
                 Fd->AddInstID (Id);
-                printf ("\tTaintInst:[%u] %lu\r\n", R_EID2IID (Id), Id);
+                printf ("\tTaintInst:[%u] %lx\r\n", R_EID2IID (Id), Id);
             }        
 
             for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
@@ -634,8 +634,8 @@ private:
         BasicBlock &termbBlock = Func->back();
         Instruction *retInst   = termbBlock.getTerminator();
 
-        assert(isa<ReturnInst>(retInst) ||
-               isa<UnreachableInst>(retInst) &&
+        assert((isa<ReturnInst>(retInst) ||
+                isa<UnreachableInst>(retInst)) &&
                "Last instruction is not return or exit() instruction");
             
         return retInst;

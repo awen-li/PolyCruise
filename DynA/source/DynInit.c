@@ -21,15 +21,14 @@ void *FilterThread (void* Arg)
 
     while (1)
     {
-        QNode *Node = OutQueue ();
-        if (Node == NULL)
+        QNode *Node = FrontQueue ();
+        if (Node == NULL || Node->Flag == FALSE)
         {
             sleep (1);
             continue;
         }
 
         //DEBUG ("Queue: [%lx]%s\r\n", Node->EventId, Node->QBuf);
-
         if (R_EID2IID (Node->EventId) != 0)
         {
             Req.pKeyCtx  = (BYTE*)(&Node->EventId);
@@ -38,13 +37,15 @@ void *FilterThread (void* Arg)
             Ret = QueryDataByKey(&Req, &Ack);
             if (Ack.dwDataId != 0)
             {
+                OutQueue ();
                 continue;
             }
 
             (VOID)CreateDataByKey (&Req, &Ack);
         }
 
-        DfiEngine (Node->EventId, Node->QBuf);        
+        DfiEngine (Node->EventId, Node->QBuf);
+        OutQueue ();
     }
     
     return NULL;
@@ -58,7 +59,7 @@ void TRC_init ()
     InitQueue (4096);
 
     DWORD Ret;
-    Ret = DbCreateTable(DB_TYPE_EVENT, sizeof (DWORD), sizeof (ULONG), 5*1024*1024);
+    Ret = DbCreateTable(DB_TYPE_EVENT, sizeof (DWORD), sizeof (ULONG), 128*1024);
     assert (Ret != R_FAIL);
    
     Ret = pthread_create(&Tid, NULL, FilterThread, NULL);
