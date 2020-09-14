@@ -7,7 +7,7 @@
 ************************************************************/
 #include "Queue.h"
 #include "Db.h"
-#include "DfiEngine.h"
+#include "DifEngine.h"
 #include "Event.h"
 
 void *FilterThread (void* Arg)
@@ -44,7 +44,7 @@ void *FilterThread (void* Arg)
             (VOID)CreateDataByKey (&Req, &Ack);
         }
 
-        DfiEngine (Node->EventId, Node->QBuf);
+        DifEngine (Node->EventId, Node->QBuf);
         OutQueue ();
     }
     

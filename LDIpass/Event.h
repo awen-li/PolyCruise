@@ -12,6 +12,12 @@
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
+#define MSG_BEGIN         ('{')
+#define MSG_END           ('}')
+#define MSG_VT            (':')
+#define MSG_DF            ('=')
+#define MSG_MT            (',')
+
 /*
     Event Id definition:
     |4b language|4b type|2b soure/sink|18b FunctionId|12b Blockid|24b Instructionid|

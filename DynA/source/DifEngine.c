@@ -1,17 +1,21 @@
 /***********************************************************
  * Author: Wen Li
- * Date  : 7/24/2020
- * Describe: DfiEngine.c  
+ * Date  : 9/9/2020
+ * Describe: DifEngine.c  
  * History:
    <1> 9/9/2020 , create
 ************************************************************/
 #include "MacroDef.h"
-#include "DfiEngine.h"
+#include "Graph.h"
+#include "Event.h"
+#include "DifEngine.h"
+
+static Graph DifGraph;
 
 
-VOID DfiEngine (ULONG EventId, char *Msg)
+VOID DifEngine (ULONG EventId, char *Msg)
 {
-    printf ("[DFI]%lx: %s \r\n", EventId, Msg);
+    printf ("[DIF]%lx: %s \r\n", EventId, Msg);
 
     return;
 }

@@ -1,4 +1,4 @@
-//===- Graph.h -- Graph definition---------------------------------------------//
+//===- EventMsg.h -- Event message definition---------------------------------------------//
 //
 //
 // Copyright (C) <2019-2024>  <Wen Li>
@@ -17,45 +17,33 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 //===----------------------------------------------------------------------===//
-#ifndef _GRAPH_H_
-#define _GRAPH_H_
+#ifndef _EVENTMSG_H_
+#define _EVENTMSG_H_
 #include "MacroDef.h"
+#include "Event.h"
 
-typedef struct tag_List
+typedef struct tag_Variable
 {
-    VOID *data;
-    struct tag_List *Next;
-}List;
+    BYTE Type;
+    char *Name;
+}Variable;
 
-
-typedef struct tag_Node 
+typedef struct tag_VarList
 {
-    ULONG EventID;
-    
-    List *InEdge;
-    List *OutEdge;
-}Node;
+    Variable Var;
+    struct tag_VarList *Next;
+}VarList;
 
 
-typedef struct tag_Edge 
+typedef struct tag_EventMsg
 {
-    Node *Src;
-    Node *Dst;
-    
-}Edge;
+    ULONG EventId;
+
+    VarList *Def;
+    VarList *Use;  
+}EventMsg;
 
 
-
-typedef struct tag_Graph 
-{
-    DWORD NodeNum;
-    DWORD EdgeNum;
-
-    List *NodeList;
-    List *EdgeList;
-
-    Node *Root;
-   
-}Graph;
+EventMsg *DeEventMsg (ULONG EventId, char *Msg);
 
 #endif 

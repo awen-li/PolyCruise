@@ -1,4 +1,4 @@
-//===-- DfiEngine.h - Dyn information flow engine ---------------------------===//
+//===-- DifEngine.h - Dyn information flow engine ---------------------------===//
 //
 // Copyright (C) <2019-2024>  <Wen Li>
 //
@@ -9,11 +9,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _DFIENGINE_H_
-#define _DFIENGINE_H_
+#ifndef _DIFENGINE_H_
+#define _DIFENGINE_H_
 
 
-VOID DfiEngine (ULONG EventId, char *Msg);
+VOID DifEngine (ULONG EventId, char *Msg);
 
 
-#endif // _DFIENGINE_H_
+#endif // _DIFENGINE_H_
