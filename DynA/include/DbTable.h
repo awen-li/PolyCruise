@@ -45,11 +45,27 @@ typedef struct tag_DataManage
 	DWORD dwRev;
 }DataManage;
 
+typedef struct tag_MemList
+{
+    BYTE *MemAddr;
+    struct tag_MemList *Nxt;
+}MemList;
+
+typedef struct tag_MemUnit
+{
+    DWORD dwUnitNum;
+    DWORD dwNodeNum;
+    
+    MemList *MLHdr;    
+}MemUnit;
+
 typedef struct tag_DbTable
 {
-	DataManage* ptBusyDataTable;      
-	DataManage* ptIdleDataTable;       
-	mutex_lock_t* ptIdleTableLock;      
+	DataManage tBusyDataTable;      
+	DataManage tIdleDataTable;
+    
+	mutex_lock_t tIdleTableLock;
+    mutex_lock_t tBusyTableLock; 
 
     HashPail* ptHashPail;          
 
@@ -65,11 +81,7 @@ typedef struct tag_DbTable
 	DWORD dwCreateNum;
 	DWORD dwDeleteNum;
 
-	/////////////////////////////////////
-	HashNode** pptId2NodePtr;           
-	HashNode* ptDataHdr;                
-	////////////////////////////////////
-
+    MemUnit MU;
 }DbTable;
 
 

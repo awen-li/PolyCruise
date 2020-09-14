@@ -82,4 +82,17 @@ DWORD IsQueueEmpty ()
     return (DWORD)((Q->Hindex+1)%Q->NodeNum == Q->Tindex);
 }
 
+VOID DelQueue ()
+{
+    Queue* Q = &g_Queue;
+    
+    if (Q->NodeList != NULL)
+    {
+        free (Q->NodeList);
+        Q->NodeList = NULL;
+    }
+
+    return;
+}
+
 

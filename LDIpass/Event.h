@@ -18,6 +18,10 @@
 #define MSG_DF            ('=')
 #define MSG_MT            (',')
 
+#define VT_INTEGER        ('U')
+#define VT_POINTER        ('P')
+#define VT_FUNCTION       ('F')
+
 /*
     Event Id definition:
     |4b language|4b type|2b soure/sink|18b FunctionId|12b Blockid|24b Instructionid|

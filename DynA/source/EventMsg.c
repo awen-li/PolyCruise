@@ -42,7 +42,7 @@ static inline VOID DeFEvent (EventMsg *EM, char *Msg)
     DWORD Len = strlen (Msg);
     assert (Len > 2);
 
-    VarList *VL = AllotVarList (Msg, Len-1, 0);
+    VarList *VL = AllotVarList (Msg, Len-1, VT_FUNCTION);
 
     EM->Use = NULL;
     EM->Def = VL;
@@ -64,27 +64,28 @@ static inline DWORD GetVarName (char *Msg)
 
 static inline BYTE GetVarType (char *Msg)
 {
-    char *Pos = Msg;
+    char *Pos = Msg;    
     assert (*Pos == MSG_VT);
-
+        
     Pos++;
-    return (BYTE)(*Pos); 
+    return (BYTE)(*Pos);
 }
 
 
-/* {conv.i:U=call.i:U} */
-static inline VOID DeNREvent (EventMsg *EM, char *Msg)
+/* {add:U=or:U,rem:U} */
+static inline VOID DeEvent (EventMsg *EM, char *Msg)
 {
     char *Pos = Msg;
     DWORD IsDef = TRUE;
 
-    while (*Pos != '}')
+    while (*Pos != MSG_END && 
+           *Pos != 0)
     {
         DWORD NameLen = GetVarName (Pos);
         assert (NameLen != 0);
 
-        BYTE Type = GetVarType (Pos);
-        assert (NameLen != 0);
+        BYTE Type = GetVarType (Pos+NameLen);
+        assert (Type != 0);
 
         VarList *VL = AllotVarList (Pos, NameLen, Type);
         if (IsDef)
@@ -115,21 +116,34 @@ static inline VOID DeBREvent (EventMsg *EM, char *Msg)
     return;    
 }
 
+
+/* {or:U} */ 
 static inline VOID DeRETEvent (EventMsg *EM, char *Msg)
 {
+    char *Pos = Msg;
 
-    return;    
+    while (*Pos != MSG_END && 
+           *Pos != 0)
+    {
+        DWORD NameLen = GetVarName (Pos);
+        assert (NameLen != 0);
+
+        BYTE Type = GetVarType (Pos+NameLen);
+        assert (Type != 0);
+
+        VarList *VL = AllotVarList (Pos, NameLen, Type);
+        
+        VL->Next = EM->Use;
+        EM->Use = VL;
+
+        Pos += NameLen+2;
+        Pos++;
+    }
+
+    return;        
 }
 
-static inline VOID DeCALLEvent (EventMsg *EM, char *Msg)
-{
-
-    return;    
-}
-
-
-
-EventMsg *DeEventMsg (ULONG EventId, char *Msg)
+EventMsg *DecodeEventMsg (ULONG EventId, char *Msg)
 {
     assert (Msg[0] == MSG_BEGIN);
     Msg++;
@@ -148,10 +162,11 @@ EventMsg *DeEventMsg (ULONG EventId, char *Msg)
         {
             DeFEvent (EM, Msg);
             break;
-        }
+        }    
         case EVENT_NR:
+        case EVENT_CALL:
         {
-            DeNREvent (EM, Msg);
+            DeEvent (EM, Msg);
             break;
         }
         case EVENT_BR:
@@ -164,11 +179,6 @@ EventMsg *DeEventMsg (ULONG EventId, char *Msg)
             DeRETEvent (EM, Msg);
             break;
         }
-        case EVENT_CALL:
-        {
-            DeCALLEvent (EM, Msg);
-            break;
-        }
         default:
         {
             assert (0);            
@@ -179,5 +189,31 @@ EventMsg *DeEventMsg (ULONG EventId, char *Msg)
 }
 
 
+static inline VOID DelList (VarList *VL)
+{
+    VarList *Nxt;
+
+    while (VL != NULL)
+    {
+        Nxt = VL->Next;
+        
+        Variable *V = &VL->Var;
+        free (V->Name);
+        V->Name = NULL;
+
+        free (VL);
+        VL = Nxt;
+    }
+
+    return;
+}
+
+void DelEventMsg (EventMsg *EM)
+{
+    DelList (EM->Def);
+    DelList (EM->Use);
+    
+    return;
+}
 
 

@@ -7,6 +7,7 @@
 ************************************************************/
 #include "Queue.h"
 #include "Db.h"
+#include "Graph.h"
 #include "DifEngine.h"
 #include "Event.h"
 
@@ -21,17 +22,17 @@ void *FilterThread (void* Arg)
 
     while (1)
     {
-        QNode *Node = FrontQueue ();
-        if (Node == NULL || Node->Flag == FALSE)
+        QNode *QN = FrontQueue ();
+        if (QN == NULL || QN->Flag == FALSE)
         {
             sleep (1);
             continue;
         }
 
         //DEBUG ("Queue: [%lx]%s\r\n", Node->EventId, Node->QBuf);
-        if (R_EID2IID (Node->EventId) != 0)
+        if (R_EID2IID (QN->EventId) != 0)
         {
-            Req.pKeyCtx  = (BYTE*)(&Node->EventId);
+            Req.pKeyCtx  = (BYTE*)(&QN->EventId);
             Ack.dwDataId = 0;
             
             Ret = QueryDataByKey(&Req, &Ack);
@@ -44,7 +45,7 @@ void *FilterThread (void* Arg)
             (VOID)CreateDataByKey (&Req, &Ack);
         }
 
-        DifEngine (Node->EventId, Node->QBuf);
+        DifEngine (QN->EventId, QN->QBuf);
         OutQueue ();
     }
     
@@ -59,7 +60,7 @@ void TRC_init ()
     InitQueue (4096);
 
     DWORD Ret;
-    Ret = DbCreateTable(DB_TYPE_EVENT, sizeof (DWORD), sizeof (ULONG), 128*1024);
+    Ret = DbCreateTable(DB_TYPE_EVENT, sizeof (Node), sizeof (ULONG), 128*1024);
     assert (Ret != R_FAIL);
    
     Ret = pthread_create(&Tid, NULL, FilterThread, NULL);
@@ -79,6 +80,11 @@ void TRC_exit ()
 
     sleep (1);
     DEBUG ("TRC_deinit exit!\r\n");
+
+    DelQueue ();
+    DelDb ();
+
+    return;
 }
 
 

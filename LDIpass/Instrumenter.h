@@ -453,16 +453,13 @@ private:
         if (LI.IsRet ())
         {
             Fd->SetEventType (InstId, EVENT_RET);
-            Format += "R=";
         }
         else if (LI.IsCall ())
         {
             Fd->SetEventType (InstId, EVENT_CALL);
             CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
-            {          
-                Format += Cst->GetName () + ",";
-                
+            {
                 unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
                 unsigned OutArg  =  GetArgNo(Outbits);
                 if (OutArg != 0)
@@ -476,7 +473,6 @@ private:
             }
             else
             {
-                Format += LI.GetCallName () + ",";
                 Def = LI.GetDef ();
                 if (Def != NULL)
                 {
@@ -566,7 +562,10 @@ private:
         
         IRBuilder<> Builder(Site);
 
-        unsigned long EventId = F_LANG2EID (CLANG_TY) | F_ETY2EID (EVENT_FENTRY);
+        unsigned long FID = Fd->GetId (); 
+        unsigned long EventId = F_LANG2EID (CLANG_TY) | 
+                                F_ETY2EID (EVENT_FENTRY) |
+                                F_FID2EID (FID);
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 

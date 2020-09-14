@@ -11,13 +11,12 @@
 
 static DbTableManage g_tTableManage = {0};
 
-INLINE VOID* db_Malloc(ULONG ulMemSize)
+static inline VOID* db_Malloc(ULONG ulMemSize)
 {
 	return malloc (ulMemSize);
 }
 
-
-INLINE DWORD db_PailNum(DWORD dwDataNum)
+static inline DWORD db_PailNum(DWORD dwDataNum)
 {
 	DWORD dwPailNum = M_BASE_DATA_NUM+dwDataNum;
 	DWORD dwi;
@@ -45,7 +44,7 @@ INLINE DWORD db_PailNum(DWORD dwDataNum)
 }
 
 
-INLINE DbTable* db_Type2Table(DWORD dwDataType)
+static inline DbTable* db_Type2Table(DWORD dwDataType)
 {
 	if(dwDataType >= DB_TYPE_END)
 	{
@@ -57,9 +56,30 @@ INLINE DbTable* db_Type2Table(DWORD dwDataType)
 	return (DbManage->TableList + dwDataType);
 }
 
+static inline BYTE* db_GetActiveMemAddr(DbTable *ptTable)
+{   
+    MemUnit *MU = &ptTable->MU;
+    assert (MU->MLHdr != NULL);
 
-INLINE HashNode* db_NewNode(DbTable* ptDataTable)
+    return MU->MLHdr->MemAddr;
+}
+
+static inline DWORD db_GetDataId(DbTable *ptTable)
+{  
+    DWORD dwDataId;
+    
+    MemUnit *MU = &ptTable->MU;
+    assert (MU->MLHdr != NULL);
+
+    ptTable->dwInitDataNum++;
+    dwDataId = (MU->dwUnitNum-1) * ptTable->dwMaxDataNum + ptTable->dwInitDataNum;   
+
+    return dwDataId;
+}
+
+static inline HashNode* db_NewNode(DbTable* ptDataTable)
 {
+    BYTE *DAddr;
 	DWORD dwNodeLen;
 	HashNode* ptHashNode;
 
@@ -68,11 +88,11 @@ INLINE HashNode* db_NewNode(DbTable* ptDataTable)
 		return NULL;
 	}
 
-	dwNodeLen = sizeof(HashNode) + ptDataTable->dwDataLen+ptDataTable->dwKeyLen;
-	ptHashNode = (HashNode*)((BYTE*)ptDataTable->ptDataHdr + dwNodeLen*ptDataTable->dwInitDataNum);
-    ptDataTable->dwInitDataNum++;
+	dwNodeLen  = sizeof(HashNode) + ptDataTable->dwDataLen+ptDataTable->dwKeyLen;
+    DAddr      = db_GetActiveMemAddr (ptDataTable);
+	ptHashNode = (HashNode*)(DAddr + dwNodeLen*ptDataTable->dwInitDataNum);
 
-	ptHashNode->dwDataId = ptDataTable->dwInitDataNum;
+	ptHashNode->dwDataId = db_GetDataId(ptDataTable);
 	//ptHashNode->pKeyArea  = KeyArea(ptHashNode);
 	//ptHashNode->pDataArea = DataArea(ptHashNode, ptDataTable->dwKeyLen);
 	
@@ -80,7 +100,7 @@ INLINE HashNode* db_NewNode(DbTable* ptDataTable)
 }
 
 
-INLINE DWORD db_FormatDataNode(DbTable* ptDataTable)
+static inline DWORD db_FormatDataNode(DbTable* ptDataTable)
 {
 	HashNode* ptHashNode;
 	HashNode* ptHashNodeTail;
@@ -92,12 +112,7 @@ INLINE DWORD db_FormatDataNode(DbTable* ptDataTable)
 		return R_FAIL;
 	}
 
-	pDataManage = (DataManage*)db_Malloc(sizeof(DataManage));
-	if(NULL == pDataManage)
-	{
-		return R_FAIL;
-	}
-	ptDataTable->ptIdleDataTable = pDataManage;
+	pDataManage = &ptDataTable->tIdleDataTable;
 
 	ptHashNodeTail = pDataManage->pHashNodeHdr;
 	for(dwDataNum = 0; dwDataNum < ptDataTable->dwMaxDataNum; dwDataNum++)
@@ -122,19 +137,77 @@ INLINE DWORD db_FormatDataNode(DbTable* ptDataTable)
 		pDataManage->dwCurNodeNum++;
 	}
 	pDataManage->pHashNodeTail= ptHashNodeTail;
-
-	pDataManage = (DataManage*)db_Malloc(sizeof(DataManage));
-	if(NULL == pDataManage)
-	{
-		return R_FAIL;
-	}
-	ptDataTable->ptBusyDataTable = pDataManage;
 	
 	return R_SUCCESS;
 }
 
+static inline HashNode* db_ID2Node (DbTable *ptTable, DWORD ID)
+{
+    DWORD dwNodeLen;
+    MemUnit *MU = &ptTable->MU;
+    DWORD dwSeq = ID/MU->dwNodeNum;
+    MemList *ML = MU->MLHdr;
 
-INLINE DWORD db_HashKey(BYTE* pKey, DWORD dwKeyLen)
+    while (dwSeq != 0 && ML != NULL)
+    {
+        ML = ML->Nxt;
+        dwSeq--;
+    }
+
+    assert (dwSeq == 0);
+    dwNodeLen  = sizeof(HashNode) + ptTable->dwDataLen+ptTable->dwKeyLen;
+
+     return (HashNode*)(ML->MemAddr + dwNodeLen*(ID-1));  
+}
+
+static inline VOID db_ExtendDataMem(DbTable *ptTable)
+{
+    DWORD dwRet;
+    MemUnit *MU = &ptTable->MU;
+ 
+    ULONG ulMemSize = (sizeof(HashNode) + ptTable->dwDataLen + ptTable->dwKeyLen)*(ptTable->dwMaxDataNum+1);
+    MemList *ML = (MemList *)db_Malloc (ulMemSize + sizeof (MemList));
+    assert (ML != NULL);
+
+    ML->MemAddr   = (BYTE *)(ML + 1);
+    ML->Nxt = MU->MLHdr;      
+    MU->MLHdr = ML;
+    
+    MU->dwNodeNum = ptTable->dwMaxDataNum; 
+    MU->dwUnitNum++;
+
+    ptTable->dwInitDataNum = 0;
+    dwRet = db_FormatDataNode(ptTable);
+    assert (dwRet != R_FAIL);
+
+    //printf ("db_ExtendDataMem:dwUnitNum = %u, dwNodeNum = %u \r\n", MU->dwUnitNum, MU->dwNodeNum);
+
+    return;
+}
+
+static inline VOID db_DelTable (DbTable *ptTable)
+{
+    MemUnit *MU = &ptTable->MU;
+
+    MemList *ML = MU->MLHdr;
+    MemList *Next;
+    while (NULL != ML)
+    {
+        Next = ML->Nxt;
+        free (ML);
+        ML = Next;           
+    }
+
+    if (NULL != ptTable->ptHashPail)
+    {
+        free (ptTable->ptHashPail);
+    }
+    memset (ptTable, 0, sizeof (DbTable));
+    
+    return;
+}
+
+static inline DWORD db_HashKey(BYTE* pKey, DWORD dwKeyLen)
 {
 	DWORD dwi;
 	DWORD dwIndex = 5381;
@@ -149,7 +222,7 @@ INLINE DWORD db_HashKey(BYTE* pKey, DWORD dwKeyLen)
 	return dwIndex;
 }
 
-INLINE HashNode* db_QueryInsidePail(HashPail* ptHashPail, BYTE* pKey, DWORD dwKeyLen)
+static inline HashNode* db_QueryInsidePail(HashPail* ptHashPail, BYTE* pKey, DWORD dwKeyLen)
 {
 	HashNode* ptNodeHdr;
 
@@ -177,7 +250,7 @@ INLINE HashNode* db_QueryInsidePail(HashPail* ptHashPail, BYTE* pKey, DWORD dwKe
 }
 
 
-INLINE VOID db_InsertNode2Pail(DbTable* ptDataTable, HashNode* ptHashNode)
+static inline VOID db_InsertNode2Pail(DbTable* ptDataTable, HashNode* ptHashNode)
 {
 	HashNode* ptHashNodeHdr;
 	HashPail* ptHashPail;
@@ -210,7 +283,7 @@ INLINE VOID db_InsertNode2Pail(DbTable* ptDataTable, HashNode* ptHashNode)
 }
 
 
-INLINE VOID db_DeleteNodeOfPail(DbTable* ptDataTable, HashNode* ptHashNode)
+static inline VOID db_DeleteNodeOfPail(DbTable* ptDataTable, HashNode* ptHashNode)
 {
 	HashPail* ptHashPail;
 
@@ -246,7 +319,7 @@ INLINE VOID db_DeleteNodeOfPail(DbTable* ptDataTable, HashNode* ptHashNode)
 }
 
 
-INLINE HashNode* db_GetIdleNode(DbTable* ptDataTable)
+static inline HashNode* db_GetIdleNode(DbTable* ptDataTable)
 {
 	HashNode* ptHashNode;
 	DataManage* pIdleManage;
@@ -257,35 +330,31 @@ INLINE HashNode* db_GetIdleNode(DbTable* ptDataTable)
 		return NULL;
 	}
 
-	pIdleManage = ptDataTable->ptIdleDataTable;
-	mutex_lock(ptDataTable->ptIdleTableLock);
-	if(0 != pIdleManage->dwCurNodeNum)
-	{
-		ptHashNode = pIdleManage->pHashNodeHdr;
-        if(pIdleManage->dwCurNodeNum > 1)
-		{
-			pIdleManage->pHashNodeHdr = ptHashNode->pDataNxt;
-			pIdleManage->dwCurNodeNum--;
-		}
-		else
-		{
-			pIdleManage->dwCurNodeNum = 0;
-			pIdleManage->pHashNodeHdr = NULL;
-			pIdleManage->pHashNodeTail = NULL;
-		}
-		mutex_unlock(ptDataTable->ptIdleTableLock);
-	}
-	else
-	{
-		mutex_unlock(ptDataTable->ptIdleTableLock);
+	pIdleManage = &ptDataTable->tIdleDataTable;
+	mutex_lock(&ptDataTable->tIdleTableLock);
+    if (0 == pIdleManage->dwCurNodeNum)
+    {
+        db_ExtendDataMem (ptDataTable);
+    }    
+	assert(0 != pIdleManage->dwCurNodeNum);
+    
+	ptHashNode = pIdleManage->pHashNodeHdr;
+    if(pIdleManage->dwCurNodeNum > 1)
+    {
+        pIdleManage->pHashNodeHdr = ptHashNode->pDataNxt;
+        pIdleManage->dwCurNodeNum--;
+    }
+    else
+    {
+        pIdleManage->dwCurNodeNum = 0;
+        pIdleManage->pHashNodeHdr = NULL;
+        pIdleManage->pHashNodeTail = NULL;
+    }
+    mutex_unlock(&ptDataTable->tIdleTableLock);
 
-        ptHashNode = ptDataTable->ptBusyDataTable->pHashNodeHdr;
-		memset(DataArea(ptHashNode, ptDataTable->dwKeyLen), 0, sizeof(ptDataTable->dwDataLen));
 
-		return ptHashNode;
-	}
-
-	pBusyManage = ptDataTable->ptBusyDataTable;
+	pBusyManage = &ptDataTable->tBusyDataTable;
+    mutex_lock(&ptDataTable->tBusyTableLock);
 	if(pBusyManage->dwCurNodeNum > 0)
 	{
 		ptHashNode->pDataNxt = NULL;
@@ -305,6 +374,7 @@ INLINE HashNode* db_GetIdleNode(DbTable* ptDataTable)
 		
 		pBusyManage->dwCurNodeNum = 1;
 	}
+    mutex_unlock(&ptDataTable->tBusyTableLock);
 	
 	memset(DataArea(ptHashNode, ptDataTable->dwKeyLen), 0, sizeof(ptDataTable->dwDataLen));
 	
@@ -312,7 +382,7 @@ INLINE HashNode* db_GetIdleNode(DbTable* ptDataTable)
 }
 
 
-INLINE VOID db_FreeBusyNode(DbTable* ptDataTable, HashNode* ptBusyNode)
+static inline VOID db_FreeBusyNode(DbTable* ptDataTable, HashNode* ptBusyNode)
 {
 	DataManage* pIdleManage;
 	DataManage* pBusyManage;
@@ -322,7 +392,8 @@ INLINE VOID db_FreeBusyNode(DbTable* ptDataTable, HashNode* ptBusyNode)
 		return;
 	}
 
-	pBusyManage = ptDataTable->ptBusyDataTable;
+	pBusyManage = &ptDataTable->tBusyDataTable;
+    mutex_lock(&ptDataTable->tBusyTableLock);
 	if(0 != pBusyManage->dwCurNodeNum)
 	{
 		if(pBusyManage->dwCurNodeNum > 1)
@@ -357,12 +428,12 @@ INLINE VOID db_FreeBusyNode(DbTable* ptDataTable, HashNode* ptBusyNode)
 	}
 	else
 	{
-		assert(0);
-		return;		
+		assert(0);		
 	}
+    mutex_unlock(&ptDataTable->tBusyTableLock);
 
-	pIdleManage = ptDataTable->ptIdleDataTable;
-	mutex_lock(ptDataTable->ptIdleTableLock);
+	pIdleManage = &ptDataTable->tIdleDataTable;
+	mutex_lock(&ptDataTable->tIdleTableLock);
 	if(pIdleManage->dwCurNodeNum > 0)
 	{
 		pIdleManage->pHashNodeTail->pDataNxt = ptBusyNode;
@@ -376,13 +447,12 @@ INLINE VOID db_FreeBusyNode(DbTable* ptDataTable, HashNode* ptBusyNode)
 		pIdleManage->pHashNodeTail = ptBusyNode;
 		pIdleManage->dwCurNodeNum = 1;
 	}
-	mutex_unlock(ptDataTable->ptIdleTableLock);
+	mutex_unlock(&ptDataTable->tIdleTableLock);
 
 	return;
 }
 
-
-INLINE VOID db_MoveNode2BusyEnd(DbTable* ptDataTable, HashNode* ptBusyNode)
+static inline VOID db_MoveNode2BusyEnd(DbTable* ptDataTable, HashNode* ptBusyNode)
 {
     DataManage* pBusyManage;
 
@@ -391,7 +461,7 @@ INLINE VOID db_MoveNode2BusyEnd(DbTable* ptDataTable, HashNode* ptBusyNode)
         return;
 	}
 
-	pBusyManage = ptDataTable->ptBusyDataTable;
+	pBusyManage = &ptDataTable->tBusyDataTable;
 	if(ptBusyNode != pBusyManage->pHashNodeHdr &&
 	   ptBusyNode != pBusyManage->pHashNodeTail)
 	{
@@ -430,6 +500,7 @@ INLINE VOID db_MoveNode2BusyEnd(DbTable* ptDataTable, HashNode* ptBusyNode)
     return;
 }
 
+
 DWORD CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 {
 	HashNode* ptHashNode;
@@ -461,8 +532,6 @@ DWORD CreateDataByKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 	ptHashNode->dwPailIndex = db_HashKey(ptCreateReq->pKeyCtx, ptCreateReq->dwKeyLen)%ptDataTable->dwPailNum;
 
 	db_InsertNode2Pail(ptDataTable, ptHashNode);
-
-	ptDataTable->pptId2NodePtr[ptHashNode->dwDataId] = ptHashNode;
 
 	pCreateAck->dwDataId  = ptHashNode->dwDataId;
 	pCreateAck->pDataAddr = DataArea(ptHashNode, ptDataTable->dwKeyLen);
@@ -503,8 +572,7 @@ DWORD CreateDataNonKey(DbReq* ptCreateReq, DbAck* pCreateAck)
 DWORD DeleteDataByID(DbReq* ptDelReq)
 {
 	HashNode* ptHashNode;
-	DbTable* ptDataTable0;
-	DbTable* ptRealTable;
+	DbTable* ptDataTable;
 	DWORD dwDataId;
 	
 	if(NULL == ptDelReq)
@@ -512,36 +580,30 @@ DWORD DeleteDataByID(DbReq* ptDelReq)
 		return R_FAIL;
 	}
 	
-	ptDataTable0 = db_Type2Table(ptDelReq->dwDataType);
-	if(NULL == ptDataTable0)
+	ptDataTable = db_Type2Table(ptDelReq->dwDataType);
+	if(NULL == ptDataTable)
 	{
 		return R_FAIL;
 	}
 	
     dwDataId = ptDelReq->dwDataId;
-	if(dwDataId > ptDataTable0->dwMaxDataNum)
+	if(dwDataId == 0 || dwDataId > ptDataTable->dwMaxDataNum)
 	{
 		return R_FAIL;
 	}
 	
-    ptHashNode = ptDataTable0->pptId2NodePtr[dwDataId];
+    ptHashNode = db_ID2Node (ptDataTable, dwDataId);
 	if(NULL == ptHashNode)
 	{
 		return R_FAIL;
 	}
 
-	ptRealTable = db_Type2Table(ptDelReq->dwDataType);
-	if(NULL == ptRealTable)
+	if(0 != ptDataTable->dwKeyLen)
 	{
-		return R_FAIL;
+		db_DeleteNodeOfPail(ptDataTable, ptHashNode);
 	}
 
-	if(0 != ptRealTable->dwKeyLen)
-	{
-		db_DeleteNodeOfPail(ptRealTable, ptHashNode);
-	}
-
-	db_FreeBusyNode(ptRealTable, ptHashNode);
+	db_FreeBusyNode(ptDataTable, ptHashNode);
     
 	return R_SUCCESS;
 }
@@ -604,13 +666,13 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
 	}
 
 	dwDataId = ptQueryReq->dwDataId;
-	if(dwDataId > ptDataTable->dwMaxDataNum)
+	if(dwDataId == 0 || dwDataId > ptDataTable->dwMaxDataNum)
 	{
 		return R_FAIL;
 	}
 	
 	
-    ptHashNode = ptDataTable->pptId2NodePtr[dwDataId];
+    ptHashNode = db_ID2Node (ptDataTable, dwDataId);
 	if(NULL == ptHashNode)
 	{
 		return R_FAIL;
@@ -623,7 +685,7 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
 }
 
 
-INLINE DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum)
+DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum)
 {
 	DWORD dwAvgThrCap;
 	ULONG ulMemSize;
@@ -639,33 +701,11 @@ INLINE DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DW
 	
 	ptCurTable->dwCreateNum = 0;
 	ptCurTable->dwDeleteNum = 0;
-	ptCurTable->dwInitDataNum = 0;
-    
-	ulMemSize = (sizeof(HashNode) + ptCurTable->dwDataLen + ptCurTable->dwKeyLen)*(ptCurTable->dwMaxDataNum+1);
-	ptCurTable->ptDataHdr = (HashNode*)db_Malloc(ulMemSize);
-	if(NULL == ptCurTable->ptDataHdr)
-	{
-		return R_FAIL;
-	}
-		
-	ulMemSize = sizeof(HashNode*)*(ptCurTable->dwMaxDataNum+1);
-	ptCurTable->pptId2NodePtr = (HashNode**)db_Malloc(ulMemSize);
-	if(NULL == ptCurTable->pptId2NodePtr)
-	{
-		return R_FAIL;
-	}
 
-	if(R_FAIL == db_FormatDataNode(ptCurTable))
-	{
-		return R_FAIL;
-	}
+	db_ExtendDataMem (ptCurTable);
 
-	ptCurTable->ptIdleTableLock = (mutex_lock_t*)db_Malloc(sizeof(mutex_lock_t));
-	if(NULL == ptCurTable->ptIdleTableLock)
-	{
-		return R_FAIL;
-	}
-	mutex_lock_init(ptCurTable->ptIdleTableLock);
+	mutex_lock_init(&ptCurTable->tIdleTableLock);
+    mutex_lock_init(&ptCurTable->tBusyTableLock);
 
 	ptCurTable->dwPailNum  = db_PailNum(dwDataNum);
 	ptCurTable->ptHashPail = (HashPail*)db_Malloc(sizeof(HashPail)*ptCurTable->dwPailNum);
@@ -677,5 +717,21 @@ INLINE DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DW
 	return R_SUCCESS;
 }
 
+VOID DelDb ()
+{
+    DbTable* ptTable;
+    DWORD dwType = DB_TYPE_BEGIN;
+    DbTableManage *DbManage = &g_tTableManage;		
+
+    while (dwType < DB_TYPE_END)
+    {
+        ptTable = DbManage->TableList + dwType;
+        db_DelTable (ptTable);
+        
+        dwType++;
+    }
+
+    return;
+}
 
 

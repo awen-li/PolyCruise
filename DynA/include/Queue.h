@@ -36,6 +36,6 @@ QNode* InQueue ();
 QNode* FrontQueue ();
 void OutQueue ();
 DWORD IsQueueEmpty ();
-
+VOID DelQueue ();
 
 #endif 
