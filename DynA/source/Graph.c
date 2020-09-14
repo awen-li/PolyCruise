@@ -9,7 +9,7 @@
 
 typedef VOID (*DelData) (VOID *Data);
 
-static inline VOID DelList (List *L, DelData Dd)
+static inline VOID DelList (List *L, DelData Del)
 {
     List *Next = L;
 
@@ -17,15 +17,37 @@ static inline VOID DelList (List *L, DelData Dd)
     {
         Next = L->Next;
 
-        if (Dd)
+        if (Del)
         {
-            Dd (L->data);
+            Del (L->data);
         }
 
         free (L);
         L = Next;
     }
+
+    return;
 }
+
+static inline VOID VisitList (List *L, ProcData Pd)
+{
+    List *Next = L;
+
+    while (L != NULL)
+    {
+        Next = L->Next;
+
+        if (Pd)
+        {
+            Pd (L->data);
+        }
+
+        L = Next;
+    }
+
+    return;
+}
+
 
 static inline List* AllotList ()
 {
@@ -35,24 +57,6 @@ static inline List* AllotList ()
     NL->data = NULL;
 
     return NL;
-}
-
-static inline Node* AllotNode (Graph *G)
-{
-    List *NL = AllotList ();
-
-    NL->data = (VOID*)malloc (sizeof (Node));
-    assert (NL->data != NULL);
-
-    NL->Next = G->NodeList;
-    G->NodeList = NL;
-    G->NodeNum++;
-
-    Node* N = (Node*) NL->data;
-    N->InEdge  = NULL;
-    N->OutEdge = NULL;
-    
-    return N;
 }
 
 static inline void AddOutEdge (Node *N, Edge* Out)
@@ -78,8 +82,71 @@ static inline void AddInEdge (Node *N, Edge* In)
     return;    
 }
 
+static inline VOID DelNode (VOID *Data)
+{
+    Node *N = (Node *)Data;
+    
+    DelList (N->InEdge, NULL);
+    N->InEdge = NULL;
+    
+    DelList (N->OutEdge, NULL);
+    N->OutEdge = NULL;
 
-static inline Edge* AllotEdge (Graph *G, Node *S, Node *D)
+    return;
+}
+
+static inline VOID DelEdge (VOID *Data)
+{
+    return;
+}
+
+
+static inline VOID DelGraph (Graph *G)
+{
+    DelList (G->NodeList, DelNode);
+    DelList (G->EdgeList, DelEdge);
+    
+    return;
+}
+
+
+Graph *CreateGraph (DWORD NDBType, DWORD EDBType)
+{
+    Graph *G = malloc (sizeof (Graph));
+    assert (G != NULL);
+
+    G->EdgeList = NULL;
+    G->NodeList = NULL;
+    
+    G->EdgeNum  = 0;
+    G->NodeNum  = 0;
+
+    G->EDBType = EDBType;
+    G->NDBType = NDBType;
+
+    return G;
+}
+
+
+Node* AddNode (Graph *G, Node *N)
+{
+    List *NL = AllotList ();
+
+    NL->data = (VOID*)N;
+    assert (NL->data != NULL);
+
+    NL->Next = G->NodeList;
+    G->NodeList = NL;
+    G->NodeNum++;
+
+    N->InEdge  = NULL;
+    N->OutEdge = NULL;
+    
+    return N;
+}
+
+
+Edge* AddEdge (Graph *G, Node *S, Node *D)
 {
     List *NL = AllotList ();
     
@@ -101,51 +168,10 @@ static inline Edge* AllotEdge (Graph *G, Node *S, Node *D)
 }
 
 
-static inline VOID DelNode (VOID *Data)
+VOID VisitAllNode (Graph *G, ProcData Pd)
 {
-    Node *N = (Node *)Data;
-    
-    DelList (N->InEdge, NULL);
-    N->InEdge = NULL;
-    
-    DelList (N->OutEdge, NULL);
-    N->OutEdge = NULL;
-
-    free (N);
-
+    VisitList (G->NodeList, Pd);
     return;
 }
-
-static inline VOID DelEdge (VOID *Data)
-{
-    free (Data);
-
-    return;
-}
-
-
-static inline VOID DestroyGraph (Graph *G)
-{
-    DelList (G->NodeList, DelNode);
-    DelList (G->EdgeList, DelEdge);
-    
-    return;
-}
-
-
-Graph *CreateGraph ()
-{
-    Graph *G = malloc (sizeof (Graph));
-    assert (G != NULL);
-
-    G->EdgeList = NULL;
-    G->NodeList = NULL;
-    G->EdgeNum  = 0;
-    G->NodeNum  = 0;
-
-    return G;
-}
-
-
 
 

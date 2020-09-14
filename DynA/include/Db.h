@@ -13,7 +13,8 @@
 enum DB_TYPE
 {
     DB_TYPE_BEGIN=1,
-    DB_TYPE_EVENT=DB_TYPE_BEGIN,
+    DB_TYPE_DIF_NODE=DB_TYPE_BEGIN,
+    DB_TYPE_DIF_EDGE,
     DB_TYPE_END
 };
 
@@ -43,7 +44,7 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck);
 
 DWORD DeleteDataByID(DbReq* ptDelReq);
 
-DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum);
+DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen);
 
 VOID DelDb ();
 

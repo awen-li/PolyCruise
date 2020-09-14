@@ -44,7 +44,9 @@ typedef struct tag_EventMsg
 }EventMsg;
 
 
-void DelEventMsg (EventMsg *EM);
 EventMsg *DecodeEventMsg (ULONG EventId, char *Msg);
+void DelEventMsg (EventMsg *EM);
+void ViewEMsg (EventMsg *EM);
+
 
 #endif 

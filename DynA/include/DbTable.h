@@ -9,7 +9,7 @@
 #define _DBTATBL_H_
 #include "MacroDef.h"
 
-#define M_BASE_DATA_NUM        (100000)
+#define M_BASE_DATA_NUM        (16 * 1024)
 
 
 typedef struct tag_HashNode

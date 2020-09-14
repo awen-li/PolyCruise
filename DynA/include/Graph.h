@@ -19,7 +19,8 @@
 //===----------------------------------------------------------------------===//
 #ifndef _GRAPH_H_
 #define _GRAPH_H_
-#include "MacroDef.h"
+#include "Db.h"
+#include "EventMsg.h"
 
 typedef struct tag_List
 {
@@ -34,6 +35,8 @@ typedef struct tag_Node
     
     List *InEdge;
     List *OutEdge;
+
+    VOID *Ndata;
 }Node;
 
 
@@ -41,7 +44,8 @@ typedef struct tag_Edge
 {
     Node *Src;
     Node *Dst;
-    
+
+    VOID *Edata;
 }Edge;
 
 
@@ -54,8 +58,20 @@ typedef struct tag_Graph
     List *NodeList;
     List *EdgeList;
 
+    DWORD NDBType;
+    DWORD EDBType;
+
     Node *Root;
    
 }Graph;
+
+
+Graph *CreateGraph (DWORD NDBType, DWORD EDBType);
+Node* AddNode (Graph *G, Node *N);
+Edge* AddEdge (Graph *G, Node *S, Node *D);
+
+typedef VOID (*ProcData) (Node *GN);
+VOID VisitAllNode (Graph *G, ProcData Pd);
+
 
 #endif 

@@ -18,7 +18,7 @@ static inline VOID* db_Malloc(ULONG ulMemSize)
 
 static inline DWORD db_PailNum(DWORD dwDataNum)
 {
-	DWORD dwPailNum = M_BASE_DATA_NUM+dwDataNum;
+	DWORD dwPailNum = dwDataNum<<3;
 	DWORD dwi;
 
 	while(1)
@@ -685,7 +685,7 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck)
 }
 
 
-DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwDataNum)
+DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen)
 {
 	DWORD dwAvgThrCap;
 	ULONG ulMemSize;
@@ -697,7 +697,7 @@ DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwD
     ptCurTable->dwDataType = dwDataType;
 	ptCurTable->dwDataLen  = dwDataLen;
 	ptCurTable->dwKeyLen   = dwKeyLen;
-    ptCurTable->dwMaxDataNum  = dwDataNum;
+    ptCurTable->dwMaxDataNum  = M_BASE_DATA_NUM;
 	
 	ptCurTable->dwCreateNum = 0;
 	ptCurTable->dwDeleteNum = 0;
@@ -707,7 +707,7 @@ DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen, DWORD dwD
 	mutex_lock_init(&ptCurTable->tIdleTableLock);
     mutex_lock_init(&ptCurTable->tBusyTableLock);
 
-	ptCurTable->dwPailNum  = db_PailNum(dwDataNum);
+	ptCurTable->dwPailNum  = db_PailNum(ptCurTable->dwMaxDataNum);
 	ptCurTable->ptHashPail = (HashPail*)db_Malloc(sizeof(HashPail)*ptCurTable->dwPailNum);
 	if(NULL == ptCurTable->ptHashPail)
 	{

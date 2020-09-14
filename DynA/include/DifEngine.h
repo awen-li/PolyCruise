@@ -13,7 +13,11 @@
 #define _DIFENGINE_H_
 
 
-VOID DifEngine (ULONG EventId, char *Msg);
+VOID InitDif ();
+VOID DeInitDif ();
+
+DWORD IsEventExist (ULONG Event);
+VOID DifEngine (ULONG Event, char *Msg);
 
 
 #endif // _DIFENGINE_H_

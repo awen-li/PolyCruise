@@ -22,15 +22,13 @@ static inline DWORD Align4 (DWORD V)
 
 static inline VarList *AllotVarList (char *Msg, DWORD NameLen, BYTE Type)
 {
-    VarList *VL = (VarList *)malloc (sizeof (VarList));
+    VarList *VL = (VarList *)malloc (sizeof (VarList) + Align4(NameLen+1));
     assert (VL != NULL);
     
     Variable *FE = &VL->Var;
-    FE->Name = (char *)malloc (Align4(NameLen));
-    assert (FE->Name != NULL);
-
+    FE->Name = (char *)(VL + 1);
+    
     FE->Type = Type;
-    FE->Name = (char*)(FE + 1);
     strncpy (FE->Name, Msg, NameLen);
 
     return VL;
@@ -197,10 +195,6 @@ static inline VOID DelList (VarList *VL)
     {
         Nxt = VL->Next;
         
-        Variable *V = &VL->Var;
-        free (V->Name);
-        V->Name = NULL;
-
         free (VL);
         VL = Nxt;
     }
@@ -216,4 +210,45 @@ void DelEventMsg (EventMsg *EM)
     return;
 }
 
+
+static inline void ViewList (VarList *L)
+{
+    while (L != NULL)
+    {
+        Variable *V = &L->Var;
+        printf ("%c %s", V->Type ,V->Name);
+
+        L = L->Next;
+        if (L != NULL)
+        {
+            printf (", ");
+        }
+    }
+    printf ("\r\n");
+
+    return;
+}
+
+void ViewEMsg (EventMsg *EM)
+{
+    printf ("EVENT: %lx\r\n", EM->EventId);
+
+    VarList *L = EM->Def;
+    if (L != NULL)
+    {
+        printf ("[Definition]:");
+        ViewList (L);
+    }
+
+    L = EM->Use;
+    if (L != NULL)
+    {
+        printf ("[Use]:");
+        ViewList (L);
+    }
+
+    printf ("\r\n");
+
+    return;    
+}
 
