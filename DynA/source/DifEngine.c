@@ -26,31 +26,36 @@ VOID InitDif ()
     Ret = DbCreateTable(DifGraph->NDBType, sizeof (Node)+sizeof (DifNode), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
-    Ret = DbCreateTable(DifGraph->EDBType, sizeof (Edge), sizeof (Edge));
+    Ret = DbCreateTable(DifGraph->EDBType, sizeof (Edge)+sizeof (DifEdge), sizeof (Edge));
     assert (Ret != R_FAIL);
 
-    DA->FuncHandle = DB_TYPE_DIF_FUNC;
-    Ret = DbCreateTable(DA->FuncHandle, FUNC_NAME_LEN, sizeof (ULONG));
+    DA->FDifHandle = DB_TYPE_DIF_FUNC;
+    Ret = DbCreateTable(DA->FDifHandle, sizeof(List), sizeof (ULONG));
     assert (Ret != R_FAIL);
+
+    //DA->DefHandle = DB_TYPE_DIF_DEF;
+    //Ret = DbCreateTable(DA->DefHandle, sizeof (DNLNode), FUNC_NAME_LEN));
+    //assert (Ret != R_FAIL);
 
     return;
 }
 
-static inline VOID AddCallFunc (EventMsg *EMsg)
+
+
+static inline VOID Insert2FDif (DWORD Handle, ULONG FID, Node *N)
 {
     DbReq Req;
     DbAck Ack;
 
-    Req.dwDataType = DifA.FuncHandle;
+    Req.dwDataType = Handle;
     Req.dwKeyLen   = sizeof (ULONG);
-    Req.pKeyCtx    = (BYTE*)(&EMsg->EventId);
+    Req.pKeyCtx    = (BYTE*)(&FID);
     
     DWORD Ret = CreateDataByKey (&Req, &Ack);
     assert (Ret == R_SUCCESS);
 
-    char *Name = (char *)(Ack.pDataAddr);
-    strncpy (Name, EMsg->Def->Var.Name, FUNC_NAME_LEN);
-    printf ("Insert function: %s \t\n", Name);
+    List *FDL = (List *)(Ack.pDataAddr);
+    ListInsert (FDL, N);
 
     return;
 }
@@ -72,9 +77,9 @@ VOID DeInitDif ()
     
     if (DA->DifGraph != NULL)
     {
-        VisitAllNode (DA->DifGraph, DelDifNode);
+        ListVisit (&DA->DifGraph->NodeList, (ProcData)DelDifNode);
         
-        free (DA->DifGraph);
+        DelGraph (DA->DifGraph);
         DA->DifGraph = NULL;
     }
 
@@ -106,7 +111,7 @@ DWORD IsEventExist (ULONG Event)
     return FALSE;
 }
 
-static inline DifNode* AddDifNode (ULONG Event)
+static inline Node* AddDifNode (ULONG Event)
 {
     DbReq Req;
     DbAck Ack;
@@ -126,25 +131,64 @@ static inline DifNode* AddDifNode (ULONG Event)
 
     AddNode (DifGraph, N);
 
-    return GN_2_DIFN (N);
+    return N;
+    //return GN_2_DIFN (N);
+}
+
+
+static inline Edge* AddDifEdge (Node *S, Node *D)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Graph *DifGraph = DifA.DifGraph;
+    assert (DifGraph != NULL);
+
+    Edge EC = {S, D, NULL};
+    Req.dwDataType = DifGraph->EDBType;
+    Req.dwKeyLen   = sizeof (Edge);
+    Req.pKeyCtx    = (BYTE*)(&EC);
+    
+    DWORD Ret = CreateDataByKey (&Req, &Ack);
+    assert (Ret == R_SUCCESS);
+
+    Edge *E = (Edge *)(Ack.pDataAddr);
+    E->Src = S;
+    E->Dst = D;
+    AddEdge(DifGraph, E);
+
+    return E;
+}
+
+
+
+static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
+{   
+
+
+    return;
 }
 
 VOID DifEngine (ULONG Event, char *Msg)
 {
+    Graph *DifGraph = DifA.DifGraph;
     printf ("[DIF]%lx: %s \r\n", Event, Msg);
 
     EventMsg *EMsg = DecodeEventMsg (Event, Msg);
     ViewEMsg (EMsg);
 
-    DifNode* DifN = AddDifNode (Event);
+    Node *N = AddDifNode (Event);
+    DifNode* DifN = GN_2_DIFN (N); 
     DifN->EMsg = EMsg;
 
+    InsertNode2Graph (DifGraph, N);
+    
     if (R_EID2IID(EMsg->EventId) != 0)
     {
     }
     else
     {
-        AddCallFunc (EMsg);       
+             
     }
     
 

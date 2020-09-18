@@ -103,7 +103,15 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
             EM->Use = VL;
         }
 
-        Pos += NameLen+2;
+        if (Type != VT_FUNCTION)
+        {
+            Pos += NameLen+2;
+        }
+        else
+        {
+            Pos += NameLen;
+        }
+        
         if (*Pos == MSG_DF)
         {
             IsDef = FALSE;

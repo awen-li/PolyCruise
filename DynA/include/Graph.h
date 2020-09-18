@@ -21,20 +21,14 @@
 #define _GRAPH_H_
 #include "Db.h"
 #include "EventMsg.h"
-
-typedef struct tag_List
-{
-    VOID *data;
-    struct tag_List *Next;
-}List;
-
+#include "List.h"
 
 typedef struct tag_Node 
 {
     ULONG EventID;
     
-    List *InEdge;
-    List *OutEdge;
+    List InEdge;
+    List OutEdge;
 
     VOID *Ndata;
 }Node;
@@ -52,11 +46,8 @@ typedef struct tag_Edge
 
 typedef struct tag_Graph 
 {
-    DWORD NodeNum;
-    DWORD EdgeNum;
-
-    List *NodeList;
-    List *EdgeList;
+    List NodeList;
+    List EdgeList;
 
     DWORD NDBType;
     DWORD EDBType;
@@ -67,11 +58,13 @@ typedef struct tag_Graph
 
 
 Graph *CreateGraph (DWORD NDBType, DWORD EDBType);
-Node* AddNode (Graph *G, Node *N);
-Edge* AddEdge (Graph *G, Node *S, Node *D);
+VOID AddNode (Graph *G, Node *N);
+VOID AddEdge (Graph *G, Edge* E);
+VOID DelGraph (Graph *G);
 
-typedef VOID (*ProcData) (Node *GN);
-VOID VisitAllNode (Graph *G, ProcData Pd);
+
+
+
 
 
 #endif 
