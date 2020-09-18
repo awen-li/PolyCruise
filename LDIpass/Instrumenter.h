@@ -262,7 +262,7 @@ private:
             assert (N == 1);
             Flda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
 
-            printf ("Load Function: %s\r\n", Fdb.FuncName);
+            printf ("Load Function: %s, FID = %u\r\n", Fdb.FuncName, Fdb.FuncId);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
             {
                 unsigned long Id = 0;
@@ -456,6 +456,12 @@ private:
         }
         else if (LI.IsCall ())
         {
+            string Callee = LI.GetCallName ();
+            if (Callee != "")
+            {
+                Format += Callee + ",";
+            }
+            
             Fd->SetEventType (InstId, EVENT_CALL);
             CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
@@ -628,16 +634,19 @@ private:
         return;
     }
 
-    inline Instruction *GetTermInstofFunction(Function *Func) 
+    inline void GetTermInstofFunction(Function *Func) 
     {
         BasicBlock &termbBlock = Func->back();
         Instruction *retInst   = termbBlock.getTerminator();
 
-        assert((isa<ReturnInst>(retInst) ||
-                isa<UnreachableInst>(retInst)) &&
-               "Last instruction is not return or exit() instruction");
-            
-        return retInst;
+        if (!isa<ReturnInst>(retInst) &&
+            !isa<UnreachableInst>(retInst))
+        {
+            return;
+        }
+
+        m_ExitInsts.insert(retInst);
+        return;
     }
 
     void GetProgramExitInsts(Instruction *Inst) 
@@ -673,7 +682,7 @@ private:
         BasicBlock *entryBlock = &mainFunc->front();
         CallInst::Create(m_InitFunc, "", entryBlock->getFirstNonPHI());
 
-        m_ExitInsts.insert(GetTermInstofFunction(mainFunc));
+        GetTermInstofFunction(mainFunc);
         for (auto it = m_ExitInsts.begin(); it != m_ExitInsts.end(); ++it) 
         {
             Instruction *Inst = *it;

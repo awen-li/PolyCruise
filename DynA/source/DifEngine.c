@@ -6,25 +6,51 @@
    <1> 9/9/2020 , create
 ************************************************************/
 #include "MacroDef.h"
-#include "Graph.h"
 #include "DifGraph.h"
 
-static Graph *DifGraph;
+static DifAgent DifA;
 
 VOID InitDif ()
 {
-    if (DifGraph == NULL)
+    DifAgent *DA = &DifA;
+    
+    if (DA->DifGraph == NULL)
     {
-        DifGraph = CreateGraph (DB_TYPE_DIF_NODE, DB_TYPE_DIF_EDGE);
-        assert (DifGraph != NULL);
+        DA->DifGraph = CreateGraph (DB_TYPE_DIF_NODE, DB_TYPE_DIF_EDGE);
+        assert (DA->DifGraph != NULL);
     }
 
     DWORD Ret;
+    Graph *DifGraph = DA->DifGraph;
+    
     Ret = DbCreateTable(DifGraph->NDBType, sizeof (Node)+sizeof (DifNode), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
     Ret = DbCreateTable(DifGraph->EDBType, sizeof (Edge), sizeof (Edge));
     assert (Ret != R_FAIL);
+
+    DA->FuncHandle = DB_TYPE_DIF_FUNC;
+    Ret = DbCreateTable(DA->FuncHandle, FUNC_NAME_LEN, sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    return;
+}
+
+static inline VOID AddCallFunc (EventMsg *EMsg)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.FuncHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    Req.pKeyCtx    = (BYTE*)(&EMsg->EventId);
+    
+    DWORD Ret = CreateDataByKey (&Req, &Ack);
+    assert (Ret == R_SUCCESS);
+
+    char *Name = (char *)(Ack.pDataAddr);
+    strncpy (Name, EMsg->Def->Var.Name, FUNC_NAME_LEN);
+    printf ("Insert function: %s \t\n", Name);
 
     return;
 }
@@ -42,12 +68,14 @@ static inline VOID DelDifNode (Node *GN)
 
 VOID DeInitDif ()
 {
-    if (DifGraph != NULL)
+    DifAgent *DA = &DifA;
+    
+    if (DA->DifGraph != NULL)
     {
-        VisitAllNode (DifGraph, DelDifNode);
+        VisitAllNode (DA->DifGraph, DelDifNode);
         
-        free (DifGraph);
-        DifGraph = NULL;
+        free (DA->DifGraph);
+        DA->DifGraph = NULL;
     }
 
     DelDb ();
@@ -60,6 +88,9 @@ DWORD IsEventExist (ULONG Event)
 {
     DbReq Req;
     DbAck Ack;
+
+    Graph *DifGraph = DifA.DifGraph;
+    assert (DifGraph != NULL);
 
     Req.dwDataType = DifGraph->NDBType;
     Req.dwKeyLen   = sizeof (ULONG);
@@ -79,6 +110,9 @@ static inline DifNode* AddDifNode (ULONG Event)
 {
     DbReq Req;
     DbAck Ack;
+
+    Graph *DifGraph = DifA.DifGraph;
+    assert (DifGraph != NULL);
 
     Req.dwDataType = DifGraph->NDBType;
     Req.dwKeyLen   = sizeof (ULONG);
@@ -104,6 +138,14 @@ VOID DifEngine (ULONG Event, char *Msg)
 
     DifNode* DifN = AddDifNode (Event);
     DifN->EMsg = EMsg;
+
+    if (R_EID2IID(EMsg->EventId) != 0)
+    {
+    }
+    else
+    {
+        AddCallFunc (EMsg);       
+    }
     
 
     return;

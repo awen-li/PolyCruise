@@ -52,7 +52,8 @@ static inline DWORD GetVarName (char *Msg)
 {
     char *Pos = Msg;
 
-    while (*Pos != MSG_VT)
+    while (*Pos != MSG_VT && 
+           *Pos != MSG_MT)
     {
         Pos++;
     }
@@ -63,10 +64,15 @@ static inline DWORD GetVarName (char *Msg)
 static inline BYTE GetVarType (char *Msg)
 {
     char *Pos = Msg;    
-    assert (*Pos == MSG_VT);
-        
-    Pos++;
-    return (BYTE)(*Pos);
+    if (*Pos == MSG_VT)
+    {
+        Pos++;
+        return (BYTE)(*Pos);
+    }
+    else
+    {
+        return VT_FUNCTION;
+    }  
 }
 
 
@@ -74,7 +80,7 @@ static inline BYTE GetVarType (char *Msg)
 static inline VOID DeEvent (EventMsg *EM, char *Msg)
 {
     char *Pos = Msg;
-    DWORD IsDef = TRUE;
+    DWORD IsDef = (DWORD)(strchr (Msg, '=') != NULL);
 
     while (*Pos != MSG_END && 
            *Pos != 0)

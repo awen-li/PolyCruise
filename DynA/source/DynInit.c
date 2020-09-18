@@ -20,11 +20,14 @@ void *EventProcess (void* Arg)
             sleep (1);
             continue;
         }
-
-        //DEBUG ("Queue: [%lx]%s\r\n", Node->EventId, Node->QBuf);
+        
         if (IsEventExist (QN->EventId) == FALSE)
         {
             DifEngine (QN->EventId, QN->QBuf);
+        }
+        else
+        {
+            //DEBUG ("Repeated: [%lx]%s QS=%u\r\n", QN->EventId, QN->QBuf, QueueSize ());
         }
         
         OutQueue ();
@@ -53,7 +56,7 @@ void TRC_init ()
 
 void TRC_exit ()
 {
-    while (!IsQueueEmpty ())
+    while (QueueSize ())
     {
         sleep (1);
     }

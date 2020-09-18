@@ -45,6 +45,11 @@ QNode* InQueue ()
     {
         Node = Q->NodeList + Q->Tindex++;
         Node->Flag = FALSE;
+
+        if (Q->Tindex >= Q->NodeNum)
+        {
+            Q->Tindex = 0;
+        }
     }
     mutex_unlock(&Q->InLock);
     
@@ -55,7 +60,7 @@ QNode* FrontQueue ()
 {
     Queue* Q = &g_Queue;
     
-    if ((Q->Hindex+1)%Q->NodeNum == Q->Tindex)
+    if (Q->Hindex == Q->Tindex)
     {
         return NULL;
     }
@@ -70,16 +75,20 @@ void OutQueue ()
     Queue* Q = &g_Queue;
     
     Q->Hindex++;
+    if (Q->Hindex >= Q->NodeNum)
+    {
+        Q->Hindex = 0;
+    }
 
     return;
 }
 
 
-DWORD IsQueueEmpty ()
+DWORD QueueSize ()
 {
     Queue* Q = &g_Queue;
-    
-    return (DWORD)((Q->Hindex+1)%Q->NodeNum == Q->Tindex);
+
+    return (Q->Tindex - Q->Hindex);
 }
 
 VOID DelQueue ()

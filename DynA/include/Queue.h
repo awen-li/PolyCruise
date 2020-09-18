@@ -35,7 +35,7 @@ void InitQueue (unsigned QueueNum);
 QNode* InQueue ();
 QNode* FrontQueue ();
 void OutQueue ();
-DWORD IsQueueEmpty ();
+DWORD QueueSize ();
 VOID DelQueue ();
 
 #endif 

@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/InstIterator.h"
+#include "common/WorkList.h"
 #include "Source.h"
 #include "ExternalLib.h"
 #include "StField.h"
@@ -86,6 +87,12 @@ public:
     inline char* GetName ()
     {
         return (char*)m_CurFunc->getName ().data();
+    }
+
+    
+    inline unsigned GetFID ()
+    {
+        return m_FuncId;
     }
 
     inline unsigned long GetInstID (Instruction *Inst)
@@ -199,6 +206,8 @@ private:
 
     StField *m_Sf;
 
+    ComQueue<Function*> m_EntryFQ;
+
 public:
     
     Lda(ModuleManage *Ms, Source *S, StField *Sf)
@@ -246,6 +255,19 @@ public:
     }
     
 private:
+    inline bool IsEntryFunc (Function *Callee)
+    {
+        if (Callee == NULL)
+        {
+            return false;
+        }
+        if (strcmp (Callee->getName().data(), "pthread_create") == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     inline Flda* GetFlda (Function *Func)
     {
@@ -435,11 +457,29 @@ private:
         return;
     }
 
+
+    inline void GetEntryFunction (Instruction *CallInst)
+    {
+        Value *Ef = CallInst->getOperand (2);
+        assert (llvm::isa<llvm::Function>(Ef));
+        //errs()<<"Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<"\r\n";
+
+        m_EntryFQ.InQueue ((Function*)Ef);
+        
+        return;
+    }
+
     inline void ProcessCall (LLVMInst *LI, CSTaint *Cst, set<Value*> *LexSet)
     {
         Function *Callee = LI->GetCallee();
+        if (IsEntryFunc (Callee))
+        {
+            GetEntryFunction (LI->GetInst ());
+            return;
+        }
+        
         if  (Callee != NULL)
-        {   
+        {  
             ExeFunction (LI, Callee, Cst, LexSet);
             Cst->m_Callees.insert(Callee);
         }
@@ -569,11 +609,18 @@ private:
     }
 
     inline void Compute ()
-    {       
+    {      
         Function *Entry = m_Ms->GetEntryFunction ();
         assert (Entry != NULL);
 
-        ComputeFlda (Entry, TAINT_NONE);
+        m_EntryFQ.InQueue (Entry);
+        while (!m_EntryFQ.IsEmpty ())
+        {
+            Entry = m_EntryFQ.OutQueue ();
+            errs()<<"=====================> Process Entery Function: "<<Entry->getName ()<<" <====================\r\n";         
+            
+            ComputeFlda (Entry, TAINT_NONE);
+        }     
     }
 
 
@@ -605,14 +652,13 @@ private:
         printf ("FldaNum = %u \r\n", Lb.FuncNum);
         fwrite (&Lb, sizeof(Lb), 1, Bf);
 
-        unsigned FuncId = 1;
-        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++, FuncId++)
+        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
         {
             Flda *Fd = &(It->second);
             
             FldaBin Fdb = {0};
             strcpy (Fdb.FuncName, Fd->GetName());
-            Fdb.FuncId       = FuncId;
+            Fdb.FuncId       = Fd->GetFID ();
             Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
