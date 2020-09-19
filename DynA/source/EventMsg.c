@@ -20,18 +20,16 @@ static inline DWORD Align4 (DWORD V)
     }
 }
 
-static inline VarList *AllotVarList (char *Msg, DWORD NameLen, BYTE Type)
+static inline Variable *AllotVariable (char *Msg, DWORD NameLen, BYTE Type)
 {
-    VarList *VL = (VarList *)malloc (sizeof (VarList) + Align4(NameLen+1));
-    assert (VL != NULL);
+    Variable *V = (Variable *)malloc (sizeof (Variable) + Align4(NameLen+1));
+    assert (V != NULL);
     
-    Variable *FE = &VL->Var;
-    FE->Name = (char *)(VL + 1);
-    
-    FE->Type = Type;
-    strncpy (FE->Name, Msg, NameLen);
+    V->Type = Type;
+    V->Name = (char*) (V + 1);
+    strncpy (V->Name, Msg, NameLen);
 
-    return VL;
+    return V;
 }
 
 /* {main} */
@@ -40,10 +38,8 @@ static inline VOID DeFEvent (EventMsg *EM, char *Msg)
     DWORD Len = strlen (Msg);
     assert (Len > 2);
 
-    VarList *VL = AllotVarList (Msg, Len-1, VT_FUNCTION);
-
-    EM->Use = NULL;
-    EM->Def = VL;
+    Variable *V = AllotVariable (Msg, Len-1, VT_FUNCTION);
+    ListInsert (&EM->Def, V);
 
     return;    
 }
@@ -91,16 +87,14 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
         BYTE Type = GetVarType (Pos+NameLen);
         assert (Type != 0);
 
-        VarList *VL = AllotVarList (Pos, NameLen, Type);
+        Variable *V = AllotVariable (Pos, NameLen, Type);
         if (IsDef)
         {
-            VL->Next = EM->Def;
-            EM->Def = VL;
+            ListInsert (&EM->Def, V);
         }
         else
         {
-            VL->Next = EM->Use;
-            EM->Use = VL;
+            ListInsert (&EM->Use, V);
         }
 
         if (Type != VT_FUNCTION)
@@ -143,10 +137,8 @@ static inline VOID DeRETEvent (EventMsg *EM, char *Msg)
         BYTE Type = GetVarType (Pos+NameLen);
         assert (Type != 0);
 
-        VarList *VL = AllotVarList (Pos, NameLen, Type);
-        
-        VL->Next = EM->Use;
-        EM->Use = VL;
+        Variable *V = AllotVariable (Pos, NameLen, Type);       
+        ListInsert (&EM->Use, V);
 
         Pos += NameLen+2;
         Pos++;
@@ -155,18 +147,11 @@ static inline VOID DeRETEvent (EventMsg *EM, char *Msg)
     return;        
 }
 
-EventMsg *DecodeEventMsg (ULONG EventId, char *Msg)
+VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
 {
     assert (Msg[0] == MSG_BEGIN);
     Msg++;
     
-    EventMsg *EM = (EventMsg *)malloc (sizeof (EventMsg));
-    assert (EM != NULL);
-
-    EM->EventId = EventId;
-    EM->Def     = NULL;
-    EM->Use     = NULL;
-
     BYTE EventType = R_EID2ETY(EventId);
     switch (EventType)
     {
@@ -197,71 +182,45 @@ EventMsg *DecodeEventMsg (ULONG EventId, char *Msg)
         }
     }
 
-    return EM;
-}
-
-
-static inline VOID DelList (VarList *VL)
-{
-    VarList *Nxt;
-
-    while (VL != NULL)
-    {
-        Nxt = VL->Next;
-        
-        free (VL);
-        VL = Nxt;
-    }
-
     return;
 }
 
+
+VOID DelVar (VOID *Data)
+{
+    Variable *V = (Variable *)Data;
+
+    free (V);
+    return;
+}
+
+
 void DelEventMsg (EventMsg *EM)
 {
-    DelList (EM->Def);
-    DelList (EM->Use);
+    ListDel (&EM->Def, DelVar);
+    ListDel (&EM->Use, DelVar);
     
     return;
 }
 
 
-static inline void ViewList (VarList *L)
+static inline void ViewVar (VOID *Data)
 {
-    while (L != NULL)
-    {
-        Variable *V = &L->Var;
-        printf ("%c %s", V->Type ,V->Name);
-
-        L = L->Next;
-        if (L != NULL)
-        {
-            printf (", ");
-        }
-    }
-    printf ("\r\n");
+    Variable *V = (Variable *)Data;
+    printf ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
 
     return;
 }
 
 void ViewEMsg (EventMsg *EM)
 {
-    printf ("EVENT: %lx\r\n", EM->EventId);
-
-    VarList *L = EM->Def;
-    if (L != NULL)
-    {
-        printf ("[Definition]:");
-        ViewList (L);
-    }
-
-    L = EM->Use;
-    if (L != NULL)
-    {
-        printf ("[Use]:");
-        ViewList (L);
-    }
-
+    printf ("[Definition]:");
+    ListVisit (&EM->Def, ViewVar);
     printf ("\r\n");
+
+    printf ("[Use]:");
+    ListVisit (&EM->Use, ViewVar);
+    printf ("\r\n\r\n");
 
     return;    
 }

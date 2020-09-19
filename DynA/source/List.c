@@ -15,6 +15,7 @@ VOID ListInsert (List *L, VOID *N)
 
     LN->Data = N;
     LN->Nxt  = NULL;
+    LN->Pre  = NULL;
     
     if (L->Header == NULL)
     {
@@ -23,7 +24,9 @@ VOID ListInsert (List *L, VOID *N)
     }
     else
     {
-        L->Tail->Nxt = LN; 
+        L->Tail->Nxt = LN;
+        LN->Pre = L->Tail;
+        
         L->Tail = LN;
     }
 

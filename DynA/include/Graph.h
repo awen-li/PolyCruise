@@ -25,12 +25,9 @@
 
 typedef struct tag_Node 
 {
-    ULONG EventID;
-    
+    DWORD Id;
     List InEdge;
     List OutEdge;
-
-    VOID *Ndata;
 }Node;
 
 
@@ -38,8 +35,6 @@ typedef struct tag_Edge
 {
     Node *Src;
     Node *Dst;
-
-    VOID *Edata;
 }Edge;
 
 
@@ -61,10 +56,6 @@ Graph *CreateGraph (DWORD NDBType, DWORD EDBType);
 VOID AddNode (Graph *G, Node *N);
 VOID AddEdge (Graph *G, Edge* E);
 VOID DelGraph (Graph *G);
-
-
-
-
-
+Node *GetLastNode (Graph *G);
 
 #endif 

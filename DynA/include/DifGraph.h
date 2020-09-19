@@ -16,14 +16,14 @@
 
 enum 
 {
-    EDGE_CG = 1,
-    EDGE_CF,
+    EDGE_CF = 1,
     EDGE_DIF
 };
 
 typedef struct tag_DifNode
 {
-    EventMsg *EMsg;
+    ULONG EventId;
+    EventMsg EMsg;
 }DifNode;
 
 typedef struct tag_DifEdge
@@ -43,6 +43,10 @@ typedef struct tag_DifAgent
 
 #define DIFN_2_GN(DIFN)    (Node*)((BYTE*)DIFN - sizeof(Node))
 #define GN_2_DIFN(GN)      (DifNode*)(GN + 1)
+
+#define DIFE_2_GE(DIFE)    (Node*)((BYTE*)DIFE - sizeof(Edge))
+#define GE_2_DIFE(GE)      (DifEdge*)(GE + 1)
+
 #define FUNC_NAME_LEN      (64)
 #define VAR_NAME_LEN       (32)
 

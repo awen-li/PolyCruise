@@ -21,30 +21,24 @@
 #define _EVENTMSG_H_
 #include "MacroDef.h"
 #include "Event.h"
+#include "List.h"
 
 typedef struct tag_Variable
 {
     BYTE Type;
     char *Name;
+    ULONG Addr;
 }Variable;
-
-typedef struct tag_VarList
-{
-    Variable Var;
-    struct tag_VarList *Next;
-}VarList;
 
 
 typedef struct tag_EventMsg
 {
-    ULONG EventId;
-
-    VarList *Def;
-    VarList *Use;  
+    List Def;
+    List Use;  
 }EventMsg;
 
 
-EventMsg *DecodeEventMsg (ULONG EventId, char *Msg);
+VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg);
 void DelEventMsg (EventMsg *EM);
 void ViewEMsg (EventMsg *EM);
 

@@ -14,6 +14,7 @@ typedef struct tag_LNode
 {
     VOID *Data;
 	struct tag_LNode *Nxt;
+    struct tag_LNode *Pre;
 }LNode;
 
 typedef struct tag_List

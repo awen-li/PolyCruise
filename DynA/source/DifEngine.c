@@ -10,6 +10,13 @@
 
 static DifAgent DifA;
 
+Graph *GetDIFG ()
+{
+    DifAgent *DA = &DifA;
+
+    return DA->DifGraph;    
+}
+
 VOID InitDif ()
 {
     DifAgent *DA = &DifA;
@@ -41,8 +48,27 @@ VOID InitDif ()
 }
 
 
+static inline List* GetFDifG (DWORD Handle, ULONG FID)
+{
+    DbReq Req;
+    DbAck Ack;
 
-static inline VOID Insert2FDif (DWORD Handle, ULONG FID, Node *N)
+    Req.dwDataType = Handle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    Req.pKeyCtx    = (BYTE*)(&FID);
+    
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        return NULL;
+    }
+
+    return (List *)(Ack.pDataAddr);
+}
+
+
+
+static inline List* CreateFDifG (DWORD Handle, ULONG FID)
 {
     DbReq Req;
     DbAck Ack;
@@ -54,19 +80,16 @@ static inline VOID Insert2FDif (DWORD Handle, ULONG FID, Node *N)
     DWORD Ret = CreateDataByKey (&Req, &Ack);
     assert (Ret == R_SUCCESS);
 
-    List *FDL = (List *)(Ack.pDataAddr);
-    ListInsert (FDL, N);
-
-    return;
+    return (List *)(Ack.pDataAddr);
 }
 
 static inline VOID DelDifNode (Node *GN)
 {
     DifNode* DifN = GN_2_DIFN (GN);
 
-    DelEventMsg (DifN->EMsg);
-    DifN->EMsg = NULL;
+    DelEventMsg (&DifN->EMsg);
 
+    memset (DifN, 0, sizeof (DifNode));
     return;        
 }
 
@@ -126,13 +149,10 @@ static inline Node* AddDifNode (ULONG Event)
     DWORD Ret = CreateDataByKey (&Req, &Ack);
     assert (Ret == R_SUCCESS);
 
-    Node *N    = (Node *)(Ack.pDataAddr);
-    N->EventID = Event;
-
-    AddNode (DifGraph, N);
+    Node *N = (Node *)(Ack.pDataAddr);
+    N->Id   = Ack.dwDataId;
 
     return N;
-    //return GN_2_DIFN (N);
 }
 
 
@@ -144,7 +164,7 @@ static inline Edge* AddDifEdge (Node *S, Node *D)
     Graph *DifGraph = DifA.DifGraph;
     assert (DifGraph != NULL);
 
-    Edge EC = {S, D, NULL};
+    Edge EC = {S, D};
     Req.dwDataType = DifGraph->EDBType;
     Req.dwKeyLen   = sizeof (Edge);
     Req.pKeyCtx    = (BYTE*)(&EC);
@@ -161,10 +181,107 @@ static inline Edge* AddDifEdge (Node *S, Node *D)
 }
 
 
+static inline DWORD IsNodeDD (DifNode *DN, EventMsg * Emsg)
+{
+    LNode *Def = DN->EMsg.Def.Header;
+    while (Def != NULL)
+    {
+        Variable *DV = (Variable *)Def->Data;
+        assert (DV != NULL);
+
+        if (DV->Type == VT_FUNCTION)
+        {
+            Def = Def->Nxt;
+            continue;
+        }
+
+        printf ("===>Definition: %s \r\n", DV->Name);
+        
+        LNode *Use = Emsg->Use.Header;
+        while (Use != NULL)
+        {
+            Variable *UV = (Variable *)Use->Data;
+            assert (UV != NULL);
+
+            printf ("===>Use: %s \r\n", UV->Name);
+            if (strcmp (UV->Name, DV->Name) == 0 /*|| UV->Addr == DV->Addr */ )
+            {
+                return TRUE;
+            }
+            
+            Use = Use->Nxt;
+        }
+
+        Def = Def->Nxt;
+        
+    }
+    
+    return FALSE;
+}
+
+
+static inline VOID SetEdgeType (Edge* E, DWORD EType)
+{
+    DifEdge *DE = GE_2_DIFE (E);
+    DE->EdgeType = EType;
+
+    return;
+}
+
 
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
-{   
+{
+    DifNode* DifN = GN_2_DIFN (N);
+    DWORD FID = R_EID2FID (DifN->EventId);
+    
+    List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, FID);
+    if (FDifG == NULL)
+    {
+        assert (R_EID2IID (DifN->EventId) == 0);
+        FDifG = CreateFDifG (DB_TYPE_DIF_FUNC, FID);
 
+        Node *LN = GetLastNode (DifGraph);
+        if (LN != NULL)
+        {
+            Edge* E = AddDifEdge (LN, N);
+            SetEdgeType (E, EDGE_CF);
+        }
+    }
+    else
+    {
+        EventMsg *CurMsg = &DifN->EMsg;
+            
+        LNode *LN = FDifG->Tail;
+        DWORD ExistDD = FALSE;
+        while (LN != NULL)
+        {
+            Node *TempN = (Node *)LN->Data;
+
+            ExistDD = IsNodeDD (GN_2_DIFN (TempN), CurMsg);
+            if (ExistDD == TRUE)
+            {
+                break;
+            }
+
+            LN = LN->Pre;        
+        }
+
+        if (ExistDD == TRUE)
+        {
+            Edge* E = AddDifEdge ((Node *)LN->Data, N);
+            SetEdgeType (E, EDGE_DIF);
+        }
+        else
+        {
+            LNode *LnHdr = FDifG->Header;
+            
+            Edge* E = AddDifEdge ((Node *)LnHdr->Data, N);
+            SetEdgeType (E, EDGE_CF);
+        }
+    }
+  
+    ListInsert (FDifG, N);
+    AddNode (DifGraph, N);
 
     return;
 }
@@ -174,24 +291,15 @@ VOID DifEngine (ULONG Event, char *Msg)
     Graph *DifGraph = DifA.DifGraph;
     printf ("[DIF]%lx: %s \r\n", Event, Msg);
 
-    EventMsg *EMsg = DecodeEventMsg (Event, Msg);
-    ViewEMsg (EMsg);
-
     Node *N = AddDifNode (Event);
-    DifNode* DifN = GN_2_DIFN (N); 
-    DifN->EMsg = EMsg;
+    DifNode* DifN = GN_2_DIFN (N);
+    DifN->EventId = Event;
+
+    DecodeEventMsg (&DifN->EMsg, Event, Msg);
+    ViewEMsg (&DifN->EMsg);
 
     InsertNode2Graph (DifGraph, N);
     
-    if (R_EID2IID(EMsg->EventId) != 0)
-    {
-    }
-    else
-    {
-             
-    }
-    
-
     return;
 }
 

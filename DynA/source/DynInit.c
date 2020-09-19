@@ -9,6 +9,7 @@
 #include "Graph.h"
 #include "DifEngine.h"
 #include "Event.h"
+#include "GraphViz.h"
 
 void *EventProcess (void* Arg)
 {
@@ -64,6 +65,7 @@ void TRC_exit ()
     sleep (1);
     DEBUG ("TRC_deinit exit!\r\n");
 
+    WiteGraph ("DIFG", GetDIFG ());
     DelQueue ();
     DeInitDif ();
 

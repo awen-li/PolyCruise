@@ -12,7 +12,7 @@
 #ifndef _DIFENGINE_H_
 #define _DIFENGINE_H_
 
-
+Graph *GetDIFG ();
 VOID InitDif ();
 VOID DeInitDif ();
 

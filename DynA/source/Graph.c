@@ -87,3 +87,15 @@ VOID AddEdge (Graph *G, Edge* E)
 }
 
 
+Node *GetLastNode (Graph *G)
+{
+    LNode *Tail = G->NodeList.Tail;
+    if (Tail == NULL)
+    {
+        return NULL;
+    }
+    
+    return (Node *)Tail->Data;
+}
+
+
