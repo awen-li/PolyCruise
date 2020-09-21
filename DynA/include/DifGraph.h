@@ -16,8 +16,10 @@
 
 enum 
 {
-    EDGE_CF = 1,
-    EDGE_DIF
+    EDGE_CALL = 1,
+    EDGE_RET  = 2,
+    EDGE_CF   = 4,
+    EDGE_DIF  = 8
 };
 
 typedef struct tag_DifNode

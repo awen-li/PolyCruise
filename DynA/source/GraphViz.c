@@ -22,6 +22,9 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
     DifNode *DN  = GN_2_DIFN (N);
     EventMsg *EM = &DN->EMsg;
 
+    DWORD FID = R_EID2FID (DN->EventId);
+    sprintf (Buffer, "F%u: ", FID);
+
     LNode *Def = EM->Def.Header;
     while (Def != NULL)
     {
@@ -73,26 +76,67 @@ static inline char* GetNodeAttributes(char *Buffer, Node *N)
     return Buffer;
 }
 
-static inline char* GetEdgeLabel(char *Buffer, Edge *E) 
+static inline char* GetEdgeLabel(char *Buffer, DWORD EdgeType) 
 {
-    DifEdge *DE  = GE_2_DIFE (E);
-    
-    sprintf (Buffer, "%u", DE->EdgeType);
+    switch (EdgeType)
+    {
+        case EDGE_CALL:
+        {
+            strcat (Buffer, "CALL");
+            break;
+        }
+        case EDGE_RET:
+        {
+            strcat (Buffer, "RET");
+            break;
+        }
+        case EDGE_CF:
+        {
+            strcat (Buffer, "CF");
+            break;
+        }
+        case EDGE_DIF:
+        {
+            strcat (Buffer, "DIF");
+            break;
+        }
+        default:
+        {
+            assert (0);
+        }            
+    }
 
     return Buffer;
 }
 
-static inline char* GetEdgeAttributes(char *Buffer, Edge *E) 
+static inline char* GetEdgeAttributes(char *Buffer, DWORD EdgeType) 
 {
-    DifEdge *DE  = GE_2_DIFE (E);
-
-    if (DE->EdgeType == EDGE_CF)
+    switch (EdgeType)
     {
-        strcat (Buffer, "color=black");
-    }
-    else
-    {
-        strcat (Buffer, "color=red");
+        case EDGE_CALL:
+        {
+            strcat (Buffer, "color=green");
+            break;
+        }
+        case EDGE_RET:
+        {
+            strcat (Buffer, "color=yellow");
+            break;
+        }
+        case EDGE_CF:
+        {
+            strcat (Buffer, "color=black");
+            break;
+        }
+        case EDGE_DIF:
+        {
+            strcat (Buffer, "color=red");
+            break;
+        }
+        default:
+        {
+            assert (0);
+        }            
     }
     
     return Buffer;
@@ -113,14 +157,33 @@ static inline VOID WriteNodes(FILE *F, Node *N)
 
 static inline VOID WriteEdge(FILE *F, Edge *E) 
 {
+    DifEdge *DE  = GE_2_DIFE (E);
+    
     DWORD SrcId = E->Src->Id;
     DWORD DstId = E->Dst->Id;
 
-    char Buffer1[256] = {0};
-    char Buffer2[256] = {0};
+    char Buffer1[256];
+    char Buffer2[256];
 
-    fprintf(F, "\tN%u -> N%u[%s,label=\"{%s}\"]\n", 
-            SrcId, DstId, GetEdgeAttributes (Buffer1, E), GetEdgeLabel(Buffer2, E));
+    DWORD Bit = 0;
+    DWORD EdgeType = DE->EdgeType;
+    while (EdgeType != 0)
+    {
+        if (EdgeType & 1)
+        {
+            memset (Buffer1, 0, sizeof (Buffer1));
+            memset (Buffer2, 0, sizeof (Buffer2));
+        
+            fprintf(F, "\tN%u -> N%u[%s,label=\"{%s}\"]\n", 
+                    SrcId, DstId, GetEdgeAttributes (Buffer1, 1<<Bit), GetEdgeLabel(Buffer2, 1<<Bit));
+            
+        }
+
+        EdgeType = EdgeType>>1;
+        Bit++;
+    }
+
+    
     return; 
  
 }
