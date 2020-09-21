@@ -316,7 +316,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
             SetEdgeType (E, EDGE_DIF);
 
             DifNode* LastDifN = GN_2_DIFN (LastGNode);
-            ViewEMsg (&LastDifN->EMsg);
+            //ViewEMsg (&LastDifN->EMsg);
             if (R_EID2FID (LastDifN->EventId) != R_EID2FID (DifN->EventId))
             {
                 AddRetEdge (LastGNode, N);

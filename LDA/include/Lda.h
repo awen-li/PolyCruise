@@ -644,12 +644,14 @@ private:
     inline void Dump ()
     {
         FILE *Bf = fopen ("LdaBin.bin", "wb");
+        FILE *BfTxt = fopen ("LdaBin.txt", "wb");
         assert (Bf != NULL);
+        assert (BfTxt != NULL);
 
         LdaBin Lb;
         Lb.Version = 1;
         Lb.FuncNum = m_Func2Flda.size();
-        printf ("FldaNum = %u \r\n", Lb.FuncNum);
+        fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
         fwrite (&Lb, sizeof(Lb), 1, Bf);
 
         for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
@@ -662,6 +664,8 @@ private:
             Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
+            fprintf (BfTxt, "Function[%u, %s]: TaintInstNum:%u \r\n", 
+                     Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
 
             unsigned long *IID = new unsigned long [Fdb.TaintInstNum];
             assert (IID != NULL);
@@ -689,11 +693,14 @@ private:
                     char CalleeName[F_NAME_LEN] = {0};
                     strcpy (CalleeName, (*Fit)->getName().data());
                     fwrite (CalleeName, sizeof(CalleeName), 1, Bf);
+                    fprintf (BfTxt, "\tCall %s: TaintBits[in, out]=[%x, %x] \r\n", 
+                             CalleeName, Cst->m_InTaintBits, Cst->m_OutTaintBits);
                 }
             }
         }
 
         fclose (Bf);
+        fclose (BfTxt);
     }  
 };
 

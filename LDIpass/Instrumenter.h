@@ -169,8 +169,6 @@ private:
 
     map <string, Flda> m_Fname2Flda;
 
-    map<StringRef, Value*> m_GlobalPtrMap;
-
     map <Value*, unsigned> m_Value2Id;
 
     set<Instruction *> m_ExitInsts;
@@ -199,21 +197,6 @@ public:
     }
     
 private:
-
-    Value* GetGlobalPtr(StringRef strRef, IRBuilder<> *IRB)
-    {
-        auto It = m_GlobalPtrMap.find(strRef);
-        if(It != m_GlobalPtrMap.end())
-        {
-            return It->second;
-        }
-        else
-        {
-            Value* VStr = IRB->CreateGlobalStringPtr(strRef);
-            m_GlobalPtrMap[strRef] = VStr;
-            return VStr;
-        }
-  }
 
     inline Flda* GetFlda (string Fname)
     {
@@ -430,8 +413,7 @@ private:
 
         return 0;
     }
-
-    
+   
 
     inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, 
                                   string &Format, Value **ArgBuf, unsigned *ArgNum)
@@ -466,15 +448,51 @@ private:
             CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
             {
-                unsigned Outbits = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
-                unsigned OutArg  =  GetArgNo(Outbits);
-                if (OutArg != 0)
+                unsigned OutArg = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
+
+                printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
+                        Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);
+
+                // ret tatinted
+                if (OutArg & (1<<31))
                 {
-                    Def = LI.GetUse (OutArg-1);
-                    assert (Def != NULL);
-                        
+                    Def = LI.GetDef ();
                     ArgBuf [ArgIndex++] = Def;            
-                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def);
+                    OutArg = OutArg << 1;
+
+                    if (OutArg == 0)
+                    {
+                        Format += "=";
+                    }
+                    else
+                    {
+                        Format += ",";
+                    }
+
+                    printf ("Ret tainted, Now OutArg = %x \r\n", OutArg);
+                }
+                else
+                {
+                    // skip the ret bit
+                    OutArg = OutArg << 1;
+                }
+                
+                unsigned No = 1;
+                while (OutArg != 0)
+                { 
+                    if (OutArg & (1<<31))
+                    {
+                        printf ("OutArg = %x, No = %u \r\n", OutArg, No);
+                        Def = LI.GetUse (No-1);
+                        assert (Def != NULL);
+                            
+                        ArgBuf [ArgIndex++] = Def;            
+                        Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                    }
+
+                    OutArg = OutArg << 1;
+                    No++;
                 }
             }
             else
@@ -502,9 +520,9 @@ private:
         for (auto It = LI.begin (); It != LI.end(); It++)
         {
             Value *Val = *It;
-            if (Val == Def)
+            if (LI.IsConst (Val))
             {
-                //continue;
+                continue;
             }
             
             ArgBuf [ArgIndex++] = Val;
@@ -531,7 +549,7 @@ private:
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
-        Value *TFormat = GetGlobalPtr(Format, &Builder);
+        Value *TFormat = Builder.CreateGlobalStringPtr(Format);
         switch (ArgNum)
         {
             case 1:
@@ -553,7 +571,6 @@ private:
             {
                 errs()<<*Inst;
                 printf ("ArgNum = %u\r\n", ArgNum);
-                assert (0);
             }
         }
 
@@ -579,7 +596,7 @@ private:
         FunctionName
         */
         string Format = "{" + Fd->GetName () + "}";
-        Value *TFormat = GetGlobalPtr(Format, &Builder);
+        Value *TFormat = Builder.CreateGlobalStringPtr(Format);
 
         Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
 
@@ -620,6 +637,8 @@ private:
                     unsigned long EventId = Fd->GetEventID (InstId-1);
                     AddTrack (EventId, Inst, Format, ArgBuf, ArgNum);
                     Format = "";
+                    memset (ArgBuf, 0, sizeof (ArgBuf));
+                    ArgNum = 0;
                 }
                 
                 if (Fd->IsInstTainted (InstId))

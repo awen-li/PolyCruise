@@ -28,7 +28,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
 
     Node->Flag = TRUE;
 
-    //printf ("[%lx]%s \r\n", EventId, Node->QBuf);
+    //printf ("[Original]%lx:%s, QNode=%p \r\n", EventId, Node->QBuf, Node->QBuf);
 
     return;   
 }

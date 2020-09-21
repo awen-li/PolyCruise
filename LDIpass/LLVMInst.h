@@ -161,11 +161,6 @@ private:
         while (Index < OpNum)
         {
             Value *U = m_Inst->getOperand (Index);
-            if(IsConst(U))
-            {
-                Index++;
-                continue;                        
-            } 
 
             m_Use.push_back(U);
             Index++;

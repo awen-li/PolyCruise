@@ -62,7 +62,7 @@ void TRC_exit ()
         sleep (1);
     }
 
-    sleep (1);
+    sleep (3);
     DEBUG ("TRC_deinit exit!\r\n");
 
     WiteGraph ("DIFG", GetDIFG ());
