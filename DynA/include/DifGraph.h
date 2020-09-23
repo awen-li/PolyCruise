@@ -16,11 +16,18 @@
 
 enum 
 {
-    EDGE_CALL = 1,
-    EDGE_RET  = 2,
-    EDGE_CF   = 4,
-    EDGE_DIF  = 8
+    EDGE_CG  = 1,
+    EDGE_RET = 2,
+    EDGE_CF  = 4,
+    EDGE_DIF = 8
 };
+
+#define USE_MAP_NUM (8)
+typedef struct tag_UseMap
+{
+    BYTE UseMap[USE_MAP_NUM];
+    DWORD MapNum;   
+}UseMap;
 
 typedef struct tag_DifNode
 {

@@ -210,9 +210,10 @@ static inline Edge* AddDifEdge (Node *S, Node *D)
 }
 
 
-static inline DWORD IsNodeDD (DifNode *DN, EventMsg * Emsg)
+static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
 {
-    LNode *Def = DN->EMsg.Def.Header;
+    DWORD UseNo;
+    LNode *Def = PreNode->EMsg.Def.Header;
     while (Def != NULL)
     {
         Variable *DV = (Variable *)Def->Data;
@@ -224,21 +225,26 @@ static inline DWORD IsNodeDD (DifNode *DN, EventMsg * Emsg)
             continue;
         }
 
-        printf ("===>Definition: %s \r\n", DV->Name);
-        
-        LNode *Use = Emsg->Use.Header;
+        DEBUG ("===>Definition: %s \r\n", DV->Name);
+
+        UseNo = 0;
+        LNode *Use = CurNode->EMsg.Use.Header;
         while (Use != NULL)
         {
             Variable *UV = (Variable *)Use->Data;
             assert (UV != NULL);
 
-            printf ("===>Use: %s \r\n", UV->Name);
-            if (strcmp (UV->Name, DV->Name) == 0 /*|| UV->Addr == DV->Addr */ )
+            DEBUG ("===>Use: %s \r\n", UV->Name);
+            if (Um->UseMap[UseNo] == 0 &&
+                strcmp (UV->Name, DV->Name) == 0)
             {
+                Um->UseMap[UseNo] = 1;
+                Um->MapNum++;
                 return TRUE;
             }
             
             Use = Use->Nxt;
+            UseNo++;
         }
 
         Def = Def->Nxt;
@@ -266,10 +272,33 @@ static inline VOID AddCallEdge (Node *LastNd, Node *CurNd)
     
     Node *LastCallNode = (Node *)(FDifG->Header->Data);
     Edge* E = AddDifEdge (LastCallNode, CurNd);
-    SetEdgeType (E, EDGE_CALL);
+    SetEdgeType (E, EDGE_CG);
 
     return;
 }
+
+static inline VOID AddInterCfEdge (Node *LastNd, Node *CurNd)
+{
+    DifNode* LastDifN = GN_2_DIFN (LastNd);
+
+    List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, R_EID2FID (LastDifN->EventId));
+    assert (FDifG != NULL && FDifG->Header != NULL);
+    
+    Node *FEntryNode = (Node *)(FDifG->Header->Data);
+    Edge* E = AddDifEdge (CurNd, FEntryNode);
+    SetEdgeType (E, EDGE_CF);
+
+    LNode *LSecNode = FDifG->Header->Nxt;
+    if (LSecNode != NULL)
+    {
+        assert (LSecNode->Data != NULL);
+        E = AddDifEdge (CurNd, (Node *)LSecNode->Data);
+        SetEdgeType (E, EDGE_DIF);
+    }
+
+    return;
+}
+
 
 static inline VOID AddRetEdge (Node *LastNd, Node *CurNd)
 {
@@ -295,9 +324,6 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 
         if (LastGNode != NULL)
         {
-            Edge* E = AddDifEdge (LastGNode, N);
-            SetEdgeType (E, EDGE_CF);
-
             AddCallEdge (LastGNode, N); 
         }
     }
@@ -305,22 +331,38 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     {
         LNode *LN = FDifG->Tail;
         Node *TempN = (Node *)LN->Data;
-        Edge* E = AddDifEdge (TempN, N);
-        if (FDifG->NodeNum == 1)
-        {
-            // the first node of current function
-            SetEdgeType (E, EDGE_CF);            
-        }
-        else
-        {
-            SetEdgeType (E, EDGE_DIF);
 
-            DifNode* LastDifN = GN_2_DIFN (LastGNode);
-            //ViewEMsg (&LastDifN->EMsg);
-            if (R_EID2FID (LastDifN->EventId) != R_EID2FID (DifN->EventId))
+        // add cf edge
+        Edge* E = AddDifEdge (TempN, N);           
+        SetEdgeType (E, EDGE_CF);            
+
+
+        // add dif edge
+        UseMap Um = {{0}, 0};
+        while (LN != NULL)
+        {
+            TempN = (Node *)LN->Data;
+            if (IsNodeDD (DifN, GN_2_DIFN (TempN), &Um))
             {
-                AddRetEdge (LastGNode, N);
+                Edge* E = AddDifEdge (TempN, N);
+                SetEdgeType (E, EDGE_DIF);
+                if (Um.MapNum == DifN->EMsg.Use.NodeNum)
+                {
+                    break;
+                }
             }
+
+            LN = LN->Pre;
+        }
+
+        // add ret edge
+        DifNode* LastDifN = GN_2_DIFN (LastGNode);
+        //ViewEMsg (&LastDifN->EMsg);
+        if (R_EID2FID (LastDifN->EventId) != R_EID2FID (DifN->EventId) &&
+            R_EID2ETY (DifN->EventId) == EVENT_CALL)
+        {
+            AddRetEdge (LastGNode, N);
+            AddInterCfEdge (LastGNode, N);
         }
     }
   

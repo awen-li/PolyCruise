@@ -80,9 +80,9 @@ static inline char* GetEdgeLabel(char *Buffer, DWORD EdgeType)
 {
     switch (EdgeType)
     {
-        case EDGE_CALL:
+        case EDGE_CG:
         {
-            strcat (Buffer, "CALL");
+            strcat (Buffer, "CG");
             break;
         }
         case EDGE_RET:
@@ -113,7 +113,7 @@ static inline char* GetEdgeAttributes(char *Buffer, DWORD EdgeType)
 {
     switch (EdgeType)
     {
-        case EDGE_CALL:
+        case EDGE_CG:
         {
             strcat (Buffer, "color=green");
             break;

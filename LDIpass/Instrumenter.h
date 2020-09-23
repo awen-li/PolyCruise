@@ -278,102 +278,6 @@ private:
         fclose (Bf);
     }
 
-    inline string GetValueType (Instruction* Inst, Value *Val)
-    {
-        unsigned VType = Val->getType ()->getTypeID ();
-        switch (VType)
-        {
-            case Type::VoidTyID:
-            {
-                return "";
-            }
-            case Type::HalfTyID:
-            {
-                printf ("Type=> [HalfTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::FloatTyID:
-            {
-                printf ("Type=> [FloatTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::DoubleTyID:
-            {
-                printf ("Type=> [DoubleTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::X86_FP80TyID:
-            {
-                printf ("Type=> [X86_FP80TyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::FP128TyID:
-            {
-                printf ("Type=> [FP128TyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::PPC_FP128TyID:
-            {
-                printf ("Type=> [PPC_FP128TyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::LabelTyID:
-            {
-                printf ("Type=> [LabelTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::MetadataTyID:
-            {
-                printf ("Type=> [MetadataTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::X86_MMXTyID:
-            {
-                printf ("Type=> [X86_MMXTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::TokenTyID:
-            {
-                printf ("Type=> [TokenTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::IntegerTyID:
-            {
-                return "U";
-            }
-            case Type::FunctionTyID:
-            {
-                printf ("Type=> [FunctionTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::StructTyID:
-            {
-                printf ("Type=> [StructTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::ArrayTyID:
-            {
-                printf ("Type=> [ArrayTyID]:%u \r\n", VType);
-                break;
-            }
-            case Type::PointerTyID:
-            {
-                return "P";
-            }
-            case Type::VectorTyID:
-            {
-                printf ("Type=> [VectorTyID]:%u \r\n", VType);
-                break;
-            }
-            default:
-            {
-                assert (0);
-            }
-        }
-
-        return "";
-    }
-
     inline string GetValueName (Value *Val)
     {
         if (Val->hasName ())
@@ -412,6 +316,47 @@ private:
         }
 
         return 0;
+    }
+
+    inline bool AddVarFormat (string &Format, Value *Val)
+    {
+        unsigned VType = Val->getType ()->getTypeID ();
+        switch (VType)
+        {
+            case Type::IntegerTyID:
+            {
+                Format += GetValueName (Val) + ":" + "U";
+                return false;
+            }
+            case Type::PointerTyID:
+            {
+                Format += "%lX:P";
+                return true;
+            }
+            case Type::VoidTyID:
+            case Type::HalfTyID:
+            case Type::FloatTyID:
+            case Type::DoubleTyID:
+            case Type::X86_FP80TyID:
+            case Type::FP128TyID:
+            case Type::PPC_FP128TyID:
+            case Type::LabelTyID:
+            case Type::MetadataTyID:
+            case Type::X86_MMXTyID:
+            case Type::TokenTyID:           
+            case Type::FunctionTyID:
+            case Type::StructTyID:
+            case Type::ArrayTyID:
+            case Type::VectorTyID:
+            default:
+            {
+                printf ("Type=>%u, Not support\r\n", VType);
+                assert (0);
+            }
+        }
+
+        return false;        
+        
     }
    
 
@@ -456,11 +401,13 @@ private:
                 // ret tatinted
                 if (OutArg & (1<<31))
                 {
-                    Def = LI.GetDef ();
-                    ArgBuf [ArgIndex++] = Def;            
-                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def);
-                    OutArg = OutArg << 1;
+                    Def = LI.GetDef ();             
+                    if (AddVarFormat (Format, Def))
+                    {
+                        ArgBuf [ArgIndex++] = Def;
+                    }
 
+                    OutArg = OutArg << 1;
                     if (OutArg == 0)
                     {
                         Format += "=";
@@ -479,6 +426,7 @@ private:
                 }
                 
                 unsigned No = 1;
+                bool ArgFlg = false;
                 while (OutArg != 0)
                 { 
                     if (OutArg & (1<<31))
@@ -487,21 +435,39 @@ private:
                         Def = LI.GetUse (No-1);
                         assert (Def != NULL);
                             
-                        ArgBuf [ArgIndex++] = Def;            
-                        Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                        if (AddVarFormat (Format, Def))
+                        {
+                            ArgBuf [ArgIndex++] = Def; 
+                        }
+
+                        ArgFlg = true;
                     }
 
                     OutArg = OutArg << 1;
                     No++;
-                }
+                    if (ArgFlg)
+                    {
+                        if (OutArg != 0)
+                        {
+                            Format += ",";
+                        }
+                        else
+                        {
+                            Format += "=";
+                        }
+                    }
+                }   
             }
             else
             {
                 Def = LI.GetDef ();
                 if (Def != NULL)
                 {
-                    ArgBuf [ArgIndex++] = Def;            
-                    Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                    if (AddVarFormat (Format, Def))
+                    {
+                        ArgBuf [ArgIndex++] = Def; 
+                    }
+                    Format += "=";
                 }
             }
         }
@@ -512,8 +478,11 @@ private:
             Def = LI.GetDef ();
             if (Def != NULL)
             {
-                ArgBuf [ArgIndex++] = Def;            
-                Format += GetValueName (Def) + ":" + GetValueType (Inst, Def) + "=";
+                if (AddVarFormat (Format, Def))
+                {
+                    ArgBuf [ArgIndex++] = Def; 
+                }
+                Format += "=";
             }
         }
 
@@ -524,9 +493,12 @@ private:
             {
                 continue;
             }
-            
-            ArgBuf [ArgIndex++] = Val;
-            Format += GetValueName (Val) + ":" + GetValueType (Inst, Val);
+
+            //errs()<<"visit use:" <<Val->getName ()<<"\r\n";
+            if (AddVarFormat (Format, Val))
+            {
+                ArgBuf [ArgIndex++] = Val; 
+            }
 
             if ((It+1) != LI.end())
             {
@@ -552,6 +524,11 @@ private:
         Value *TFormat = Builder.CreateGlobalStringPtr(Format);
         switch (ArgNum)
         {
+            case 0:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
+                break;
+            }
             case 1:
             {
                 Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0]});

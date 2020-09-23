@@ -31,17 +31,6 @@
 #define INLINE                    inline
 
 
-/////////////////////////////////////////////////////////////////////////////////
-#define KNRM  "\x1B[1;0m"
-#define KRED  "\x1B[1;31m"
-#define KYEL  "\x1B[1;33m"
-#define KBLU  "\x1B[1;34m"
-
-#define ErrMsg(msg)    (std::string(KRED) + std::string(msg) + std::string(KNRM))
-#define WarnMsg(msg)   (std::string(KYEL) + std::string(msg) + std::string(KNRM))
-#define NormalMsg(msg) (std::string(KBLU) + std::string(msg) + std::string(KNRM))
-/////////////////////////////////////////////////////////////////////////////////
-
 #ifdef __DEBUG__
 #define DEBUG(format, ...) printf(format, ##__VA_ARGS__)
 #else
