@@ -156,6 +156,7 @@ VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
     switch (EventType)
     {
         case EVENT_FENTRY:
+        case EVENT_THRC:
         {
             DeFEvent (EM, Msg);
             break;

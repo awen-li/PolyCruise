@@ -91,14 +91,22 @@ VOID RunPasses (vector<string> &ModulePathVec)
     {
         case 0:
         {
-            Source S (&ModuleMng, "ProcessEntry", "strtol", TAINT_RET);
-            Lda lda (&ModuleMng, &S, &Sf);
+            set <Source *> SS;
+            Source S1 (&ModuleMng, "ProcessEntry", "strtol", TAINT_RET);
+            Source S2 (&ModuleMng, "ThrProcess2", "strtol", TAINT_RET);
+            SS.insert (&S1);
+            SS.insert (&S2);
+            
+            Lda lda (&ModuleMng, &SS, &Sf);           
             break;
         }
         case 1:
         {
+            set <Source *> SS;
             Source S (&ModuleMng, "compress", "fread", TAINT_ARG0);
-            Lda lda (&ModuleMng, &S, &Sf);
+            SS.insert (&S);
+            
+            Lda lda (&ModuleMng, &SS, &Sf);
             break;
         }
     }

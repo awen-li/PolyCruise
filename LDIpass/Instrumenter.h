@@ -30,6 +30,38 @@
 using namespace llvm;
 using namespace std;
 
+#define MAX_ARG_NUM (8)
+
+struct ParaFt
+{
+    string m_Format;
+    Value *m_ArgBuf[MAX_ARG_NUM];
+    unsigned m_ArgNum;
+
+    inline void AppendFormat (string Ft)
+    {
+        m_Format += Ft; 
+
+        return;
+    }
+
+    inline void AddArg (Value *Arg)
+    {
+        if (m_ArgNum < MAX_ARG_NUM)
+        {
+            m_ArgBuf [m_ArgNum++] = Arg;
+        }
+
+        return;
+    }
+
+    inline void Reset ()
+    {
+        m_Format = "";
+        m_ArgNum = 0;
+    }
+};
+
 struct CSTaint
 {
     CSTaint ()
@@ -49,14 +81,20 @@ struct CSTaint
 };
 
 typedef map <unsigned, CSTaint>::iterator mcs_iterator;
+typedef map <unsigned, unsigned long>::iterator taint_iterator;
+typedef set <unsigned>::iterator thr_iterator;
+
 class Flda
 {
 private:
     string m_FuncName;
     unsigned m_Id;
+
     map <unsigned long, CSTaint> m_CsID2Cst;
     map <unsigned, unsigned long> m_TaintInstID2EventID;
-    set <unsigned long> m_TaintInstIDs;
+    map <unsigned, Instruction*> m_InstID2Inst;
+    
+    set <unsigned> m_ThrCInstIDs;
 
 public:
     Flda (string FuncName)
@@ -156,6 +194,51 @@ public:
 
         return;
     }
+
+    inline void AddThrcInstId (unsigned InstID)
+    {
+        m_ThrCInstIDs.insert (InstID);
+
+        return;
+    }
+
+    inline void AddInstMap (unsigned InstID, Instruction *Inst)
+    {
+        m_InstID2Inst [InstID] = Inst;
+
+        return;
+    }
+
+    inline Instruction* GetInstById (unsigned InstID)
+    {
+        auto It = m_InstID2Inst.find (InstID);
+        if (It == m_InstID2Inst.end())
+        {
+            return NULL;
+        }
+
+        return It->second;
+    }
+
+    inline taint_iterator tt_begin ()
+    {
+        return m_TaintInstID2EventID.begin ();
+    }
+
+    inline taint_iterator tt_end ()
+    {
+        return m_TaintInstID2EventID.end ();
+    }
+
+    inline thr_iterator thr_begin ()
+    {
+        return m_ThrCInstIDs.begin ();
+    }
+
+    inline thr_iterator thr_end ()
+    {
+        return m_ThrCInstIDs.end ();
+    }
 };
 
 class Instrumenter
@@ -166,13 +249,15 @@ private:
     Constant *m_TaceFunc;
     Constant *m_InitFunc;
     Constant *m_ExitFunc;
+    Constant *m_ThreadTc;
+
+    Value *m_ThreadId;
 
     map <string, Flda> m_Fname2Flda;
 
     map <Value*, unsigned> m_Value2Id;
 
     set<Instruction *> m_ExitInsts;
-
 public:
     
     Instrumenter(Module *M)
@@ -181,10 +266,19 @@ public:
 
 
         TraceFunc Trb;
-        m_TaceFunc = Trb.geTraceFunction (M);
+        m_TaceFunc = Trb.getTraceFunction (M);
         assert (m_TaceFunc != NULL);
-        m_InitFunc = Trb.geInitFunction (M);
-        m_ExitFunc = Trb.geExitFunction (M);
+        
+        m_InitFunc = Trb.getInitFunction (M);
+        assert (m_InitFunc != NULL);
+        
+        m_ExitFunc = Trb.getExitFunction (M);
+        assert (m_ExitFunc != NULL);
+
+        m_ThreadTc = Trb.getThreadTrace (M);
+        assert (m_ThreadTc != NULL);
+
+        m_ThreadId = NULL;
     } 
 
     void RunInstrm ()
@@ -318,19 +412,20 @@ private:
         return 0;
     }
 
-    inline bool AddVarFormat (string &Format, Value *Val)
+    inline bool AddVarFormat (ParaFt *Pf, Value *Val)
     {
         unsigned VType = Val->getType ()->getTypeID ();
         switch (VType)
         {
             case Type::IntegerTyID:
             {
-                Format += GetValueName (Val) + ":" + "U";
+                string Name = GetValueName (Val) + ":" + "U";
+                Pf->AppendFormat (Name);
                 return false;
             }
             case Type::PointerTyID:
             {
-                Format += "%lX:P";
+                Pf->AppendFormat ("%lX:P");
                 return true;
             }
             case Type::VoidTyID:
@@ -360,12 +455,10 @@ private:
     }
    
 
-    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, 
-                                  string &Format, Value **ArgBuf, unsigned *ArgNum)
+    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf)
     { 
         Value *Def = NULL;
-        unsigned ArgIndex = 0;
-        
+
         LLVMInst LI (Inst);
 
         /*
@@ -376,7 +469,7 @@ private:
 
         errs()<<*Inst<<"\r\n";
         
-        Format = "{";
+        Pf->AppendFormat ("{");
         if (LI.IsRet ())
         {
             Fd->SetEventType (InstId, EVENT_RET);
@@ -386,7 +479,7 @@ private:
             string Callee = LI.GetCallName ();
             if (Callee != "")
             {
-                Format += Callee + ",";
+                Pf->AppendFormat (Callee + ",");
             }
             
             Fd->SetEventType (InstId, EVENT_CALL);
@@ -402,19 +495,19 @@ private:
                 if (OutArg & (1<<31))
                 {
                     Def = LI.GetDef ();             
-                    if (AddVarFormat (Format, Def))
+                    if (AddVarFormat (Pf, Def))
                     {
-                        ArgBuf [ArgIndex++] = Def;
+                        Pf->AddArg (Def);
                     }
 
                     OutArg = OutArg << 1;
                     if (OutArg == 0)
                     {
-                        Format += "=";
+                        Pf->AppendFormat ("=");
                     }
                     else
                     {
-                        Format += ",";
+                        Pf->AppendFormat (",");
                     }
 
                     printf ("Ret tainted, Now OutArg = %x \r\n", OutArg);
@@ -435,9 +528,9 @@ private:
                         Def = LI.GetUse (No-1);
                         assert (Def != NULL);
                             
-                        if (AddVarFormat (Format, Def))
+                        if (AddVarFormat (Pf, Def))
                         {
-                            ArgBuf [ArgIndex++] = Def; 
+                            Pf->AddArg (Def); 
                         }
 
                         ArgFlg = true;
@@ -449,11 +542,11 @@ private:
                     {
                         if (OutArg != 0)
                         {
-                            Format += ",";
+                            Pf->AppendFormat(",");
                         }
                         else
                         {
-                            Format += "=";
+                            Pf->AppendFormat("=");
                         }
                     }
                 }   
@@ -463,11 +556,11 @@ private:
                 Def = LI.GetDef ();
                 if (Def != NULL)
                 {
-                    if (AddVarFormat (Format, Def))
+                    if (AddVarFormat (Pf, Def))
                     {
-                        ArgBuf [ArgIndex++] = Def; 
+                        Pf->AddArg (Def); 
                     }
-                    Format += "=";
+                    Pf->AppendFormat ("=");
                 }
             }
         }
@@ -478,11 +571,11 @@ private:
             Def = LI.GetDef ();
             if (Def != NULL)
             {
-                if (AddVarFormat (Format, Def))
+                if (AddVarFormat (Pf, Def))
                 {
-                    ArgBuf [ArgIndex++] = Def; 
+                    Pf->AddArg (Def); 
                 }
-                Format += "=";
+                Pf->AppendFormat ("=");
             }
         }
 
@@ -495,34 +588,32 @@ private:
             }
 
             //errs()<<"visit use:" <<Val->getName ()<<"\r\n";
-            if (AddVarFormat (Format, Val))
+            if (AddVarFormat (Pf, Val))
             {
-                ArgBuf [ArgIndex++] = Val; 
+                Pf->AddArg (Val); 
             }
 
             if ((It+1) != LI.end())
             {
-                Format += ",";
+                Pf->AppendFormat (",");
             }
         }
-        Format += "}";
-        *ArgNum = ArgIndex;
+        Pf->AppendFormat ("}");
 
-        errs()<<"\tTrg: "<<Format<<", ArgNum="<<*ArgNum<<"\r\n";
+        errs()<<"\tTrg: "<<Pf->m_Format<<", ArgNum="<<Pf->m_ArgNum<<"\r\n";
   
         return;
     }
 
-    inline void AddTrack (unsigned long EventId, Instruction* Inst, 
-                             string Format, Value **ArgBuf, unsigned ArgNum)
+    inline void AddTrack (unsigned long EventId, Instruction* Inst, ParaFt *Pf)
     { 
         IRBuilder<> Builder(Inst);
 
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
-        Value *TFormat = Builder.CreateGlobalStringPtr(Format);
-        switch (ArgNum)
+        Value *TFormat = Builder.CreateGlobalStringPtr(Pf->m_Format);
+        switch (Pf->m_ArgNum)
         {
             case 0:
             {
@@ -531,23 +622,23 @@ private:
             }
             case 1:
             {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0]});
                 break;
             }
             case 2:
             {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0], ArgBuf[1]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0], Pf->m_ArgBuf[1]});
                 break;
             }
             case 3:
             {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, ArgBuf[0], ArgBuf[1], ArgBuf[2]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2]});
                 break;
             }
             default:
             {
                 errs()<<*Inst;
-                printf ("ArgNum = %u\r\n", ArgNum);
+                printf ("ArgNum = %u\r\n", Pf->m_ArgNum);
             }
         }
 
@@ -580,6 +671,79 @@ private:
         return;
     }
 
+    inline Function* GetCallee(Instruction *Inst) 
+    {
+        if (!isa<CallInst>(Inst) && !isa<InvokeInst>(Inst))
+        {
+            return NULL;
+        }
+        
+        CallSite Cs(const_cast<Instruction*>(Inst));
+        
+        return dyn_cast<Function>(Cs.getCalledValue()->stripPointerCasts());
+    }
+
+
+    inline bool IsThreadEntry (Instruction *Inst)
+    {
+        Function *Callee = GetCallee (Inst);
+        if (Callee == NULL)
+        {
+            return false;
+        }
+        
+        if (strcmp (Callee->getName().data(), "pthread_create") == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+    
+    inline void InstrumThrc (Flda *Fd, Instruction* ThrcInst, Instruction *Site)
+    {
+        IRBuilder<> Builder(Site);
+
+        /* pthread_create(&ID1, NULL, ...., .....) */
+        Value *Ef = ThrcInst->getOperand (2);
+        assert (llvm::isa<llvm::Function>(Ef));
+        string ThrEntry = Ef->getName ().data();
+        Value *ValThrEntry = Builder.CreateGlobalStringPtr(ThrEntry);
+
+        Value *ThrID = ThrcInst->getOperand (0);
+
+        unsigned long FID = Fd->GetId (); 
+        unsigned long EventId = F_LANG2EID (CLANG_TY) | 
+                                F_ETY2EID (EVENT_THRC) |
+                                F_FID2EID (FID);
+        Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
+        Value *Ev = ConstantInt::get(I64ype, EventId, false);
+       
+        Builder.CreateCall(m_ThreadTc, {Ev, ValThrEntry, ThrID});
+            
+        return;
+    }
+
+
+    inline void VisitInst (Function *F, Flda *Fd)
+    {
+        unsigned InstId = 1;
+        for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
+        {
+            Instruction *Inst = &*ItI;
+            Fd->AddInstMap (InstId, Inst);
+
+            if (IsThreadEntry (Inst))
+            {
+                Fd->AddThrcInstId (InstId);
+            }
+
+            GetProgramExitInsts (Inst);
+        }
+
+        return;
+    }
+    
     inline void VisitFunction ()
     {
         for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
@@ -599,29 +763,39 @@ private:
             m_Value2Id.clear ();
             errs()<<"Process Function: "<<F->getName ()<<"\r\n";
 
-            string Format = "";
-            Value *ArgBuf[4];
-            unsigned ArgNum = 0;
-            unsigned InstId = 1;
-            for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
+            VisitInst (F, Fd);
+
+            /* basic instrumentation */
+            ParaFt Pf;
+            for (auto TIt = Fd->tt_begin (), TEnd = Fd->tt_end (); TIt != TEnd; TIt++)
             {
-                Instruction *Inst = &*ItI;
+                unsigned InstId       = TIt->first;
+                Instruction *CurInst  = Fd->GetInstById (InstId);
 
-                GetProgramExitInsts (Inst);
+                Pf.Reset ();
+                GetInstrPara (Fd, InstId, CurInst, &Pf);
+                if (Pf.m_Format != "")
+                {
+                    Instruction *InstrumentSite = Fd->GetInstById (InstId+1);
+                    if (InstrumentSite == NULL)
+                    {
+                        InstrumentSite = CurInst;
+                    }
 
-                if (Format != "")
-                {
-                    unsigned long EventId = Fd->GetEventID (InstId-1);
-                    AddTrack (EventId, Inst, Format, ArgBuf, ArgNum);
-                    Format = "";
-                    memset (ArgBuf, 0, sizeof (ArgBuf));
-                    ArgNum = 0;
+                    unsigned long EventId = TIt->second;
+                    AddTrack (EventId, InstrumentSite, &Pf);
                 }
-                
-                if (Fd->IsInstTainted (InstId))
-                {
-                    GetInstrPara (Fd, InstId, Inst, Format, ArgBuf, &ArgNum);
-                }
+            }
+
+            /* pthread_create instrumentation */
+            for (auto ThrIt = Fd->thr_begin (), ThrEnd = Fd->thr_end (); ThrIt != ThrEnd; ThrIt++)
+            {
+                unsigned InstId       = *ThrIt;
+                Instruction *ThrcInst = Fd->GetInstById (InstId);
+                Instruction *InstrumentSite = Fd->GetInstById (InstId+1);
+                assert (InstrumentSite != NULL);
+
+                InstrumThrc (Fd, ThrcInst, InstrumentSite);
             }
 
             AddCallTrack (F, Fd);

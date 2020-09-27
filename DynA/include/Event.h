@@ -50,6 +50,8 @@
 #define EVENT_BR          (3UL)
 #define EVENT_RET         (4UL)
 #define EVENT_CALL        (5UL)
+#define EVENT_THRC        (6UL)
+
 
 
 #define CLANG_TY          (1UL)

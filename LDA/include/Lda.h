@@ -196,7 +196,7 @@ private:
 
     ModuleManage *m_Ms;
 
-    Source *m_Source;
+    set<Source *> *m_Source;
 
     ExternalLib *ExtLib;
 
@@ -208,13 +208,16 @@ private:
 
     ComQueue<Function*> m_EntryFQ;
 
+    DWORD m_EntryNo;
+
 public:
     
-    Lda(ModuleManage *Ms, Source *S, StField *Sf)
+    Lda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
     {
         m_Ms  = Ms;
         m_Sf  = Sf;
-        m_Source = S;
+        
+        m_Source = SS;
 
         m_Fts = new Fts (Ms);
         assert (m_Fts != NULL);
@@ -222,11 +225,13 @@ public:
         ExtLib = new ExternalLib ();
         assert (ExtLib != NULL);
 
+        m_EntryNo = 0;
+        
         Compute ();
 
         printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
 
-        Dump ();
+        
     }
 
     ~Lda ()
@@ -318,11 +323,15 @@ private:
 
     inline void InitCriterions (Function *Func, unsigned TaintBit, set<Value*> *LexSet)
     {
-        if (Func == m_Source->GetSrcCaller ())
+        for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
         {
-            for (auto It = m_Source->begin(), End = m_Source->end(); It != End; It++)
+            Source *S = *ItS;
+            if (Func == S->GetSrcCaller ())
             {
-                LexSet->insert (*It);
+                for (auto It = S->begin(), End = S->end(); It != End; It++)
+                {
+                    LexSet->insert (*It);
+                }
             }
         }
       
@@ -501,12 +510,33 @@ private:
         return;
     }
 
+
+    inline bool IsSourceInst (Instruction *Inst)
+    {
+        for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
+        {
+            Source *S = *ItS;
+            if (S->IsSrcInst (Inst))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    inline unsigned IsThrFunc ();
+    {
+        return (unsigned) (m_EntryNo != 0);
+    }
+
     inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
     {
         set<Value*> LocalLexSet;
 
         m_RunStack.insert (Func);
         Flda *fd = GetFlda (Func);
+        fd->SetThrEntry (IsThrFunc ());
 
         printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
@@ -522,7 +552,7 @@ private:
                 continue;
             }
 
-            if (m_Source->IsSrcInst (Inst))
+            if (IsSourceInst (Inst))
             {
                 errs ()<<"Add Source: "<<*Inst<<"\r\n";
                 m_InstSet.insert (Inst);
@@ -620,7 +650,10 @@ private:
             errs()<<"=====================> Process Entery Function: "<<Entry->getName ()<<" <====================\r\n";         
             
             ComputeFlda (Entry, TAINT_NONE);
-        }     
+            m_EntryNo++;
+        }
+
+        Dump ();
     }
 
 

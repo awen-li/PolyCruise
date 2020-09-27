@@ -5,12 +5,13 @@
  * History:
    <1> 7/24/2020 , create
 ************************************************************/
+#include <sys/syscall.h>
 #include "Queue.h"
+#include "Event.h"
 
 void TRC_trace (ULONG EventId, const char* Format, ...)
 {
 	va_list ap;
-
 	
 	QNode *Node = InQueue ();
     if (Node == NULL)
@@ -19,19 +20,42 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
         exit (0);
     }
 
-
-    Node->EventId = EventId;
-	
-	va_start(ap, Format);
+    va_start(ap, Format);
     (void)vsnprintf (Node->QBuf, sizeof(Node->QBuf), Format, ap);
     va_end(ap);
 
-    Node->Flag = TRUE;
+    //Node->ThreadId = syscall(SYS_gettid);
+    Node->ThreadId = pthread_self ();
+    Node->EventId  = EventId;
+    Node->Flag     = TRUE;
 
-    //printf ("[Original]%lx:%s, QNode=%p \r\n", EventId, Node->QBuf, Node->QBuf);
+    printf ("[TRC_trace][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
 
     return;   
 }
+
+
+void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId)
+{
+	va_list ap;
+	
+	QNode *Node = InQueue ();
+    if (Node == NULL)
+    {
+        printf ("Queue Full\r\n");
+        exit (0);
+    }
+
+    (void)snprintf (Node->QBuf, sizeof(Node->QBuf), "{%x:%s}", *((DWORD*)ThrId), ThreadEntry);
+    Node->ThreadId = pthread_self ();
+    Node->EventId  = EventId;
+    Node->Flag     = TRUE;
+
+    printf ("[TRC_thread][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+
+    return;   
+}
+
 
 
 

@@ -16,16 +16,17 @@
 typedef struct tag_QNode
 {
     ULONG EventId;
-    unsigned Flag;
+    DWORD ThreadId;
+    DWORD Flag;
     char QBuf [BUF_SIZE];
 }QNode;
 
 typedef struct tag_Queue
 {
     QNode *NodeList;
-    unsigned NodeNum;
-    unsigned Hindex;
-    unsigned Tindex;
+    DWORD NodeNum;
+    DWORD Hindex;
+    DWORD Tindex;
 
     mutex_lock_t InLock;  
 }Queue;

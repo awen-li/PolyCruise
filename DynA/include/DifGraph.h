@@ -40,12 +40,11 @@ typedef struct tag_DifEdge
     DWORD EdgeType;
 }DifEdge;
 
-
 typedef struct tag_DifAgent
 {
     Graph *DifGraph;
     DWORD FDifHandle;
-    DWORD DefHandle;
+    DWORD ThrHandle;
 }DifAgent;
 
 

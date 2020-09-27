@@ -29,9 +29,9 @@ using namespace std;
 class HookFunc
 {
 public:
-    virtual inline Constant *geTraceFunction(Module *M) = 0;
-    virtual inline Constant *geInitFunction(Module *M) = 0;
-    virtual inline Constant *geExitFunction(Module *M) = 0;
+    virtual inline Constant *getTraceFunction(Module *M) = 0;
+    virtual inline Constant *getInitFunction(Module *M) = 0;
+    virtual inline Constant *getExitFunction(Module *M) = 0;
 };
 
 
@@ -39,12 +39,13 @@ class TraceFunc:public HookFunc
 {
 public:
 
-    inline Constant *geTraceFunction(Module *M) 
+    inline Constant *getTraceFunction(Module *M) 
     {
         LLVMContext &context = M->getContext();
 
         /* void TRC_track (unsigned long EventId, char *Data) */      
-        Type *ArgTypes[] = {Type::getInt64Ty (M->getContext()), Type::getInt8PtrTy(M->getContext()), };
+        Type *ArgTypes[] = {Type::getInt64Ty (M->getContext()), 
+                            Type::getInt8PtrTy(M->getContext()), };
         //Type *ArgTypes[] = {Type::getInt8PtrTy(M->getContext()), };
         FunctionType *TRC_trace = FunctionType::get(Type::getVoidTy(context), ArgTypes, true);
             
@@ -52,7 +53,7 @@ public:
     }
 
  
-    inline Constant *geInitFunction(Module *M) 
+    inline Constant *getInitFunction(Module *M) 
     {
         LLVMContext &context = M->getContext();
 
@@ -63,7 +64,7 @@ public:
     }
 
 
-    inline Constant *geExitFunction(Module *M) 
+    inline Constant *getExitFunction(Module *M) 
     {
         LLVMContext &context = M->getContext();
 
@@ -71,6 +72,21 @@ public:
         FunctionType *TRC_exit = FunctionType::get(Type::getVoidTy(context), false);
             
         return M->getOrInsertFunction("TRC_exit", TRC_exit);
+    }
+
+    inline Constant *getThreadTrace(Module *M) 
+    {
+        LLVMContext &context = M->getContext();
+
+        /* void TRC_thread (ULONG EventId, char* ThreadEntry, DWORD *ThrId) */
+        Type *ArgTypes[] = {Type::getInt64Ty (M->getContext()), 
+                            Type::getInt8PtrTy(M->getContext()),
+                            Type::getInt64PtrTy(M->getContext()),};
+
+        
+        FunctionType *Threadtr = FunctionType::get(Type::getVoidTy(context), ArgTypes, false);
+            
+        return M->getOrInsertFunction("TRC_thread", Threadtr);
     }
 
 };

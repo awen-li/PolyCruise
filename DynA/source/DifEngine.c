@@ -40,9 +40,9 @@ VOID InitDif ()
     Ret = DbCreateTable(DA->FDifHandle, sizeof(List), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
-    //DA->DefHandle = DB_TYPE_DIF_DEF;
-    //Ret = DbCreateTable(DA->DefHandle, sizeof (DNLNode), FUNC_NAME_LEN));
-    //assert (Ret != R_FAIL);
+    DA->ThrHandle = DB_TYPE_DIF_THR;
+    Ret = DbCreateTable(DA->ThrHandle, sizeof (ULONG), FUNC_NAME_LEN);
+    assert (Ret != R_FAIL);
 
     return;
 }
@@ -263,6 +263,7 @@ static inline VOID SetEdgeType (Edge* E, DWORD EType)
     return;
 }
 
+
 static inline VOID AddCallEdge (Node *LastNd, Node *CurNd)
 {
     DifNode* LastDifN = GN_2_DIFN (LastNd);
@@ -273,6 +274,11 @@ static inline VOID AddCallEdge (Node *LastNd, Node *CurNd)
     Node *LastCallNode = (Node *)(FDifG->Header->Data);
     Edge* E = AddDifEdge (LastCallNode, CurNd);
     SetEdgeType (E, EDGE_CG);
+
+    if (LastCallNode == LastNd)
+    {
+        SetEdgeType (E, EDGE_CF);
+    }
 
     return;
 }
@@ -324,7 +330,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 
         if (LastGNode != NULL)
         {
-            AddCallEdge (LastGNode, N); 
+            AddCallEdge (LastGNode, N);
         }
     }
     else
@@ -372,10 +378,49 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     return;
 }
 
+static inline VOID UpdateThrEvent (ULONG Event, char *Msg)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    EventMsg EMsg = {0};
+    DecodeEventMsg (&EMsg, Event, Msg);
+
+    Variable *ThrVal = (Variable *)EMsg.Def.Header->Data;
+    char FuncName [FUNC_NAME_LEN]  ={0};
+    strncpy (FuncName, ThrVal->Name, sizeof(FuncName));
+    DelEventMsg (&EMsg);
+    
+    Req.dwDataType = DifA.ThrHandle;
+    Req.dwKeyLen   = sizeof (FuncName);
+    Req.pKeyCtx    = (BYTE*)FuncName;
+  
+
+    // Query first
+    Ack.dwDataId = 0;
+    (VOID)QueryDataByKey(&Req, &Ack);
+    if (Ack.dwDataId == 0)
+    {
+        DWORD Ret = CreateDataByKey (&Req, &Ack);
+        assert (Ret == R_SUCCESS);
+    }
+
+    ULONG *Evt = (ULONG *)(Ack.pDataAddr);
+    *Evt = Event;
+
+    return;  
+}
+
 VOID DifEngine (ULONG Event, char *Msg)
 {
     Graph *DifGraph = DifA.DifGraph;
     printf ("[DIF]%lx: %s \r\n", Event, Msg);
+
+    //if (R_EID2ETY (Event) == EVENT_THRC)
+    //{
+    //     UpdateThrEvent (Event, Msg);
+    //    return;
+    // }
 
     Node *N = AddDifNode (Event);
     DifNode* DifN = GN_2_DIFN (N);
