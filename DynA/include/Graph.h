@@ -48,14 +48,20 @@ typedef struct tag_Graph
     DWORD EDBType;
 
     Node *Root;
+    DWORD ThreadId;
    
 }Graph;
 
 
-Graph *CreateGraph (DWORD NDBType, DWORD EDBType);
+Graph *GetGraph (DWORD ThreadId, DWORD NDBType, DWORD EDBType);
 VOID AddNode (Graph *G, Node *N);
 VOID AddEdge (Graph *G, Edge* E);
 VOID DelGraph (Graph *G);
 Node *GetLastNode (Graph *G);
+
+DWORD GetGraphNum ();
+Graph *GetGraphById (DWORD GraphId);
+
+
 
 #endif 

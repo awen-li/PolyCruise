@@ -29,6 +29,13 @@ typedef struct tag_UseMap
     DWORD MapNum;   
 }UseMap;
 
+typedef struct tag_EventKey
+{
+    ULONG Event;
+    DWORD ThreadId;
+    DWORD Rev;
+}EventKey;
+
 typedef struct tag_DifNode
 {
     ULONG EventId;
@@ -42,7 +49,8 @@ typedef struct tag_DifEdge
 
 typedef struct tag_DifAgent
 {
-    Graph *DifGraph;
+    DWORD NodeHandle;
+    DWORD EdgeHandle;
     DWORD FDifHandle;
     DWORD ThrHandle;
 }DifAgent;

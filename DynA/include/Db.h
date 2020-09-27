@@ -17,6 +17,7 @@ enum DB_TYPE
     DB_TYPE_DIF_EDGE,
     DB_TYPE_DIF_FUNC,
     DB_TYPE_DIF_THR,
+    DB_TYPE_DIF_GRAPH,
     DB_TYPE_END
 };
 
@@ -45,8 +46,9 @@ DWORD QueryDataByID(DbReq* ptQueryReq, DbAck* pQueryAck);
 
 
 DWORD DeleteDataByID(DbReq* ptDelReq);
-
 DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen);
+
+DWORD QueryDataNum (DWORD dwDataType);
 
 VOID DelDb ();
 

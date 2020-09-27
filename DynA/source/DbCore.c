@@ -145,9 +145,9 @@ static inline HashNode* db_ID2Node (DbTable *ptTable, DWORD ID)
 {
     DWORD dwNodeLen;
     MemUnit *MU = &ptTable->MU;
+    
     DWORD dwSeq = ID/MU->dwNodeNum;
     MemList *ML = MU->MLHdr;
-
     while (dwSeq != 0 && ML != NULL)
     {
         ML = ML->Nxt;
@@ -156,8 +156,9 @@ static inline HashNode* db_ID2Node (DbTable *ptTable, DWORD ID)
 
     assert (dwSeq == 0);
     dwNodeLen  = sizeof(HashNode) + ptTable->dwDataLen+ptTable->dwKeyLen;
-
-     return (HashNode*)(ML->MemAddr + dwNodeLen*(ID-1));  
+    DWORD dwInnerId = ID%MU->dwNodeNum; 
+    
+    return (HashNode*)(ML->MemAddr + dwNodeLen*(dwInnerId-1));  
 }
 
 static inline VOID db_ExtendDataMem(DbTable *ptTable)
@@ -732,6 +733,25 @@ VOID DelDb ()
     }
 
     return;
+}
+
+
+DWORD QueryDataNum (DWORD dwDataType)
+{
+    DbTable* ptDataTable;
+	
+	if(0 == dwDataType || dwDataType >= DB_TYPE_END)
+	{
+		return 0;
+	}
+	
+	ptDataTable = db_Type2Table(dwDataType);
+	if(NULL == ptDataTable)
+	{
+		return 0;
+	}
+
+    return ptDataTable->tBusyDataTable.dwCurNodeNum;
 }
 
 

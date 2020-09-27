@@ -700,7 +700,7 @@ private:
         return false;
     }
     
-    inline void InstrumThrc (Flda *Fd, Instruction* ThrcInst, Instruction *Site)
+    inline void InstrumThrc (Flda *Fd, unsigned ThrInstId, Instruction* ThrcInst, Instruction *Site)
     {
         IRBuilder<> Builder(Site);
 
@@ -715,7 +715,8 @@ private:
         unsigned long FID = Fd->GetId (); 
         unsigned long EventId = F_LANG2EID (CLANG_TY) | 
                                 F_ETY2EID (EVENT_THRC) |
-                                F_FID2EID (FID);
+                                F_FID2EID (FID) |
+                                F_IID2EID (ThrInstId);
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
        
@@ -795,7 +796,7 @@ private:
                 Instruction *InstrumentSite = Fd->GetInstById (InstId+1);
                 assert (InstrumentSite != NULL);
 
-                InstrumThrc (Fd, ThrcInst, InstrumentSite);
+                InstrumThrc (Fd, InstId, ThrcInst, InstrumentSite);
             }
 
             AddCallTrack (F, Fd);

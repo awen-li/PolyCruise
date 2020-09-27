@@ -12,12 +12,13 @@
 #ifndef _DIFENGINE_H_
 #define _DIFENGINE_H_
 
-Graph *GetDIFG ();
 VOID InitDif ();
 VOID DeInitDif ();
 
-DWORD IsEventExist (ULONG Event);
-VOID DifEngine (ULONG Event, char *Msg);
+DWORD GetGraphNodeNum ();
+Node *GetGraphNodeById (DWORD GraphNodeId);
+
+VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg);
 
 
 #endif // _DIFENGINE_H_

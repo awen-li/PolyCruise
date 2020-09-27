@@ -7,6 +7,8 @@
 ************************************************************/
 #include "Graph.h"
 
+static DWORD GraphHandle = 0;
+
 static inline void AddOutEdge (Node *N, Edge* Out)
 {
     ListInsert (&N->OutEdge, Out);
@@ -44,20 +46,40 @@ VOID DelGraph (Graph *G)
     ListDel (&G->NodeList, DelNode);
     ListDel (&G->EdgeList, DelEdge);
 
-    free (G);
     return;
 }
 
 
-Graph *CreateGraph (DWORD NDBType, DWORD EDBType)
+Graph *GetGraph (DWORD ThreadId, DWORD NDBType, DWORD EDBType)
 {
-    Graph *G = malloc (sizeof (Graph));
-    assert (G != NULL);
+    DWORD Ret;
+    DbReq Req;
+    DbAck Ack;
+    Graph *G;
+    
+    if (GraphHandle == 0)
+    {
+        GraphHandle = DB_TYPE_DIF_GRAPH;
+        Ret = DbCreateTable(GraphHandle, sizeof (Graph), sizeof (DWORD));
+        assert (Ret != R_FAIL);
+    }
 
-    memset (G, 0, sizeof (Graph));
+    Req.dwDataType = GraphHandle;
+    Req.dwKeyLen   = sizeof (DWORD);
+    Req.pKeyCtx    = (BYTE*)(&ThreadId);
 
+    Ack.dwDataId = 0;
+    (VOID)QueryDataByKey(&Req, &Ack);
+    if (Ack.dwDataId == 0)
+    {
+        DWORD Ret = CreateDataByKey (&Req, &Ack);
+        assert (Ret == R_SUCCESS);
+    }
+
+    G = (Graph *)(Ack.pDataAddr); 
     G->EDBType = EDBType;
     G->NDBType = NDBType;
+    G->ThreadId= ThreadId;
 
     return G;
 }
@@ -98,4 +120,45 @@ Node *GetLastNode (Graph *G)
     return (Node *)Tail->Data;
 }
 
+
+DWORD GetGraphNum ()
+{
+    if (GraphHandle == 0)
+    {
+        return 0;
+    }
+
+    return QueryDataNum(GraphHandle);
+}
+
+Graph *GetGraphById (DWORD GraphId)
+{
+    DWORD Ret;
+    DbReq Req;
+    DbAck Ack;
+    Graph *G;
+    
+    if (GraphHandle == 0)
+    {
+        return NULL;
+    }
+
+    Req.dwDataType = GraphHandle;
+    Req.dwDataId   = GraphId;
+
+    Ack.dwDataId = 0;
+    (VOID)QueryDataByID (&Req, &Ack);
+    if (Ack.dwDataId == 0)
+    {
+        return NULL;
+    }
+    
+    if (Ack.dwDataId != GraphId)
+    {
+        DEBUG ("Data not consistent: IN: %d, OUT: %d\r\n", GraphId, Ack.dwDataId);
+        return NULL;
+    }
+
+    return (Graph *)(Ack.pDataAddr);
+}
 

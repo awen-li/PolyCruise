@@ -7,7 +7,7 @@
 ************************************************************/
 #include "TypeDef.h"
 #include "DifGraph.h"
-
+#include "DifEngine.h"
 
 static inline VOID WriteHeader (FILE *F, char *GraphName) 
 {
@@ -189,9 +189,14 @@ static inline VOID WriteEdge(FILE *F, Edge *E)
 }
 
 
-VOID WiteGraph (char *GName, Graph *G) 
+VOID WiteGraph (char *GName) 
 {
     char GvName[256] = {0};
+
+    if (GName == NULL)
+    {
+        return;
+    }
 
     snprintf (GvName, sizeof (GvName), "%s.dot", GName);
     FILE *F = fopen (GvName, "w");
@@ -202,10 +207,13 @@ VOID WiteGraph (char *GName, Graph *G)
     
     WriteHeader(F, GName);
 
-    LNode *LN = G->NodeList.Header;
-    while (LN != NULL)
+    DWORD NodeNum = GetGraphNodeNum ();
+    DEBUG ("NodeNum => %u \r\n", NodeNum);
+
+    DWORD NodeId = 1;
+    while (NodeId <= NodeNum)
     {
-        Node *N = (Node*)LN->Data;      
+        Node *N = GetGraphNodeById (NodeId);      
         WriteNodes (F, N);
 
         LNode *LOE = N->OutEdge.Header;
@@ -216,7 +224,7 @@ VOID WiteGraph (char *GName, Graph *G)
             LOE = LOE->Nxt;
         }
 
-        LN = LN->Nxt;
+        NodeId++;
     }
 
     fprintf(F, "}\n");

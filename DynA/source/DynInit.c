@@ -22,15 +22,7 @@ void *EventProcess (void* Arg)
             continue;
         }
         
-        if (IsEventExist (QN->EventId) == FALSE)
-        {
-            DifEngine (QN->EventId, QN->QBuf);
-        }
-        else
-        {
-            //DEBUG ("Repeated: [%lx]%s QS=%u\r\n", QN->EventId, QN->QBuf, QueueSize ());
-        }
-        
+        DifEngine (QN->EventId, QN->ThreadId, QN->QBuf);       
         OutQueue ();
     }
     
@@ -65,7 +57,7 @@ void TRC_exit ()
     sleep (3);
     DEBUG ("TRC_deinit exit!\r\n");
 
-    WiteGraph ("DIFG", GetDIFG ());
+    WiteGraph ("DIFG");
     DelQueue ();
     DeInitDif ();
 

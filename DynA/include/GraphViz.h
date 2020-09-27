@@ -21,7 +21,7 @@
 #define _GRAPHVIZ_H_
 
 
-VOID WiteGraph (char *GName, Graph *G);
+VOID WiteGraph (char *GName);
 
 
 
