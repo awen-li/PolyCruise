@@ -30,7 +30,7 @@ VOID InitDif ()
     Ret = DbCreateTable(DA->FDifHandle, sizeof(List), sizeof (EventKey));
     assert (Ret != R_FAIL);
     
-    Ret = DbCreateTable(DA->ThrHandle, sizeof (Graph), sizeof (DWORD));
+    Ret = DbCreateTable(DA->ThrHandle, sizeof (Node*), sizeof (DWORD));
     assert (Ret != R_FAIL);
 
     return;
@@ -343,6 +343,63 @@ static inline VOID AddRetEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     return;
 }
 
+static inline VOID UpdateThrEvent (Node *ThrcNode, EventMsg *EM)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.ThrHandle;
+    Req.dwKeyLen   = sizeof (DWORD);
+
+    Variable *Vid  = (Variable*)EM->Def.Header->Data;
+    DWORD ThreadId = strtol(Vid->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&ThreadId);
+    
+    DWORD Ret = CreateDataByKey (&Req, &Ack);
+    assert (Ret == R_SUCCESS);
+
+    Node **NodePtr = (Node **)(Ack.pDataAddr);
+    *NodePtr = ThrcNode;
+
+    DEBUG ("UpdateThrEvent: %x \r\n", ThreadId);
+
+    return;  
+}
+
+static inline Node* IsThreadEntry (DWORD ThrId)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.ThrHandle;
+    Req.dwKeyLen   = sizeof (DWORD);
+    Req.pKeyCtx    = (BYTE*)(&ThrId);
+
+    Ack.dwDataId = 0;
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        return NULL;
+    }
+
+    if (Ack.dwDataId == 0)
+    {
+        return NULL;
+    }
+
+    Node **NodePtr = (Node **)(Ack.pDataAddr);
+    return *NodePtr; 
+}
+
+
+static inline VOID AddThreadEdge (Graph *DifGraph, Node *ThrcNd, Node *CurNd)
+{
+    Edge* E = AddDifEdge (DifGraph, ThrcNd, CurNd);
+    SetEdgeType (E, EDGE_THRC);
+
+    return;
+}
+
 
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 {
@@ -360,6 +417,15 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
         if (LastGNode != NULL)
         {
             AddCallEdge (DifGraph, LastGNode, N);
+        }
+        else
+        {
+            /* the entry of sub-graph */
+            Node *ThrcNode = IsThreadEntry (DifGraph->ThreadId);
+            if (ThrcNode != NULL)
+            {
+                AddThreadEdge (DifGraph, ThrcNode, N);
+            }
         }
     }
     else
@@ -407,38 +473,6 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     return;
 }
 
-static inline VOID UpdateThrEvent (ULONG Event, char *Msg)
-{
-    DbReq Req;
-    DbAck Ack;
-
-    EventMsg EMsg = {0};
-    DecodeEventMsg (&EMsg, Event, Msg);
-
-    Variable *ThrVal = (Variable *)EMsg.Def.Header->Data;
-    char FuncName [FUNC_NAME_LEN]  ={0};
-    strncpy (FuncName, ThrVal->Name, sizeof(FuncName));
-    DelEventMsg (&EMsg);
-    
-    Req.dwDataType = DifA.ThrHandle;
-    Req.dwKeyLen   = sizeof (FuncName);
-    Req.pKeyCtx    = (BYTE*)FuncName;
-  
-
-    // Query first
-    Ack.dwDataId = 0;
-    (VOID)QueryDataByKey(&Req, &Ack);
-    if (Ack.dwDataId == 0)
-    {
-        DWORD Ret = CreateDataByKey (&Req, &Ack);
-        assert (Ret == R_SUCCESS);
-    }
-
-    ULONG *Evt = (ULONG *)(Ack.pDataAddr);
-    *Evt = Event;
-
-    return;  
-}
 
 VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 {
@@ -456,6 +490,11 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
     ViewEMsg (&DifN->EMsg);
+
+    if (R_EID2ETY (Event) == EVENT_THRC)
+    {
+        UpdateThrEvent (N, &DifN->EMsg);
+    }
 
     InsertNode2Graph (DifGraph, N);
     

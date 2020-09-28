@@ -16,10 +16,11 @@
 
 enum 
 {
-    EDGE_CG  = 1,
-    EDGE_RET = 2,
-    EDGE_CF  = 4,
-    EDGE_DIF = 8
+    EDGE_CG   = 1,
+    EDGE_RET  = 2,
+    EDGE_CF   = 4,
+    EDGE_DIF  = 8,
+    EDGE_THRC = 16
 };
 
 #define USE_MAP_NUM (8)

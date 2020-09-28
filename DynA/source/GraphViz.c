@@ -48,8 +48,13 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
         }
     }
 
-    strcat (Buffer, " = ");
+    
     LNode *Use = EM->Use.Header;
+    if (Use != NULL)
+    {
+        strcat (Buffer, " = ");
+    }
+    
     while (Use != NULL)
     {
         Variable *Var = (Variable *) Use->Data;
@@ -100,6 +105,11 @@ static inline char* GetEdgeLabel(char *Buffer, DWORD EdgeType)
             strcat (Buffer, "DIF");
             break;
         }
+        case EDGE_THRC:
+        {
+            strcat (Buffer, "THREAD");
+            break;
+        }
         default:
         {
             assert (0);
@@ -131,6 +141,11 @@ static inline char* GetEdgeAttributes(char *Buffer, DWORD EdgeType)
         case EDGE_DIF:
         {
             strcat (Buffer, "color=red");
+            break;
+        }
+        case EDGE_THRC:
+        {
+            strcat (Buffer, "color=blue");
             break;
         }
         default:

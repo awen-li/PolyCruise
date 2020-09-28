@@ -44,6 +44,7 @@ static inline VOID DeFEvent (EventMsg *EM, char *Msg)
     return;    
 }
 
+
 static inline DWORD GetVarName (char *Msg)
 {
     char *Pos = Msg;
@@ -71,6 +72,27 @@ static inline BYTE GetVarType (char *Msg)
     }  
 }
 
+/* {ThreadId:ThreadEntry} */
+static inline VOID DeThrcEvent (EventMsg *EM, char *Msg)
+{
+    char *Pos = Msg;
+
+    /* thread id */
+    DWORD ThrIdLen = GetVarName (Pos);
+    assert (ThrIdLen != 0);
+
+    Variable *V = AllotVariable (Pos, ThrIdLen, VT_INTEGER);
+    ListInsert (&EM->Def, V);
+
+    Pos += ThrIdLen + 1;
+    DWORD ThrEntryLen = GetVarName (Pos);
+    assert (ThrEntryLen != 0);
+
+    V = AllotVariable (Pos, ThrEntryLen, VT_FUNCTION);
+    ListInsert (&EM->Def, V);
+
+    return;    
+}
 
 /* {add:U=or:U,rem:U} */
 static inline VOID DeEvent (EventMsg *EM, char *Msg)
@@ -156,9 +178,13 @@ VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
     switch (EventType)
     {
         case EVENT_FENTRY:
-        case EVENT_THRC:
         {
             DeFEvent (EM, Msg);
+            break;
+        } 
+        case EVENT_THRC:
+        {
+            DeThrcEvent (EM, Msg);
             break;
         }    
         case EVENT_NR:
