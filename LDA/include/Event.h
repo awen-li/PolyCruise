@@ -31,6 +31,7 @@
 #define VT_INTEGER        ('U')
 #define VT_POINTER        ('P')
 #define VT_FUNCTION       ('F')
+#define VT_GLOBAL         ('G')
 
 /*
     Event Id definition:

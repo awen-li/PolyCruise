@@ -412,20 +412,47 @@ private:
         return 0;
     }
 
+    inline bool IsGlv (Value *Val)
+    {
+        GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
+
+        return (GVal != NULL);
+    }
+
     inline bool AddVarFormat (ParaFt *Pf, Value *Val)
     {
         unsigned VType = Val->getType ()->getTypeID ();
+        bool Glv = IsGlv (Val);
+        
         switch (VType)
         {
             case Type::IntegerTyID:
             {
-                string Name = GetValueName (Val) + ":" + "U";
+                string Name;
+                
+                if (Glv)
+                {
+                    Name = GetValueName (Val) + ":" + "G";
+                }
+                else
+                {
+                    Name = GetValueName (Val) + ":" + "U";
+                }
+                 
                 Pf->AppendFormat (Name);
                 return false;
             }
             case Type::PointerTyID:
             {
-                Pf->AppendFormat ("%lX:P");
+                if (Glv)
+                {
+                    Pf->AppendFormat ("%lX:G");
+                }
+                else
+                {
+                    Pf->AppendFormat ("%lX:P");
+                }
+                
                 return true;
             }
             case Type::VoidTyID:

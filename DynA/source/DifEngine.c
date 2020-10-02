@@ -20,6 +20,7 @@ VOID InitDif ()
     DA->EdgeHandle = DB_TYPE_DIF_EDGE;
     DA->FDifHandle = DB_TYPE_DIF_FUNC;
     DA->ThrHandle  = DB_TYPE_DIF_THR;
+    DA->GlvHandle  = DB_TYPE_DIF_GLV;
     
     Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
     assert (Ret != R_FAIL);
@@ -31,6 +32,9 @@ VOID InitDif ()
     assert (Ret != R_FAIL);
     
     Ret = DbCreateTable(DA->ThrHandle, sizeof (Node*), sizeof (DWORD));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->GlvHandle, sizeof (Node*), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
     return;
@@ -375,14 +379,8 @@ static inline Node* IsThreadEntry (DWORD ThrId)
     Req.dwKeyLen   = sizeof (DWORD);
     Req.pKeyCtx    = (BYTE*)(&ThrId);
 
-    Ack.dwDataId = 0;
     DWORD Ret = QueryDataByKey (&Req, &Ack);
     if (Ret != R_SUCCESS)
-    {
-        return NULL;
-    }
-
-    if (Ack.dwDataId == 0)
     {
         return NULL;
     }
@@ -399,6 +397,116 @@ static inline VOID AddThreadEdge (Graph *DifGraph, Node *ThrcNd, Node *CurNd)
 
     return;
 }
+
+static inline Variable* IsDefGlv (EventMsg *EM)
+{
+    LNode *DefHdr = EM->Def.Header;
+
+    while (DefHdr != NULL)
+    {
+        Variable *V = (Variable *) (DefHdr->Data);
+        if (V->Type == VT_GLOBAL)
+        {
+            return V;
+        }
+
+        DefHdr = DefHdr->Nxt;
+    }
+
+    return NULL;
+}
+
+static inline Variable* IsUseGlv (EventMsg *EM)
+{
+    LNode *UseHdr = EM->Use.Header;
+
+    while (UseHdr != NULL)
+    {
+        Variable *V = (Variable *) (UseHdr->Data);
+        if (V->Type == VT_GLOBAL)
+        {
+            return V;
+        }
+
+        UseHdr = UseHdr->Nxt;
+    }
+
+    return NULL;
+}
+
+static inline VOID UpdateGlv (Node *GlvNode, EventMsg *EM)
+{
+    Variable *Glv = IsDefGlv (EM);
+    if (Glv == NULL)
+    {
+        return;
+    }
+
+    DbReq Req;
+    DbAck Ack;
+    Node **NodePtr;
+
+    Req.dwDataType = DifA.GlvHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    ULONG GlvAddr  = strtol(Glv->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+
+    /* query first */
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        Ret = CreateDataByKey (&Req, &Ack);
+        assert ((Ret == R_SUCCESS));
+
+        NodePtr  = (Node **)(Ack.pDataAddr);
+    }
+
+    *NodePtr = GlvNode;
+    return;
+}
+
+
+static inline Node* IsGlvAccess (DifNode* DifN)
+{
+    Variable *Glv = IsUseGlv (&DifN->EMsg);
+    if (Glv == NULL)
+    {
+        return NULL;
+    }
+    
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.GlvHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    ULONG GlvAddr  = strtol(Glv->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        return NULL;
+    }
+
+    Node **NodePtr = (Node **)(Ack.pDataAddr);
+    return *NodePtr; 
+}
+
+
+static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
+{
+    Node *GlvcNd = IsGlvAccess (GN_2_DIFN (CurNd));
+    if (GlvcNd == NULL)
+    {
+        return;
+    }
+    
+    Edge* E = AddDifEdge (DifGraph, GlvcNd, CurNd);
+    SetEdgeType (E, EDGE_DIF);
+
+    return;
+}
+
 
 
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
@@ -465,6 +573,8 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
             AddRetEdge (DifGraph, LastGNode, N);
             AddInterCfEdge (DifGraph, LastGNode, N);
         }
+
+        AddGlvAccessEdge (DifGraph, N);
     }
   
     ListInsert (FDifG, N);
@@ -490,6 +600,8 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
     ViewEMsg (&DifN->EMsg);
+
+    UpdateGlv (N, &DifN->EMsg);
 
     if (R_EID2ETY (Event) == EVENT_THRC)
     {

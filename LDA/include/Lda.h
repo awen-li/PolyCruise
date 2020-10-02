@@ -210,6 +210,9 @@ private:
 
     DWORD m_EntryNo;
 
+    set<Value *> m_GlLexset;
+    map<Value *, Value *> m_GlvAlias;
+
 public:
     
     Lda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
@@ -226,6 +229,7 @@ public:
         assert (ExtLib != NULL);
 
         m_EntryNo = 0;
+        InitGlv ();
         
         Compute ();
 
@@ -260,6 +264,57 @@ public:
     }
     
 private:
+    inline bool IsGlobalValue (Value *Val)
+    {
+        GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
+
+        return (GVal != NULL);
+    }
+
+    inline bool IsConstStr (Value* Glv)
+    {
+        #define CONST_STR (".str")
+        const char *ValueName = Glv->getName ().data();
+        if (strncmp (CONST_STR, ValueName, sizeof(CONST_STR)-1) == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    inline bool IsInGlvSet (Value *Val)
+    {
+        auto It = m_GlvAlias.find (Val);
+        if (It != m_GlvAlias.end ())
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    inline void InitGlv ()
+    {
+        Value *Glv;
+        for (auto It = m_Ms->global_begin (); It != m_Ms->global_end (); It++) 
+        {
+            Glv = *It;
+            if (IsConstStr (Glv))
+            {
+                continue;
+            }
+
+            m_GlvAlias[Glv] = Glv;
+        }
+
+        errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
+    }
+    
     inline bool IsEntryFunc (Function *Callee)
     {
         if (Callee == NULL)
@@ -395,12 +450,20 @@ private:
         {
             Value *U = *It;
 
+            /* 1. search local lex set */
             if (LexSet->find (U) != LexSet->end())
             {
                 SET_TAINTED (TaintBit, BitNo);
             }
             else
             {
+                /* 2. search global lex set */
+                if (m_GlLexset.find (U) != m_GlLexset.end())
+                {
+                    SET_TAINTED (TaintBit, BitNo);
+                }
+
+                /* 3. search equal lex set */
                 auto  Eq = m_EqualVal.find (U);
                 if ((Eq  != m_EqualVal.end ()) && (LexSet->find (Eq ->second) != LexSet->end()))
                 {
@@ -525,18 +588,12 @@ private:
         return false;
     }
 
-    inline unsigned IsThrFunc ();
-    {
-        return (unsigned) (m_EntryNo != 0);
-    }
-
     inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
     {
         set<Value*> LocalLexSet;
 
         m_RunStack.insert (Func);
         Flda *fd = GetFlda (Func);
-        fd->SetThrEntry (IsThrFunc ());
 
         printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
         InitCriterions (Func, FTaintBits, &LocalLexSet);
@@ -550,6 +607,15 @@ private:
             if (LI.IsIntrinsic() || LI.IsUnReachable())
             {
                 continue;
+            }
+
+            if (LI.IsLoad ())
+            {
+                Value *LV = Inst->getOperand (0);
+                if (IsInGlvSet (LV))
+                {
+                    m_GlvAlias [Inst] = LV;
+                }
             }
 
             if (IsSourceInst (Inst))
@@ -616,6 +682,12 @@ private:
                         FTaintBits |= CheckOutArgTaint (Func, Val);
 
                         AddTaintValue (&LocalLexSet, Val);
+
+                        /* global taints */
+                        if (IsInGlvSet (Val))
+                        {
+                            m_GlLexset.insert (Val);
+                        }
 
                         if (LI.IsPHI ())
                         {

@@ -54,6 +54,7 @@ typedef struct tag_DifAgent
     DWORD EdgeHandle;
     DWORD FDifHandle;
     DWORD ThrHandle;
+    DWORD GlvHandle;
 }DifAgent;
 
 

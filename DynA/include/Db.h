@@ -18,6 +18,7 @@ enum DB_TYPE
     DB_TYPE_DIF_FUNC,
     DB_TYPE_DIF_THR,
     DB_TYPE_DIF_GRAPH,
+    DB_TYPE_DIF_GLV,
     DB_TYPE_END
 };
 
