@@ -200,7 +200,10 @@ private:
 
     ExternalLib *ExtLib;
 
-    set <Function *> m_RunStack;
+    set<Function *> m_RunStack;
+    Function *m_CurEntry;
+    bool m_IsGlvAccess;
+    map<Function*, unsigned> m_EntryExeNum;
 
     map<Value*, Value*> m_EqualVal;
 
@@ -208,9 +211,7 @@ private:
 
     ComQueue<Function*> m_EntryFQ;
 
-    DWORD m_EntryNo;
-
-    set<Value *> m_GlLexset;
+    set<Value *> m_GlvLexset;
     map<Value *, Value *> m_GlvAlias;
 
 public:
@@ -228,7 +229,7 @@ public:
         ExtLib = new ExternalLib ();
         assert (ExtLib != NULL);
 
-        m_EntryNo = 0;
+        m_CurEntry = NULL;
         InitGlv ();
         
         Compute ();
@@ -264,6 +265,32 @@ public:
     }
     
 private:
+    inline unsigned GetEntryExeNum (Function *Entry)
+    {
+        auto It = m_EntryExeNum.find (Entry);
+        if (It == m_EntryExeNum.end ())
+        {
+            return 0;
+        }
+        else
+        {
+            return It->second;
+        }
+    }
+
+    inline void UpdateEntryExeNum (Function *Entry)
+    {
+        auto It = m_EntryExeNum.find (Entry);
+        if (It == m_EntryExeNum.end ())
+        {
+            m_EntryExeNum [Entry] = 1;
+        }
+        else
+        {
+            It->second += 1;
+        }
+    }
+    
     inline bool IsGlobalValue (Value *Val)
     {
         GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
@@ -458,7 +485,7 @@ private:
             else
             {
                 /* 2. search global lex set */
-                if (m_GlLexset.find (U) != m_GlLexset.end())
+                if (m_GlvLexset.find (U) != m_GlvLexset.end())
                 {
                     SET_TAINTED (TaintBit, BitNo);
                 }
@@ -615,6 +642,8 @@ private:
                 if (IsInGlvSet (LV))
                 {
                     m_GlvAlias [Inst] = LV;
+                    m_IsGlvAccess = true;
+                    errs ()<<"Entry Function: "<<m_CurEntry->getName()<<" Use Glv: "<<LV->getName ()<<"\r\n";
                 }
             }
 
@@ -686,7 +715,7 @@ private:
                         /* global taints */
                         if (IsInGlvSet (Val))
                         {
-                            m_GlLexset.insert (Val);
+                            m_GlvLexset.insert (Val);
                         }
 
                         if (LI.IsPHI ())
@@ -712,17 +741,24 @@ private:
 
     inline void Compute ()
     {      
-        Function *Entry = m_Ms->GetEntryFunction ();
-        assert (Entry != NULL);
-
-        m_EntryFQ.InQueue (Entry);
+        Function *MainEntry = m_Ms->GetEntryFunction ();
+        assert (MainEntry != NULL);
+        m_EntryFQ.InQueue (MainEntry);
+        
         while (!m_EntryFQ.IsEmpty ())
         {
-            Entry = m_EntryFQ.OutQueue ();
-            errs()<<"=====================> Process Entery Function: "<<Entry->getName ()<<" <====================\r\n";         
+            m_IsGlvAccess = false;
+            m_CurEntry = m_EntryFQ.OutQueue ();
+            UpdateEntryExeNum (m_CurEntry);
             
-            ComputeFlda (Entry, TAINT_NONE);
-            m_EntryNo++;
+            errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
+            
+            ComputeFlda (m_CurEntry, TAINT_NONE);
+            if (m_IsGlvAccess == true && GetEntryExeNum (m_CurEntry) <= 1)
+            {
+                m_EntryFQ.InQueue (m_CurEntry);
+            }
+                
         }
 
         Dump ();
