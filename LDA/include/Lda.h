@@ -202,8 +202,10 @@ private:
 
     set<Function *> m_RunStack;
     Function *m_CurEntry;
-    bool m_IsGlvAccess;
+
     map<Function*, unsigned> m_EntryExeNum;
+    map<Function*, set<Value*>> m_Entry2GlvUse;
+    map<Value *, set<Function*>> m_GlvUse2Entry;
 
     map<Value*, Value*> m_EqualVal;
 
@@ -340,6 +342,37 @@ private:
         }
 
         errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
+    }
+
+    inline void AddGlvUseEntry (Value *Glv)
+    {
+        auto GlvIt = m_GlvUse2Entry.find (Glv);
+        if (GlvIt == m_GlvUse2Entry.end ())
+        {
+            return;
+        }
+
+        set<Function *> *EntrySet = &(GlvIt->second);
+        for (auto It = EntrySet->begin (); It != EntrySet->end (); It++)
+        {
+            Function *Entry = *It;
+            if (Entry == m_CurEntry)
+            {
+                continue;
+            }
+
+            DWORD ExeNum = GetEntryExeNum (Entry);
+            errs ()<<"****** Entry: "<<Entry->getName()<<" execute number: "<<GetEntryExeNum (Entry)<<"\r\n";
+            if (ExeNum > m_Entry2GlvUse[Entry].size ())
+            {                
+                continue;
+            }
+
+            m_EntryFQ.InQueue (Entry);
+            errs ()<<"===> Add Entry: "<<Entry->getName()<<" Use Glv: "<<Glv->getName ()<<"\r\n";
+        }
+
+        return;
     }
     
     inline bool IsEntryFunc (Function *Callee)
@@ -563,7 +596,13 @@ private:
         assert (llvm::isa<llvm::Function>(Ef));
         //errs()<<"Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<"\r\n";
 
-        m_EntryFQ.InQueue ((Function*)Ef);
+        Function *Entry = (Function *)Ef;
+        if (GetEntryExeNum (Entry) > m_Entry2GlvUse[Entry].size ())
+        {
+            return;
+        }
+
+        m_EntryFQ.InQueue ((Function*)Entry);
         
         return;
     }
@@ -642,7 +681,8 @@ private:
                 if (IsInGlvSet (LV))
                 {
                     m_GlvAlias [Inst] = LV;
-                    m_IsGlvAccess = true;
+                    m_GlvUse2Entry[LV].insert (m_CurEntry);
+                    m_Entry2GlvUse[m_CurEntry].insert (LV);
                     errs ()<<"Entry Function: "<<m_CurEntry->getName()<<" Use Glv: "<<LV->getName ()<<"\r\n";
                 }
             }
@@ -716,6 +756,7 @@ private:
                         if (IsInGlvSet (Val))
                         {
                             m_GlvLexset.insert (Val);
+                            AddGlvUseEntry (Val);
                         }
 
                         if (LI.IsPHI ())
@@ -747,18 +788,12 @@ private:
         
         while (!m_EntryFQ.IsEmpty ())
         {
-            m_IsGlvAccess = false;
             m_CurEntry = m_EntryFQ.OutQueue ();
             UpdateEntryExeNum (m_CurEntry);
             
             errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
             
-            ComputeFlda (m_CurEntry, TAINT_NONE);
-            if (m_IsGlvAccess == true && GetEntryExeNum (m_CurEntry) <= 1)
-            {
-                m_EntryFQ.InQueue (m_CurEntry);
-            }
-                
+            ComputeFlda (m_CurEntry, TAINT_NONE);                
         }
 
         Dump ();
