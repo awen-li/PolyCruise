@@ -188,10 +188,7 @@ class Lda
 private:
     Fts *m_Fts;
 
-    map <Function*, Flda> m_Func2Flda;
-    
-    set<Value*> m_GlobalLexSet;
-    
+    map <Function*, Flda> m_Func2Flda;    
     set <Instruction*> m_InstSet;
 
     ModuleManage *m_Ms;
@@ -212,6 +209,7 @@ private:
     StField *m_Sf;
 
     ComQueue<Function*> m_EntryFQ;
+    map<Function*, unsigned> m_EntryTaintBits;
 
     set<Value *> m_GlvLexset;
     map<Value *, Value *> m_GlvAlias;
@@ -267,6 +265,33 @@ public:
     }
     
 private:
+    inline unsigned GetEntryTaintbits (Function *Entry)
+    {
+        /* from the taint bits map */
+        auto It = m_EntryTaintBits.find (Entry);
+        if (It != m_EntryTaintBits.end ())
+        {
+            return It->second;
+        }
+
+        /* check the para whether it is a tainted share variable */
+        for (auto fItr = Entry->arg_begin(); fItr != Entry->arg_end() ; ++fItr) 
+        {
+            Argument *Formal = &*fItr;
+            Value *Glv = IsInGlvSet (Formal);
+            if (Glv == NULL)
+            {
+                continue;
+            }
+
+            auto It = m_GlvLexset.find (Glv);
+            if (It != m_GlvLexset.end ())
+            {
+                return TAINT_ARG0;
+            }
+        }    
+    }
+    
     inline unsigned GetEntryExeNum (Function *Entry)
     {
         auto It = m_EntryExeNum.find (Entry);
@@ -314,21 +339,22 @@ private:
         }
     }
 
-    inline bool IsInGlvSet (Value *Val)
+    inline Value* IsInGlvSet (Value *Val)
     {
         auto It = m_GlvAlias.find (Val);
         if (It != m_GlvAlias.end ())
         {
-            return true;
+            return It->second;
         }
         else
         {
-            return false;
+            return NULL;
         }
     }
 
     inline void InitGlv ()
     {
+        /* global variables */
         Value *Glv;
         for (auto It = m_Ms->global_begin (); It != m_Ms->global_end (); It++) 
         {
@@ -339,6 +365,44 @@ private:
             }
 
             m_GlvAlias[Glv] = Glv;
+        }
+
+
+        /* share variables */
+        for (auto It = m_Ms->func_begin (); It != m_Ms->func_end (); It++)
+        {
+            Function *Func  = *It;
+            if (Func->isDeclaration() || Func->isIntrinsic())
+            {
+                continue;
+            }
+
+            for (inst_iterator itr = inst_begin(*Func), ite = inst_end(*Func); itr != ite; ++itr) 
+            {
+                Instruction *Inst = &*itr.getInstructionIterator();
+                LLVMInst LI (Inst);
+                if (!IsEntryFunc (LI.GetCallee()))
+                {
+                    continue;
+                }
+        
+                errs ()<<*Inst<<"\r\n";
+
+                /* relate the actual and formal parameter, treat them as global variables */
+                Function *Entry = (Function *)Inst->getOperand (2);
+                Value *InPara = Inst->getOperand (3);
+                m_GlvAlias[InPara] = InPara;
+                errs()<<"add actual para => "<<InPara<<"\r\n";
+
+                /* get formal para */
+                for (auto fItr = Entry->arg_begin(); fItr != Entry->arg_end() ; ++fItr) 
+                {
+                    Argument *Formal = &*fItr;
+                    m_GlvAlias[Formal] = InPara;
+                    errs()<<"add formal para => "<<Formal<<" mapping to "<<InPara<<"\r\n";
+                }
+        
+            }
         }
 
         errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
@@ -590,11 +654,11 @@ private:
     }
 
 
-    inline void GetEntryFunction (Instruction *CallInst)
+    inline void GetEntryFunction (Instruction *CallInst, CSTaint *Cst)
     {
         Value *Ef = CallInst->getOperand (2);
         assert (llvm::isa<llvm::Function>(Ef));
-        //errs()<<"Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<"\r\n";
+        errs()<<"Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<"\r\n";
 
         Function *Entry = (Function *)Ef;
         if (GetEntryExeNum (Entry) > m_Entry2GlvUse[Entry].size ())
@@ -602,8 +666,12 @@ private:
             return;
         }
 
-        m_EntryFQ.InQueue ((Function*)Entry);
-        
+        m_EntryFQ.InQueue (Entry);
+        if (Cst->m_InTaintBits != 0)
+        {
+            m_EntryTaintBits[Entry] = TAINT_ARG0;
+        }
+
         return;
     }
 
@@ -612,7 +680,7 @@ private:
         Function *Callee = LI->GetCallee();
         if (IsEntryFunc (Callee))
         {
-            GetEntryFunction (LI->GetInst ());
+            GetEntryFunction (LI->GetInst (), Cst);
             return;
         }
         
@@ -668,22 +736,24 @@ private:
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstID++) 
         {
             Instruction *Inst = &*ItI;
-            
+
             LLVMInst LI (Inst);          
             if (LI.IsIntrinsic() || LI.IsUnReachable())
             {
                 continue;
             }
 
-            if (LI.IsLoad ())
+            /* check all use */
+            for (auto It = LI.begin (); It != LI.end (); It++)
             {
-                Value *LV = Inst->getOperand (0);
-                if (IsInGlvSet (LV))
+                Value *LV = IsInGlvSet (*It);
+                if (LV  != NULL)
                 {
                     m_GlvAlias [Inst] = LV;
                     m_GlvUse2Entry[LV].insert (m_CurEntry);
                     m_Entry2GlvUse[m_CurEntry].insert (LV);
-                    errs ()<<"Entry Function: "<<m_CurEntry->getName()<<" Use Glv: "<<LV->getName ()<<"\r\n";
+                    errs ()<<"Entry Function: "<<m_CurEntry->getName()
+                           <<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
                 }
             }
 
@@ -701,6 +771,14 @@ private:
                 Value *Def = LI.GetDef ();
                 Value *Use = LI.GetValue (0);
                 m_EqualVal[Def] = Use;
+
+                Value *LV = IsInGlvSet (Use);
+                if (LV != NULL)
+                {
+                    m_GlvAlias [Def] = LV;
+                    errs()<<*Inst<<" => "<<Def<<" to "<<LV<<"\r\n";
+                }
+                
                 continue;
             }
             
@@ -713,8 +791,15 @@ private:
 
                 CSTaint *Cst = fd->InsertCst (Inst, TaintedBits);
                 assert (Cst != NULL);
-                
+
+                unsigned TaintInstNum = m_InstSet.size ();
                 ProcessCall (&LI, Cst, &LocalLexSet);
+                if (m_InstSet.size () > TaintInstNum &&
+                    !IsEntryFunc (LI.GetCallee ()))
+                {
+                    m_InstSet.insert (Inst);
+                    fd->InsertInst (Inst, InstID, 0);
+                }
             }
             else
             {
@@ -753,10 +838,11 @@ private:
                         AddTaintValue (&LocalLexSet, Val);
 
                         /* global taints */
-                        if (IsInGlvSet (Val))
+                        Value *Glv = IsInGlvSet (Val);
+                        if (Glv != NULL)
                         {
-                            m_GlvLexset.insert (Val);
-                            AddGlvUseEntry (Val);
+                            m_GlvLexset.insert (Glv);
+                            AddGlvUseEntry (Glv);
                         }
 
                         if (LI.IsPHI ())
@@ -766,6 +852,11 @@ private:
 
                         break;
                     }
+                }
+
+                if (IsEntryFunc (LI.GetCallee ()))
+                {
+                    continue;
                 }
 
                 m_InstSet.insert (Inst);
@@ -792,8 +883,9 @@ private:
             UpdateEntryExeNum (m_CurEntry);
             
             errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
-            
-            ComputeFlda (m_CurEntry, TAINT_NONE);                
+            unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
+            printf ("TaintBits = %x\r\n", TaintBits);
+            ComputeFlda (m_CurEntry, TaintBits);                
         }
 
         Dump ();
