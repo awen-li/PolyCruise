@@ -35,7 +35,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
 }
 
 
-void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId)
+void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId,  char *ThrPara)
 {
 	va_list ap;
 	
@@ -46,12 +46,12 @@ void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId)
         exit (0);
     }
 
-    (void)snprintf (Node->QBuf, sizeof(Node->QBuf), "{%x:%s}", *((DWORD*)ThrId), ThreadEntry);
+    (void)snprintf (Node->QBuf, sizeof(Node->QBuf), "{%X:%s:%lX}", *((DWORD*)ThrId), ThreadEntry, (ULONG)ThrPara);
     Node->ThreadId = pthread_self ();
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    //printf ("[TRC_thread][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    //printf ("[TRC_thread][T:%X]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
 
     return;   
 }

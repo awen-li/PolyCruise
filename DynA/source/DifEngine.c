@@ -37,6 +37,9 @@ VOID InitDif ()
     Ret = DbCreateTable(DA->GlvHandle, sizeof (Node*), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
+    Ret = DbCreateTable(DA->ShareHandle, sizeof (DWORD), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
     return;
 }
 
@@ -347,7 +350,7 @@ static inline VOID AddRetEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     return;
 }
 
-static inline VOID UpdateThrEvent (Node *ThrcNode, EventMsg *EM)
+static inline VOID UpdateThrEvent (Node *ThrcNode, Variable *VThrId)
 {
     DbReq Req;
     DbAck Ack;
@@ -355,8 +358,7 @@ static inline VOID UpdateThrEvent (Node *ThrcNode, EventMsg *EM)
     Req.dwDataType = DifA.ThrHandle;
     Req.dwKeyLen   = sizeof (DWORD);
 
-    Variable *Vid  = (Variable*)EM->Def.Header->Data;
-    DWORD ThreadId = strtol(Vid->Name, NULL, 16);
+    DWORD ThreadId = strtol(VThrId->Name, NULL, 16);
     Req.pKeyCtx    = (BYTE*)(&ThreadId);
     
     DWORD Ret = CreateDataByKey (&Req, &Ack);
@@ -398,6 +400,49 @@ static inline VOID AddThreadEdge (Graph *DifGraph, Node *ThrcNd, Node *CurNd)
     return;
 }
 
+static inline VOID UpdateShareVariable (Variable *Share)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.ShareHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    ULONG GlvAddr  = strtol(Share->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+
+    /* query first */
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        Ret = CreateDataByKey (&Req, &Ack);
+        assert ((Ret == R_SUCCESS));
+    }
+
+    return;
+}
+
+
+static inline DWORD IsShareVariable (Variable *Var)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.ShareHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+    ULONG GlvAddr  = strtol(Var->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+
+    /* query first */
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 static inline Variable* IsDefGlv (EventMsg *EM)
 {
     LNode *DefHdr = EM->Def.Header;
@@ -408,6 +453,14 @@ static inline Variable* IsDefGlv (EventMsg *EM)
         if (V->Type == VT_GLOBAL)
         {
             return V;
+        }
+        else if (V->Type == VT_POINTER)
+        {
+            if (IsShareVariable (V))
+            {
+                printf ("===> def share variable\r\n");
+                return V;
+            }
         }
 
         DefHdr = DefHdr->Nxt;
@@ -427,6 +480,14 @@ static inline Variable* IsUseGlv (EventMsg *EM)
         {
             return V;
         }
+        else if (V->Type == VT_POINTER)
+        {
+            if (IsShareVariable (V))
+            {
+                printf ("===> use share variable\r\n");
+                return V;
+            }
+        }
 
         UseHdr = UseHdr->Nxt;
     }
@@ -434,14 +495,8 @@ static inline Variable* IsUseGlv (EventMsg *EM)
     return NULL;
 }
 
-static inline VOID UpdateGlv (Node *GlvNode, EventMsg *EM)
+static inline VOID UpdateGlv (Node *GlvNode, Variable *Glv)
 {
-    Variable *Glv = IsDefGlv (EM);
-    if (Glv == NULL)
-    {
-        return;
-    }
-
     DbReq Req;
     DbAck Ack;
     Node **NodePtr;
@@ -464,7 +519,6 @@ static inline VOID UpdateGlv (Node *GlvNode, EventMsg *EM)
     *NodePtr = GlvNode;
     return;
 }
-
 
 static inline Node* IsGlvAccess (DifNode* DifN)
 {
@@ -593,19 +647,29 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         return;
     }
     
-    DEBUG ("[DIF][T:%x]%lx: %s \r\n", ThreadId, Event, Msg);
+    DEBUG ("[DIF][T:%X]%lx: %s \r\n", ThreadId, Event, Msg);
     Node *N = AddDifNode (DifGraph, Event);
     DifNode* DifN = GN_2_DIFN (N);
     DifN->EventId = Event;
 
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
-    ViewEMsg (&DifN->EMsg);
+    EventMsg *EM = &DifN->EMsg; 
+    //ViewEMsg (EM);
 
-    UpdateGlv (N, &DifN->EMsg);
+    /* update Glv database */
+    Variable *Glv = IsDefGlv (EM);
+    if (Glv != NULL)
+    {
+        UpdateGlv (N, Glv);
+    }
 
     if (R_EID2ETY (Event) == EVENT_THRC)
     {
-        UpdateThrEvent (N, &DifN->EMsg);
+        Variable *VThrId  = (Variable*)EM->Def.Header->Data;
+        UpdateThrEvent (N, VThrId);
+
+        Variable *VThrPara  = (Variable*)EM->Use.Header->Data;
+        UpdateShareVariable (VThrPara);
     }
 
     InsertNode2Graph (DifGraph, N);

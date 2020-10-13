@@ -78,10 +78,11 @@ public:
     {
         LLVMContext &context = M->getContext();
 
-        /* void TRC_thread (ULONG EventId, char* ThreadEntry, DWORD *ThrId) */
+        /* void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId, ULONG *Para) */
         Type *ArgTypes[] = {Type::getInt64Ty (M->getContext()), 
                             Type::getInt8PtrTy(M->getContext()),
-                            Type::getInt64PtrTy(M->getContext()),};
+                            Type::getInt64PtrTy(M->getContext()),
+                            Type::getInt8PtrTy(M->getContext())};
 
         
         FunctionType *Threadtr = FunctionType::get(Type::getVoidTy(context), ArgTypes, false);

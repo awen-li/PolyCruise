@@ -737,7 +737,8 @@ private:
         string ThrEntry = Ef->getName ().data();
         Value *ValThrEntry = Builder.CreateGlobalStringPtr(ThrEntry);
 
-        Value *ThrID = ThrcInst->getOperand (0);
+        Value *ThrID   = ThrcInst->getOperand (0);
+        Value *ThrData = ThrcInst->getOperand (3);
 
         unsigned long FID = Fd->GetId (); 
         unsigned long EventId = F_LANG2EID (CLANG_TY) | 
@@ -747,7 +748,7 @@ private:
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
        
-        Builder.CreateCall(m_ThreadTc, {Ev, ValThrEntry, ThrID});
+        Builder.CreateCall(m_ThreadTc, {Ev, ValThrEntry, ThrID, ThrData});
             
         return;
     }

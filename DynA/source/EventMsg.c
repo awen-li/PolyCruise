@@ -50,7 +50,8 @@ static inline DWORD GetVarName (char *Msg)
     char *Pos = Msg;
 
     while (*Pos != MSG_VT && 
-           *Pos != MSG_MT)
+           *Pos != MSG_MT &&
+           *Pos != MSG_END)
     {
         Pos++;
     }
@@ -84,12 +85,21 @@ static inline VOID DeThrcEvent (EventMsg *EM, char *Msg)
     Variable *V = AllotVariable (Pos, ThrIdLen, VT_INTEGER);
     ListInsert (&EM->Def, V);
 
+    /* thread name */
     Pos += ThrIdLen + 1;
     DWORD ThrEntryLen = GetVarName (Pos);
     assert (ThrEntryLen != 0);
 
     V = AllotVariable (Pos, ThrEntryLen, VT_FUNCTION);
     ListInsert (&EM->Def, V);
+    
+    /* thread para */
+    Pos += ThrEntryLen + 1;
+    DWORD ParaLen = GetVarName (Pos);
+    assert (ParaLen != 0);
+    
+    V = AllotVariable (Pos, ParaLen, VT_GLOBAL);
+    ListInsert (&EM->Use, V);
 
     return;    
 }
