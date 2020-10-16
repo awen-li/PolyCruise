@@ -61,6 +61,8 @@
 #define EVENT_RET         (4UL)
 #define EVENT_CALL        (5UL)
 #define EVENT_THRC        (6UL)
+#define EVENT_GEP         (7UL)
+#define EVENT_STORE       (8UL)
 
 #define CLANG_TY          (1UL)
 

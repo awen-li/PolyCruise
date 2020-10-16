@@ -196,13 +196,7 @@ VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
         {
             DeThrcEvent (EM, Msg);
             break;
-        }    
-        case EVENT_NR:
-        case EVENT_CALL:
-        {
-            DeEvent (EM, Msg);
-            break;
-        }
+        }      
         case EVENT_BR:
         {
             DeBREvent (EM, Msg);
@@ -215,7 +209,8 @@ VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
         }
         default:
         {
-            assert (0);            
+            DeEvent (EM, Msg);
+            break;          
         }
     }
 

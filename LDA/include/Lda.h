@@ -60,6 +60,7 @@ typedef map <Instruction*, CSTaint>::iterator mic_iterator;
 class Flda
 {
 private:
+    unsigned m_InstNum;
     unsigned m_FuncId;
     Function *m_CurFunc;
     map <Instruction*, CSTaint> m_CallSite2Cst;
@@ -84,11 +85,25 @@ public:
 
     }
 
+    inline void SetInstNum (unsigned InstNum)
+    {
+        m_InstNum = InstNum;
+    }
+
+    inline unsigned GetInstNum ()
+    {
+        return m_InstNum;
+    }
+
     inline char* GetName ()
     {
         return (char*)m_CurFunc->getName ().data();
     }
 
+    inline Function* GetFunc ()
+    {
+        return m_CurFunc;
+    }
     
     inline unsigned GetFID ()
     {
@@ -151,7 +166,9 @@ public:
         }
         else
         {
-            return &(It->second);
+            CSTaint *Cst = &(It->second);
+            Cst->m_InTaintBits |= InTaintBits;
+            return Cst;
         }
     }
 
@@ -289,7 +306,9 @@ private:
             {
                 return TAINT_ARG0;
             }
-        }    
+        }
+
+        return TAINT_NONE;
     }
     
     inline unsigned GetEntryExeNum (Function *Entry)
@@ -570,6 +589,7 @@ private:
     {
         unsigned TaintBit = 0;
         unsigned BitNo = ARG0_NO;
+
         for (auto It = Inst->begin (); It != Inst->end(); It++, BitNo++)
         {
             Value *U = *It;
@@ -654,23 +674,24 @@ private:
     }
 
 
-    inline void GetEntryFunction (Instruction *CallInst, CSTaint *Cst)
+    inline VOID ProcEntry (Instruction *CallInst, CSTaint *Cst, set<Value*> *LexSet)
     {
         Value *Ef = CallInst->getOperand (2);
         assert (llvm::isa<llvm::Function>(Ef));
-        errs()<<"Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<"\r\n";
-
+        
         Function *Entry = (Function *)Ef;
-        if (GetEntryExeNum (Entry) > m_Entry2GlvUse[Entry].size ())
+        if (GetEntryExeNum (Entry) <= m_Entry2GlvUse[Entry].size ())
         {
-            return;
+            m_EntryFQ.InQueue (Entry);
+            if (Cst->m_InTaintBits != 0)
+            {
+                m_EntryTaintBits[Entry] = TAINT_ARG0;
+            }
+
+            errs()<<"ProcEntry ===> Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<" TaintBits = "<<m_EntryTaintBits[Entry]<<"\r\n";
         }
 
-        m_EntryFQ.InQueue (Entry);
-        if (Cst->m_InTaintBits != 0)
-        {
-            m_EntryTaintBits[Entry] = TAINT_ARG0;
-        }
+        LexSet->insert (CallInst->getOperand (3));
 
         return;
     }
@@ -680,8 +701,8 @@ private:
         Function *Callee = LI->GetCallee();
         if (IsEntryFunc (Callee))
         {
-            GetEntryFunction (LI->GetInst (), Cst);
-            return;
+            ProcEntry (LI->GetInst (), Cst, LexSet);
+            return;            
         }
         
         if  (Callee != NULL)
@@ -691,7 +712,6 @@ private:
         }
         else
         {
-            //errs()<<"Indirect: "<<*(LI->GetInst ())<<"\r\n";
             FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
             assert (Fset != NULL);
 
@@ -722,15 +742,61 @@ private:
         return false;
     }
 
-    inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
+
+    inline unsigned BackwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
-        set<Value*> LocalLexSet;
+        printf ("=>BackwardDeduce %s: FTaintBits = %#x, InstNum = %u\r\n",
+                Fd->GetName (), FTaintBits, Fd->GetInstNum ());
+        unsigned InstID = Fd->GetInstNum ();
+        Function *Func  = Fd->GetFunc ();
+        inst_iterator ItI = inst_end(*Func);
+        inst_iterator St  = inst_begin(*Func);
+        for (ItI--; ItI != St; --ItI, InstID--) 
+        {
+            Instruction *Inst = &*ItI;
 
-        m_RunStack.insert (Func);
-        Flda *fd = GetFlda (Func);
+            LLVMInst LI (Inst);          
+            if (LI.IsIntrinsic() || LI.IsUnReachable())
+            {
+                continue;
+            }
 
-        printf ("=>Entry %s : FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
-        InitCriterions (Func, FTaintBits, &LocalLexSet);
+            Value *Def = LI.GetDef ();
+            auto It = LocalLexSet->find (Def);
+            if (It == LocalLexSet->end ())
+            {
+                continue;
+            }
+
+            
+            for (auto It = LI.begin (); It != LI.end (); It++)
+            {
+                Value *Val = *It;
+                
+                LocalLexSet->insert (Val);
+                
+                FTaintBits |= CheckOutArgTaint (Func, Val);        
+            }
+
+            auto ItTI = m_InstSet.find (Inst);
+            if (ItTI  == m_InstSet.end ())
+            {
+                Fd->InsertInst (Inst, InstID, 0);
+                errs ()<<"["<<InstID<<"]BackwardDeduce -> "<<*Inst<<"\r\n";
+            }
+        }
+
+        printf ("=>BackwardDeduce %s exit\r\n", Fd->GetName ());
+
+        return FTaintBits;
+    }
+
+
+    inline unsigned ForwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
+    {
+        printf ("=>ForwardDeduce Entry %s : FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
+        Function *Func = Fd->GetFunc ();
+        InitCriterions (Func, FTaintBits, LocalLexSet);
 
         unsigned InstID = 1;
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstID++) 
@@ -761,11 +827,11 @@ private:
             {
                 errs ()<<"Add Source: "<<*Inst<<"\r\n";
                 m_InstSet.insert (Inst);
-                fd->InsertInst (Inst, InstID, SOURCE_TY);
+                Fd->InsertInst (Inst, InstID, SOURCE_TY);
                 continue;
             }
 
-            unsigned TaintedBits = GetTaintedBits (&LI, &LocalLexSet);
+            unsigned TaintedBits = GetTaintedBits (&LI, LocalLexSet);
             if (LI.IsBitCast())
             {
                 Value *Def = LI.GetDef ();
@@ -789,16 +855,16 @@ private:
                     continue;
                 }
 
-                CSTaint *Cst = fd->InsertCst (Inst, TaintedBits);
+                CSTaint *Cst = Fd->InsertCst (Inst, TaintedBits);
                 assert (Cst != NULL);
 
                 unsigned TaintInstNum = m_InstSet.size ();
-                ProcessCall (&LI, Cst, &LocalLexSet);
+                ProcessCall (&LI, Cst, LocalLexSet);
                 if (m_InstSet.size () > TaintInstNum &&
                     !IsEntryFunc (LI.GetCallee ()))
                 {
                     m_InstSet.insert (Inst);
-                    fd->InsertInst (Inst, InstID, 0);
+                    Fd->InsertInst (Inst, InstID, 0);
                 }
             }
             else
@@ -813,10 +879,10 @@ private:
                     case Instruction::Call:
                     case Instruction::Invoke:
                     {
-                        CSTaint *Cst = fd->InsertCst (Inst, TaintedBits);
+                        CSTaint *Cst = Fd->InsertCst (Inst, TaintedBits);
                         assert (Cst != NULL);
-                        
-                        ProcessCall (&LI, Cst, &LocalLexSet); 
+
+                        ProcessCall (&LI, Cst, LocalLexSet); 
                         break;
                     }
                     case Instruction::ICmp:
@@ -835,7 +901,7 @@ private:
                         Value *Val = LI.GetDef ();
                         FTaintBits |= CheckOutArgTaint (Func, Val);
 
-                        AddTaintValue (&LocalLexSet, Val);
+                        AddTaintValue (LocalLexSet, Val);
 
                         /* global taints */
                         Value *Glv = IsInGlvSet (Val);
@@ -860,13 +926,46 @@ private:
                 }
 
                 m_InstSet.insert (Inst);
-                fd->InsertInst (Inst, InstID, 0);
+                Fd->InsertInst (Inst, InstID, 0);
                 errs ()<<"\t["<<InstID<<"]Tainted Inst: "<<*Inst<<"\r\n";
             }
         }
 
-        printf ("=>Exit %s: FTaintBits = %#x\r\n", Func->getName ().data(), FTaintBits);
+        Fd->SetInstNum (InstID-1);
+        printf ("=>ForwardDeduce Exit %s: FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
 
+        return FTaintBits;
+    }
+
+
+    inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
+    {
+        unsigned Count = 0;
+        set<Value*> LocalLexSet;
+        Flda *Fd = GetFlda (Func);
+
+        m_RunStack.insert (Func);
+
+        unsigned PreTaintedNum = m_InstSet.size ();
+        while (1)
+        {            
+            /* forward execution */
+            FTaintBits = ForwardDeduce (Fd, FTaintBits, &LocalLexSet);            
+                    
+            /* deduce backward information */
+            FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
+
+            unsigned CurTaintedNum = m_InstSet.size ();
+            if (CurTaintedNum == PreTaintedNum)
+            {
+                break;                
+            }
+
+            printf ("[%u]PreTaintedNum = %u, CurTaintedNum = %u\r\n", Count, PreTaintedNum, CurTaintedNum);
+            PreTaintedNum = CurTaintedNum;          
+            Count++;
+        }
+        
         m_RunStack.erase (Func);
         return FTaintBits;
     }
@@ -884,8 +983,13 @@ private:
             
             errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
-            printf ("TaintBits = %x\r\n", TaintBits);
-            ComputeFlda (m_CurEntry, TaintBits);                
+            printf ("IN TaintBits = %x\r\n", TaintBits);
+            
+            /* update entry tainted bits */
+            TaintBits = ComputeFlda (m_CurEntry, TaintBits);
+            m_EntryTaintBits [m_CurEntry] = TaintBits; 
+
+            printf ("OUT TaintBits = %x\r\n", TaintBits);
         }
 
         Dump ();

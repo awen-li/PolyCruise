@@ -84,9 +84,19 @@ public:
         return (m_InstOp == Instruction::Load);
     }
 
+    inline bool IsStore ()
+    {
+        return (m_InstOp == Instruction::Store);
+    }
+
     inline bool IsBR ()
     {
         return (m_InstOp == Instruction::Br);
+    }
+
+    inline bool IsGep ()
+    {
+        return (m_InstOp == Instruction::GetElementPtr);
     }
 
     inline bool IsCmp ()

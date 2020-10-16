@@ -21,6 +21,8 @@ VOID InitDif ()
     DA->FDifHandle = DB_TYPE_DIF_FUNC;
     DA->ThrHandle  = DB_TYPE_DIF_THR;
     DA->GlvHandle  = DB_TYPE_DIF_GLV;
+    DA->ShareHandle= DB_TYPE_DIF_SHARE;
+    DA->AMHandle   = DB_TYPE_DIF_ADDRMAPING;
     
     Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
     assert (Ret != R_FAIL);
@@ -38,6 +40,9 @@ VOID InitDif ()
     assert (Ret != R_FAIL);
 
     Ret = DbCreateTable(DA->ShareHandle, sizeof (DWORD), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->AMHandle, sizeof (ULONG), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
     return;
@@ -350,6 +355,57 @@ static inline VOID AddRetEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     return;
 }
 
+
+static inline ULONG GetBaseAddr (Variable *Use)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DifA.AMHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+
+    ULONG Gep = strtol(Use->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&Gep);
+    
+    DWORD Ret = QueryDataByKey (&Req, &Ack);
+    if (Ret != R_SUCCESS)
+    {
+        return Gep;
+    }
+
+    ULONG Base = *(ULONG *)(Ack.pDataAddr);   
+    return Base;
+}
+
+
+static inline VOID UpdataAddrMaping (Variable *Def, Variable *Use)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    ULONG Base = GetBaseAddr (Use);
+    printf ("\t--> Base %lX\r\n", Base);
+
+    Req.dwDataType = DifA.AMHandle;
+    Req.dwKeyLen   = sizeof (ULONG);
+
+    ULONG Gep = strtol(Def->Name, NULL, 16);
+    Req.pKeyCtx    = (BYTE*)(&Gep);
+    
+    DWORD Ret = CreateDataByKey (&Req, &Ack);
+    assert (Ret == R_SUCCESS);
+
+    ULONG *NewBase = (ULONG *)(Ack.pDataAddr);
+    //*NewBase = strtol(Use->Name, NULL, 16);
+    *NewBase = Base; /* field insensitive */
+
+    printf ("Maping: %lX  to %lX\r\n", Gep, *NewBase);
+    
+    return;
+}
+
+
+
 static inline VOID UpdateThrEvent (Node *ThrcNode, Variable *VThrId)
 {
     DbReq Req;
@@ -562,7 +618,6 @@ static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
 }
 
 
-
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 {
     DifNode* DifN = GN_2_DIFN (N);
@@ -663,16 +718,39 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         UpdateGlv (N, Glv);
     }
 
-    if (R_EID2ETY (Event) == EVENT_THRC)
+    switch (R_EID2ETY (Event))
     {
-        Variable *VThrId  = (Variable*)EM->Def.Header->Data;
-        UpdateThrEvent (N, VThrId);
+        case EVENT_THRC:
+        {
+            /* control flow between threads */
+            Variable *VThrId  = (Variable*)EM->Def.Header->Data;
+            UpdateThrEvent (N, VThrId);
 
-        Variable *VThrPara  = (Variable*)EM->Use.Header->Data;
-        UpdateShareVariable (VThrPara);
+            Variable *VThrPara  = (Variable*)EM->Use.Header->Data;
+            UpdateShareVariable (VThrPara);
+            break;
+        }
+        case EVENT_GEP:
+        {
+            /* address mapping -> base address */
+            UpdataAddrMaping ((Variable*)EM->Def.Header->Data,
+                              (Variable*)EM->Use.Header->Data);
+            break;
+        }
+        case EVENT_STORE:
+        case EVENT_CALL:
+        {
+            /* definition check for pointer */
+            break;
+        }
+        default:
+        {
+            break;            
+        }
     }
 
     InsertNode2Graph (DifGraph, N);
+    
     
     return;
 }

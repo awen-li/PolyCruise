@@ -497,6 +497,10 @@ private:
         errs()<<*Inst<<"\r\n";
         
         Pf->AppendFormat ("{");
+        if (LI.IsGep ())
+        {
+            Fd->SetEventType (InstId, EVENT_GEP);
+        }
         if (LI.IsRet ())
         {
             Fd->SetEventType (InstId, EVENT_RET);
