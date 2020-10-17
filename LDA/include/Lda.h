@@ -680,18 +680,23 @@ private:
         assert (llvm::isa<llvm::Function>(Ef));
         
         Function *Entry = (Function *)Ef;
-        if (GetEntryExeNum (Entry) <= m_Entry2GlvUse[Entry].size ())
+        m_EntryFQ.InQueue (Entry);
+        if (Cst->m_InTaintBits != 0)
         {
-            m_EntryFQ.InQueue (Entry);
-            if (Cst->m_InTaintBits != 0)
+            m_EntryTaintBits[Entry] = TAINT_ARG0;
+            LexSet->insert (CallInst->getOperand (3));
+        }
+        else
+        {
+            unsigned EntryTaintBits = GetEntryTaintbits (Entry);
+            if (EntryTaintBits != 0)
             {
-                m_EntryTaintBits[Entry] = TAINT_ARG0;
+                LexSet->insert (CallInst->getOperand (3));
             }
-
-            errs()<<"ProcEntry ===> Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()<<" TaintBits = "<<m_EntryTaintBits[Entry]<<"\r\n";
         }
 
-        LexSet->insert (CallInst->getOperand (3));
+        errs()<<"ProcEntry ===> Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()
+              <<" TaintBits = "<<m_EntryTaintBits[Entry]<<"\r\n";   
 
         return;
     }
@@ -781,6 +786,7 @@ private:
             auto ItTI = m_InstSet.find (Inst);
             if (ItTI  == m_InstSet.end ())
             {
+                m_InstSet.insert (Inst);
                 Fd->InsertInst (Inst, InstID, 0);
                 errs ()<<"["<<InstID<<"]BackwardDeduce -> "<<*Inst<<"\r\n";
             }
@@ -818,8 +824,8 @@ private:
                     m_GlvAlias [Inst] = LV;
                     m_GlvUse2Entry[LV].insert (m_CurEntry);
                     m_Entry2GlvUse[m_CurEntry].insert (LV);
-                    errs ()<<"Entry Function: "<<m_CurEntry->getName()
-                           <<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
+                    //errs ()<<"Entry Function: "<<m_CurEntry->getName()
+                    //       <<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
                 }
             }
 
@@ -842,7 +848,7 @@ private:
                 if (LV != NULL)
                 {
                     m_GlvAlias [Def] = LV;
-                    errs()<<*Inst<<" => "<<Def<<" to "<<LV<<"\r\n";
+                    //errs()<<*Inst<<" => "<<Def<<" to "<<LV<<"\r\n";
                 }
                 
                 continue;
@@ -946,23 +952,19 @@ private:
 
         m_RunStack.insert (Func);
 
-        unsigned PreTaintedNum = m_InstSet.size ();
         while (1)
         {            
             /* forward execution */
-            FTaintBits = ForwardDeduce (Fd, FTaintBits, &LocalLexSet);            
+            FTaintBits = ForwardDeduce (Fd, FTaintBits, &LocalLexSet); 
+            unsigned FWTaintedNum = m_InstSet.size ();
                     
             /* deduce backward information */
             FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
-
-            unsigned CurTaintedNum = m_InstSet.size ();
-            if (CurTaintedNum == PreTaintedNum)
+            if (m_InstSet.size () == FWTaintedNum)
             {
                 break;                
             }
-
-            printf ("[%u]PreTaintedNum = %u, CurTaintedNum = %u\r\n", Count, PreTaintedNum, CurTaintedNum);
-            PreTaintedNum = CurTaintedNum;          
+       
             Count++;
         }
         
@@ -979,7 +981,11 @@ private:
         while (!m_EntryFQ.IsEmpty ())
         {
             m_CurEntry = m_EntryFQ.OutQueue ();
-            UpdateEntryExeNum (m_CurEntry);
+            if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ())
+            {
+                continue;
+            }
+            
             
             errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
@@ -989,6 +995,7 @@ private:
             TaintBits = ComputeFlda (m_CurEntry, TaintBits);
             m_EntryTaintBits [m_CurEntry] = TaintBits; 
 
+            UpdateEntryExeNum (m_CurEntry);
             printf ("OUT TaintBits = %x\r\n", TaintBits);
         }
 

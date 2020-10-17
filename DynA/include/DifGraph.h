@@ -20,7 +20,8 @@ enum
     EDGE_RET  = 2,
     EDGE_CF   = 4,
     EDGE_DIF  = 8,
-    EDGE_THRC = 16
+    EDGE_THRC = 16,
+    EDGE_TDIF = 32
 };
 
 #define USE_MAP_NUM (8)
@@ -57,6 +58,8 @@ typedef struct tag_DifAgent
     DWORD GlvHandle;
     DWORD ShareHandle;
     DWORD AMHandle;
+
+    DWORD IsFieldSensitive;
 }DifAgent;
 
 

@@ -16,6 +16,8 @@ VOID InitDif ()
     DWORD Ret;
     DifAgent *DA = &DifA;
 
+    DA->IsFieldSensitive = TRUE;
+
     DA->NodeHandle = DB_TYPE_DIF_NODE;
     DA->EdgeHandle = DB_TYPE_DIF_EDGE;
     DA->FDifHandle = DB_TYPE_DIF_FUNC;
@@ -46,6 +48,13 @@ VOID InitDif ()
     assert (Ret != R_FAIL);
 
     return;
+}
+
+static inline DWORD IsFieldSensitive ()
+{
+    DifAgent *DA = &DifA;
+
+    return DA->IsFieldSensitive;
 }
 
 
@@ -358,23 +367,28 @@ static inline VOID AddRetEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 
 static inline ULONG GetBaseAddr (Variable *Use)
 {
-    DbReq Req;
-    DbAck Ack;
-
-    Req.dwDataType = DifA.AMHandle;
-    Req.dwKeyLen   = sizeof (ULONG);
-
     ULONG Gep = strtol(Use->Name, NULL, 16);
-    Req.pKeyCtx    = (BYTE*)(&Gep);
     
-    DWORD Ret = QueryDataByKey (&Req, &Ack);
-    if (Ret != R_SUCCESS)
+    if (IsFieldSensitive ())
     {
         return Gep;
     }
-
-    ULONG Base = *(ULONG *)(Ack.pDataAddr);   
-    return Base;
+    else
+    {
+        DbReq Req;
+        DbAck Ack;
+    
+        Req.dwDataType = DifA.AMHandle;
+        Req.dwKeyLen   = sizeof (ULONG);        
+        Req.pKeyCtx    = (BYTE*)(&Gep);      
+        DWORD Ret = QueryDataByKey (&Req, &Ack);
+        if (Ret != R_SUCCESS)
+        {
+            return Gep;
+        }
+  
+        return *(ULONG *)(Ack.pDataAddr); 
+    }   
 }
 
 
@@ -428,7 +442,7 @@ static inline VOID UpdateThrEvent (Node *ThrcNode, Variable *VThrId)
     return;  
 }
 
-static inline Node* IsThreadEntry (DWORD ThrId)
+static inline Node* GetThreadEntry (DWORD ThrId)
 {
     DbReq Req;
     DbAck Ack;
@@ -460,11 +474,13 @@ static inline VOID UpdateShareVariable (Variable *Share)
 {
     DbReq Req;
     DbAck Ack;
+    ULONG ShareAddr;
 
+    ShareAddr = GetBaseAddr (Share);
+    
     Req.dwDataType = DifA.ShareHandle;
-    Req.dwKeyLen   = sizeof (ULONG);
-    ULONG GlvAddr  = strtol(Share->Name, NULL, 16);
-    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+    Req.dwKeyLen   = sizeof (ULONG);   
+    Req.pKeyCtx    = (BYTE*)(&ShareAddr);
 
     /* query first */
     DWORD Ret = QueryDataByKey (&Req, &Ack);
@@ -482,11 +498,13 @@ static inline DWORD IsShareVariable (Variable *Var)
 {
     DbReq Req;
     DbAck Ack;
+    ULONG ShareAddr;
+
+    ShareAddr = GetBaseAddr (Var);
 
     Req.dwDataType = DifA.ShareHandle;
     Req.dwKeyLen   = sizeof (ULONG);
-    ULONG GlvAddr  = strtol(Var->Name, NULL, 16);
-    Req.pKeyCtx    = (BYTE*)(&GlvAddr);
+    Req.pKeyCtx    = (BYTE*)(&ShareAddr);
 
     /* query first */
     DWORD Ret = QueryDataByKey (&Req, &Ack);
@@ -557,9 +575,10 @@ static inline VOID UpdateGlv (Node *GlvNode, Variable *Glv)
     DbAck Ack;
     Node **NodePtr;
 
+    ULONG GlvAddr  = GetBaseAddr (Glv);
+
     Req.dwDataType = DifA.GlvHandle;
     Req.dwKeyLen   = sizeof (ULONG);
-    ULONG GlvAddr  = strtol(Glv->Name, NULL, 16);
     Req.pKeyCtx    = (BYTE*)(&GlvAddr);
 
     /* query first */
@@ -587,9 +606,10 @@ static inline Node* IsGlvAccess (DifNode* DifN)
     DbReq Req;
     DbAck Ack;
 
+    ULONG GlvAddr  = GetBaseAddr (Glv);
+
     Req.dwDataType = DifA.GlvHandle;
     Req.dwKeyLen   = sizeof (ULONG);
-    ULONG GlvAddr  = strtol(Glv->Name, NULL, 16);
     Req.pKeyCtx    = (BYTE*)(&GlvAddr);
 
     DWORD Ret = QueryDataByKey (&Req, &Ack);
@@ -606,7 +626,7 @@ static inline Node* IsGlvAccess (DifNode* DifN)
 static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
 {
     Node *GlvcNd = IsGlvAccess (GN_2_DIFN (CurNd));
-    if (GlvcNd == NULL)
+    if (GlvcNd == NULL || (GlvcNd == CurNd))
     {
         return;
     }
@@ -616,6 +636,34 @@ static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
 
     return;
 }
+
+static inline VOID AddSharePropagateEdge (Graph *DifGraph, Node *CurNd)
+{
+    Node *ThrcNode = DifGraph->ThrcNode;
+    if (ThrcNode == NULL)
+    {
+        return;
+    }
+    DifNode* DifThrcN = GN_2_DIFN (ThrcNode);
+    Variable *ShareVal = (Variable *)DifThrcN->EMsg.Use.Tail->Data;
+
+    DifNode* DifN = GN_2_DIFN (CurNd);
+    LNode *UseNode = DifN->EMsg.Use.Header;
+    while (UseNode != NULL)
+    {
+        Variable *Val = (Variable *)UseNode->Data;
+        if (strcmp(Val->Name, ShareVal->Name) == 0)
+        {
+            Edge* E = AddDifEdge (DifGraph, ThrcNode, CurNd);
+            SetEdgeType (E, EDGE_TDIF);
+        }
+
+        UseNode = UseNode->Nxt;
+    }
+
+    return;
+}
+
 
 
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
@@ -638,10 +686,11 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
         else
         {
             /* the entry of sub-graph */
-            Node *ThrcNode = IsThreadEntry (DifGraph->ThreadId);
+            Node *ThrcNode = GetThreadEntry (DifGraph->ThreadId);
             if (ThrcNode != NULL)
             {
                 AddThreadEdge (DifGraph, ThrcNode, N);
+                DifGraph->ThrcNode = ThrcNode;
             }
         }
     }
@@ -671,6 +720,12 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
             }
 
             LN = LN->Pre;
+        }
+
+        /* dependence not found, try dependence cross-threads */
+        if (LN == NULL)
+        {
+            AddSharePropagateEdge (DifGraph, N);
         }
 
         // add ret edge
@@ -718,7 +773,8 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         UpdateGlv (N, Glv);
     }
 
-    switch (R_EID2ETY (Event))
+    DWORD EventType = R_EID2ETY (Event);
+    switch (EventType)
     {
         case EVENT_THRC:
         {

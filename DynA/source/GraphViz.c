@@ -105,6 +105,11 @@ static inline char* GetEdgeLabel(char *Buffer, DWORD EdgeType)
             strcat (Buffer, "DIF");
             break;
         }
+        case EDGE_TDIF:
+        {
+            strcat (Buffer, "TDIF");
+            break;
+        }
         case EDGE_THRC:
         {
             strcat (Buffer, "THREAD");
@@ -136,6 +141,11 @@ static inline char* GetEdgeAttributes(char *Buffer, DWORD EdgeType)
         case EDGE_CF:
         {
             strcat (Buffer, "color=black");
+            break;
+        }
+        case EDGE_TDIF:
+        {
+            strcat (Buffer, "color=red,style=dotted");
             break;
         }
         case EDGE_DIF:

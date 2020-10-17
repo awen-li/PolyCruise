@@ -48,6 +48,7 @@ typedef struct tag_Graph
     DWORD EDBType;
 
     Node *Root;
+    Node *ThrcNode;
     DWORD ThreadId;
    
 }Graph;
