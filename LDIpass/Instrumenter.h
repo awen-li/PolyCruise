@@ -518,6 +518,10 @@ private:
             if (Cst != NULL)
             {
                 unsigned OutArg = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
+                if (OutArg == 0)
+                {
+                    OutArg = Cst->m_OutTaintBits;
+                }
 
                 printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
                         Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);

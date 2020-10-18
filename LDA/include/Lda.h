@@ -637,7 +637,8 @@ private:
         if (Callee->isDeclaration ())
         {
             FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), Cst->m_InTaintBits);
-            //printf ("[CALL Library] %s -> TaintBits = %#x \r\n", Callee->getName ().data(), FTaintBits);
+            printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
+                    Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
         }
         else
         {
@@ -981,7 +982,7 @@ private:
         while (!m_EntryFQ.IsEmpty ())
         {
             m_CurEntry = m_EntryFQ.OutQueue ();
-            if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ())
+            if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ()+1)
             {
                 continue;
             }
