@@ -22,7 +22,8 @@ class CallEvent (PyEvent):
         Args   = Statement.args.args
 
         for arg in Args:
-            self.Use.append (arg.arg)
+            self.LiveObj.SetUse (arg.arg)
+        self.LiveObj.SetCallee (Callee)
         return
 
 class LineEvent (PyEvent):
@@ -32,30 +33,32 @@ class LineEvent (PyEvent):
     def GetDefUse (self):
         Statement  = self.Statement
         MethodName = 'LE_' + Statement.__class__.__name__.lower()
-        print (MethodName)
         LeMethod   = getattr(self, MethodName, self.Default)
         LeMethod(Statement)
         return
    
     def LE_assign(self, Statement):
-        self.Def = Statement.targets[0].id
+        Def = Statement.targets[0].id
+        self.LiveObj.SetDef (Def)
 
         Value = Statement.value
         if isinstance(Value, Name):
-            self.Use.append(Value.id)
+            self.LiveObj.SetUse (Value.id)
         elif isinstance(Value, Call):
             self.LE_call (Statement)
         elif isinstance(Value, List):
-            self.Use = Value.elts
+            for Use in Value.elts:
+                self.LiveObj.SetUse (Use)
         elif isinstance(Value, Num):
-            self.Use = Value.n
+            self.LiveObj.SetUse (Value.n)
         elif isinstance(Value, BinOp):
-            self.Use.append (Value.left.id)
-            self.Use.append (Value.right.id)
+            self.LiveObj.SetUse (Value.left.id)
+            self.LiveObj.SetUse (Value.right.id)
+        elif isinstance(Value, Str):
+            pass
         else:
-            print ("!!!!!!!!! unknown assignment.")
+            assert (0), "!!!!!!!!! unknown assignment."
 
-        print ("LE_assign")
         return
 
     def LE_expr(self, Statement):
@@ -68,17 +71,25 @@ class LineEvent (PyEvent):
         Callee = Statement.value
         Func   = Callee.func
         if isinstance(Func, Name):
-            for arg in Callee.args:
-                self.Use.append (arg.id)
-            return
+            self.LiveObj.SetCallee (Func.id)
+        elif isinstance(Func, Attribute):
+            self.LiveObj.SetDef (Func.value.id)
         else:
-            print("2-LE_expr -> ", Func.value.id, Func.attr)
+            print("Unsupport LE_expr -> ", Func.value.id, Func.attr)
+            return
+        
+        Args = Callee.args
+        for arg in Args:
+            self.LiveObj.SetUse (arg.id)
+        return
+        
 
     def LE_return(self, Statement):
         Value = Statement.value
+        self.LiveObj.SetRet (True)
         if not isinstance(Value, Name):
             return
-        self.Use.append (Value.id)
+        self.LiveObj.SetUse (Value.id)
         
     def LE_functiondef(self, Statement):
         pass
@@ -90,13 +101,14 @@ class LineEvent (PyEvent):
         print ("LE_if")
         
     def LE_for(self, Statement):
-        self.Def = Statement.target.elts[1].id
+        Def = Statement.target.elts[1].id
+        self.LiveObj.SetDef (Def)
         Use = Statement.iter.args[0].id
-        self.Use.append (Use)
+        self.LiveObj.SetUse (Use)
         return
 
         
-    def LE_while(self, Statement):     # hard code, handle in the future
+    def LE_while(self, Statement): 
         print ("LE_if")
         
     def LE_with(self, Statement):

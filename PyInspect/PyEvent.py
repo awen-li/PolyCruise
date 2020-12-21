@@ -4,15 +4,35 @@ import sys
 import abc
 from ast import Name
 
+class LiveObject ():
+    def __init__(self):
+        self.Def = None
+        self.Uses = []
+        self.Callee = None
+        self.Ret = False
+
+    def SetDef (self, Def):
+        self.Def = Def
+
+    def SetUse (self, Use):
+        self.Uses.append (Use)
+
+    def SetCallee (self, CallFunc):
+        self.Callee = CallFunc
+
+    def SetRet (self, RetFlg = False):
+        self.Ret = RetFlg
+
+    def View (self):
+        print ("==> Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
+
 class PyEvent(metaclass=abc.ABCMeta):
     def __init__(self, Frame, Event, Statement):
         self.Frame = Frame
         self.Event = Event
         self.Statement = Statement
-
-        self.Def = None
-        self.Use = []
-    
+        self.LiveObj = LiveObject ()
+  
     @abc.abstractmethod
     def GetDefUse (self):
         pass

@@ -39,8 +39,9 @@ class Inspector:
         
         LineNo = Frame.f_lineno
         print(LineNo, Event, Code.co_name, end=" => ")
-        Def, Use = self.Analyzer.HandleEvent (ModulePath, Frame, Event, LineNo)
-        print ("---> Def: ", Def, " Use: ", Use)
+        LiveObj = self.Analyzer.HandleEvent (ModulePath, Frame, Event, LineNo)
+        if LiveObj != None:
+            LiveObj.View ()
 
         return self.Tracing
 

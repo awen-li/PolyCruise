@@ -8,10 +8,7 @@ import pickle
 from ast import Name
 from os.path import abspath, sep, join
 from ModRewriter import NewASTInfo
-from HandleEvent import LineEvent
-from HandleEvent import CallEvent
-from HandleEvent import RetEvent
-
+from HandleEvent import *
 
 
 class Analyzer:
@@ -50,11 +47,15 @@ class Analyzer:
     def HandleEvent(self, Module, Frame, Event, LineNo):
         Mod = self.AstInfo.get(Module)
         Line2Stmt = Mod.lineno2stmt
+        #for lineNo, Stmt in Line2Stmt.items ():
+        #    print (lineNo, "->", ast.dump (Stmt))
+        #exit (0)
 
         Stmt = Line2Stmt.get(LineNo)
         if Stmt == None:
-            return None, []
+            return None
 
+        #print (ast.dump (Stmt), end=" ")
         if Event == 'call':
             return self.__HandleCall (Frame, Event, Stmt)            
         elif Event == 'line':
@@ -67,23 +68,19 @@ class Analyzer:
     def __HandleCall(self, Frame, ClEvent, Statement):
         CE = CallEvent (Frame, ClEvent, Statement)
         CE.GetDefUse ()
-        return CE.Def, CE.Use
+        return CE.LiveObj
 
-    def __HandleLine(self, Frame, LnEvent, Statement):
-        print (ast.dump (Statement), end=" ")
-        
+    def __HandleLine(self, Frame, LnEvent, Statement):                
         LE = LineEvent (Frame, LnEvent, Statement)
         LE.GetDefUse ()
-        return LE.Def, LE.Use
+        return LE.LiveObj
 
     def __HandleReturn(self, Frame, RtEvent, Statement):
-        print (ast.dump (Statement), end=" ")
         RE = RetEvent (Frame, RtEvent, Statement)
         RE.GetDefUse ()
-        return RE.Def, RE.Use
+        return RE.LiveObj
         
     def __HandleExcept(self, Frame, ExpEvent, Statement):
-        print (ast.dump (Statement), end=" ")
         pass    
 
 

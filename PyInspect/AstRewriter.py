@@ -426,7 +426,7 @@ class ASTVisitor(NodeTransformer):
             self.visit(s)
         if_.body = self._codelist
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         self._codelist = []
         for s in node.orelse:
             self.visit(s)
@@ -451,7 +451,7 @@ class ASTVisitor(NodeTransformer):
                              kwargs=None),
                    body=None,    # add latter
                    orelse=None,  # add latter
-                   lineno=self._new_lineno(),
+                   lineno=self._new_lineno (),
                    col_offset=self._col_offset
                    )
         fix_missing_locations(for_)
@@ -475,7 +475,7 @@ class ASTVisitor(NodeTransformer):
         tmp_assign = Assign(targets=[deepcopy(node.target)],
                             value=Name(id=tgt_name.id,
                                        ctx=Load()),
-                            lineno=self._new_lineno(),
+                            lineno=self._lineno,
                             col_offset=self._col_offset)
         fix_missing_locations(tmp_assign)
         self.visit(tmp_assign)
@@ -483,7 +483,7 @@ class ASTVisitor(NodeTransformer):
             self.visit(s)
         for_.body = self._codelist
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         self._codelist = []
         for s in node.orelse:
             self.visit(s)
@@ -517,7 +517,7 @@ class ASTVisitor(NodeTransformer):
             self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
         while_.body = self._codelist
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         self._codelist = []
         for s in node.orelse:
             self.visit(s)
@@ -628,7 +628,7 @@ class ASTVisitor(NodeTransformer):
             eh.body = self._codelist
             self._col_offset -= 4
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         self._codelist = []
         self._col_offset += 4
         for s in node.orelse:
@@ -653,7 +653,7 @@ class ASTVisitor(NodeTransformer):
             self.visit(s)
         tryfinally.body = self._codelist
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         self._codelist = []
         for s in node.finalbody:
             self.visit(s)
@@ -953,7 +953,7 @@ class ASTVisitor(NodeTransformer):
             if isinstance(node.op, And) \
             else _stop_eval(Name(id=if_.test.id, ctx=Load()))
         # process the orelse part
-        self._lineno += 1
+        #self._lineno += 1
         if_.orelse = _stop_eval(Name(id=if_.test.id, ctx=Load())) \
             if isinstance(node.op, And) \
             else _next_eval(node.values[1:])
