@@ -39,8 +39,8 @@ class Inspector:
         
         LineNo = Frame.f_lineno
         print(LineNo, Event, Code.co_name, end=" => ")
-        self.Analyzer.HandleEvent (ModulePath, Event, LineNo)
-        print ("")
+        Def, Use = self.Analyzer.HandleEvent (ModulePath, Frame, Event, LineNo)
+        print ("---> Def: ", Def, " Use: ", Use)
 
         return self.Tracing
 

@@ -8,6 +8,11 @@ import pickle
 from ast import Name
 from os.path import abspath, sep, join
 from ModRewriter import NewASTInfo
+from HandleEvent import LineEvent
+from HandleEvent import CallEvent
+from HandleEvent import RetEvent
+
+
 
 class Analyzer:
     def __init__(self, RecordFile):
@@ -42,46 +47,43 @@ class Analyzer:
         else:
             return None
  
-    def HandleEvent(self, Module, Event, LineNo):
+    def HandleEvent(self, Module, Frame, Event, LineNo):
         Mod = self.AstInfo.get(Module)
         Line2Stmt = Mod.lineno2stmt
 
-        Stmt = Line2Stmt.get(LineNo)     
+        Stmt = Line2Stmt.get(LineNo)
         if Stmt == None:
-            return
+            return None, []
 
         if Event == 'call':
-            print ("-> call")
-            self.__HandleCall (Event)            
+            return self.__HandleCall (Frame, Event, Stmt)            
         elif Event == 'line':
-            print ("-> Line")
-            #print (Stmt.value)
+            return self.__HandleLine (Frame, Event, Stmt)
         elif Event == 'return':
-            print ("-> Return")
+            return self.__HandleReturn (Frame, Event, Stmt)
         elif Event == 'except':
             print ("-> Except")
         
-    def __HandleCall(self, CallEvent):
-        pass
+    def __HandleCall(self, Frame, ClEvent, Statement):
+        CE = CallEvent (Frame, ClEvent, Statement)
+        CE.GetDefUse ()
+        return CE.Def, CE.Use
 
-    def __HandleLine(self, LineEvent):
-        Stmt = Line2Stmt.get(LineNo)
-        if Stmt == None:
-            return
-        print (ast.dump (Stmt), end=" ")
-        Def = Stmt.targets[0]
-        print ("[%d]Def:%s" %(LineNo, Def.id), end = " ")
-            
-        Use = Stmt.value
-        if isinstance(Use, Name):
-            print ("Use:%s" %Use.id)
-        else:
-            print ("")
+    def __HandleLine(self, Frame, LnEvent, Statement):
+        print (ast.dump (Statement), end=" ")
         
-    def __HandleReturn(self, RetEvent):
-        pass
+        LE = LineEvent (Frame, LnEvent, Statement)
+        LE.GetDefUse ()
+        return LE.Def, LE.Use
+
+    def __HandleReturn(self, Frame, RtEvent, Statement):
+        print (ast.dump (Statement), end=" ")
+        RE = RetEvent (Frame, RtEvent, Statement)
+        RE.GetDefUse ()
+        return RE.Def, RE.Use
         
-    def __HandleExcept(self, ExpEvent):
+    def __HandleExcept(self, Frame, ExpEvent, Statement):
+        print (ast.dump (Statement), end=" ")
         pass    
 
 
