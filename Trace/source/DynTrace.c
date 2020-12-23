@@ -7,7 +7,6 @@
 ************************************************************/
 #include <sys/syscall.h>
 #include "Queue.h"
-#include "Event.h"
 
 void TRC_trace (ULONG EventId, const char* Format, ...)
 {
