@@ -35,7 +35,12 @@ void TRC_init ()
     DWORD Ret;
     pthread_t Tid;
     
-    InitQueue (4096);
+    unsigned IsInit = InitQueue (4096);
+    if (IsInit)
+    {
+        DEBUG ("TRC_init already success!\r\n");
+        return;
+    }
 
     InitDif ();
    

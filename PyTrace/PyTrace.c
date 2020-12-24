@@ -11,7 +11,7 @@
 void TRC_trace (ULONG EventId, const char* Format, ...);
 
 /* void TRC_trace (ULONG EventId, const char* Format, ...) */
-static PyObject *PyTrace(PyObject *self, PyObject *args, ...)
+static void PyTrace(PyObject *self, PyObject *args, ...)
 {
     const int a, b;
 	
@@ -22,7 +22,7 @@ static PyObject *PyTrace(PyObject *self, PyObject *args, ...)
 	
 	int result = 0;
 	
-    return Py_BuildValue("i", result);
+    return;
 }
 
 static PyMethodDef TraceMethods[] = 
