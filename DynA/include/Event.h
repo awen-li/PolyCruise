@@ -60,6 +60,8 @@
 
 
 #define CLANG_TY          (1UL)
+#define PYLANG_TY         (2UL)
+
 
 #define SOURCE_TY         (1UL)
 #define SINK_TY           (2UL)

@@ -14,6 +14,23 @@ from HandleEvent import *
 class Analyzer:
     def __init__(self, RecordFile):
         self.AstInfo = self.LoadPlks (RecordFile)
+        self.FuncID  = {}
+        self.InitFuncSet ()
+
+    def InitFuncSet (self):
+        for Mod, ModAst in self.AstInfo.items ():
+            Line2Stmt = ModAst.lineno2stmt
+            for Line, Stmt in Line2Stmt.items ():
+                if isinstance(Stmt, FunctionDef):
+                    self.FuncID[Stmt.name] = len (self.FuncID)+1
+                    #print (Stmt.name, " -> ", self.FuncID[Stmt.name])
+        return
+
+    def GetFuncId (self, FuncName):
+        FuncId = self.FuncID.get (FuncName)
+        if FuncId == None:
+            return 0
+        return FuncId            
         
     def LoadPlks(self, RecordFile):
         AstInfo = {}
