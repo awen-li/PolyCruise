@@ -47,13 +47,35 @@ static PyObject *PyTrace(PyObject *self, PyObject *args)
 	
 	//int result = 0;
 	
-    return NULL;
+    Py_RETURN_NONE;
 }
+
+
+/* void TRC_init () */
+void TRC_init ();
+static PyObject *PyTraceInit(PyObject *self, PyObject *args)
+{
+    TRC_init ();
+	
+    Py_RETURN_NONE;
+}
+
+/* void TRC_exit () */
+void TRC_exit ();
+static PyObject *PyTraceExit(PyObject *self, PyObject *args)
+{
+    TRC_exit ();
+	
+    Py_RETURN_NONE;
+}
+
 
 static PyMethodDef TraceMethods[] = 
 {
-    {"PyTrace",   PyTrace,   METH_VARARGS, "Python tracing method."},
-    {"PyEventTy", PyEventTy, METH_VARARGS, "Python Event type."},
+    {"PyTrace",     PyTrace,     METH_VARARGS, "Python tracing method."},
+    {"PyEventTy",   PyEventTy,   METH_VARARGS, "Python Event type."},
+    {"PyTraceInit", PyTraceInit, METH_VARARGS, "Python trace init."},
+    {"PyTraceExit", PyTraceExit, METH_VARARGS, "Python trace exit."},
     {NULL, NULL, 0, NULL} 
 };
 

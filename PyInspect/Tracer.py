@@ -35,7 +35,7 @@ def main(argv):
         PyFile = abspath(File)
         with open(PyFile, 'rb') as fp:
             Code = fp.read()
-            print (Code)
+            #print (Code)
         
         Globs = {
             '__file__': PyFile,
@@ -44,7 +44,7 @@ def main(argv):
             '__cached__': None,
         }
 
-        print (Globs)
+        #print (Globs)
         with Inspector ("pyList"):
             #exec (Code, Globs)
             Add (1,2)

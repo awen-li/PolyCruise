@@ -17,16 +17,38 @@ EVENT_THRC   = 6
 EVENT_GEP    = 7
 EVENT_STORE  = 8
 
+class Context:
+    def __init__(self, CurFunc, TaintInPara):
+        self.Func = CurFunc
+        self.TaintLexical = {}
+        self.TaintInpara = TaintInPara
+        self.TaintOutpara = []
+
+    def InsertLexicon (self, Lexicon):
+        self.TaintLexical [Lexicon] = True
+
+    def IsTaint (self, Lexicon):
+        Flag = self.TaintLexical.get (Lexicon)
+        if Flag == None:
+            return False
+        else:
+            return True
+
 
 class Inspector:
     def __init__(self, RecordFile):
         print ("----> __init__................")
         self.Analyzer = Analyzer (RecordFile)
-        self.Crtn = Criterion ()
-        self.CurFunc = None
+        self.Crtn  = Criterion ()
+        self.CtxStack = []
+
+        # init main ctx
+        self.CurCtx = Context ("main", [])
+        self.CtxStack.append (self.CurCtx)
 
     def __enter__(self):
         print ("----> __enter__................")
+        PyTraceInit ()
         threading.settrace(self.Tracing)
         sys.settrace(self.Tracing)    
         return self
@@ -35,10 +57,31 @@ class Inspector:
         print ("----> __exit__................")
         sys.settrace(None)
         threading.settrace(None)
+        PyTraceExit ()
+
+    def GetTaintedParas (self, LiveObj):
+        Uses = LiveObj.Uses
+        TaintSet = []
+        for use in Uses:
+            if self.CurCtx.IsTaint (use):
+                TaintSet.append (use)
+        return TaintSet
+
+    def PushCtx (self, Func, LiveObj):
+        TaintSet = self.GetTaintedParas (LiveObj)
+        Ctx = Context (Func, TaintSet)
+        self.CtxStack.append (Ctx)
+        self.CurCtx = Ctx
+        return
+
+    def PopCtx (self):
+        self.CtxStack.pop ()
+        self.CurCtx = self.CtxStack[-1]
+        return
 
     def GetEventType (self, FuncName, LiveObj):
-        if FuncName != self.CurFunc:
-            self.CurFunc = FuncName
+        if FuncName != self.CurCtx.Func:
+            self.PushCtx (FuncName, LiveObj)
             return EVENT_FENTRY
         if LiveObj.Callee != None:
             return EVENT_CALL
