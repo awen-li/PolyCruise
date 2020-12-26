@@ -2,7 +2,9 @@
 
 import time
 from demo import add
-import ast
+
+def Source ():
+    return 3
 
 def AddbyC (a, b):   
     return add (a,b)
@@ -15,6 +17,10 @@ def Add(a, b):
     result = c/(a + b)
     print("Add result = %d" %result)
     return result
+    
+def Entry ():
+    S = Source ()
+    Add (S,2)
 
 if __name__ == '__main__':
-    Add (1,2)
+    Entry ()

@@ -30,7 +30,7 @@ static  PyObject *PyEventTy(PyObject *self, PyObject *args)
 
 	unsigned long EventId = F_LANG2EID (PYLANG_TY) | F_ETY2EID (EvType) | F_SSD2EID (SSFlg) |
                             F_FID2EID (FuncId) | F_BID2EID (0) | F_IID2EID (InstId);
-    printf ("EventId = (%lu, %lu, %lu, %lu) -> %lx \r\n", FuncId, InstId, EvType, SSFlg, EventId);
+    //printf ("EventId = (%lu, %lu, %lu, %lu) -> %lx \r\n", FuncId, InstId, EvType, SSFlg, EventId);
 	
     return Py_BuildValue("k", EventId);
 }
