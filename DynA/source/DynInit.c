@@ -35,14 +35,11 @@ void TRC_init ()
     DWORD Ret;
     pthread_t Tid;
     
-    unsigned IsInit = InitQueue (4096);
-    if (IsInit)
-    {
-        DEBUG ("TRC_init already success!\r\n");
-        return;
-    }
+    InitQueue (4096);
+    DEBUG ("Queue init success!\r\n");
 
     InitDif ();
+    DEBUG ("InitDif success!\r\n");
    
     Ret = pthread_create(&Tid, NULL, EventProcess, NULL);
     assert (Ret == 0);

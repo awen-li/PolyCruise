@@ -10,9 +10,13 @@ class LiveObject ():
         self.Uses = []
         self.Callee = None
         self.Ret = False
+        self.LineNo = 0
 
     def SetDef (self, Def):
         self.Def = Def
+
+    def SetLineNo (self, LineNo):
+        self.LineNo = LineNo
 
     def SetUse (self, Use):
         self.Uses.append (Use)
@@ -24,7 +28,7 @@ class LiveObject ():
         self.Ret = RetFlg
 
     def View (self):
-        print ("==> Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
+        print ("==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
 
 class PyEvent(metaclass=abc.ABCMeta):
     def __init__(self, Frame, Event, Statement):

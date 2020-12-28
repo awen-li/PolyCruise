@@ -676,7 +676,6 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     List *FDifG = GetFDifG (DifA.FDifHandle, FID, DifGraph->ThreadId);
     if (FDifG == NULL)
     {
-        assert (R_EID2IID (DifN->EventId) == 0);
         FDifG = CreateFDifG (DifA.FDifHandle, FID, DifGraph->ThreadId);
 
         if (LastGNode != NULL)
@@ -757,7 +756,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         return;
     }
     
-    DEBUG ("[DIF][T:%X]%lx: %s \r\n", ThreadId, Event, Msg);
+    DEBUG ("[DIF][%lx][T:%X]%lx: %s \r\n", Event, ThreadId, Event, Msg);
     Node *N = AddDifNode (DifGraph, Event);
     DifNode* DifN = GN_2_DIFN (N);
     DifN->EventId = Event;

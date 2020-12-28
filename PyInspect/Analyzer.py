@@ -18,12 +18,16 @@ class Analyzer:
         self.InitFuncSet ()
 
     def InitFuncSet (self):
+        self.FuncID["main"] = 1
         for Mod, ModAst in self.AstInfo.items ():
             Line2Stmt = ModAst.lineno2stmt
             for Line, Stmt in Line2Stmt.items ():
                 if isinstance(Stmt, FunctionDef):
                     self.FuncID[Stmt.name] = len (self.FuncID)+1
                     #print (Stmt.name, " -> ", self.FuncID[Stmt.name])
+
+        for name, Id in self.FuncID.items ():
+            print ("Func: ", Id, " ", name)
         return
 
     def GetFuncId (self, FuncName):
@@ -73,14 +77,20 @@ class Analyzer:
             return None
 
         #print (ast.dump (Stmt), end=" ")
+        LiveObj = None
         if Event == 'call':
-            return self.__HandleCall (Frame, Event, Stmt)            
+            LiveObj = self.__HandleCall (Frame, Event, Stmt)
+            LiveObj.SetLineNo (LineNo)
         elif Event == 'line':
-            return self.__HandleLine (Frame, Event, Stmt)
+            LiveObj = self.__HandleLine (Frame, Event, Stmt)
+            LiveObj.SetLineNo (LineNo)
         elif Event == 'return':
-            return self.__HandleReturn (Frame, Event, Stmt)
+            LiveObj = self.__HandleReturn (Frame, Event, Stmt)
+            LiveObj.SetLineNo (LineNo)
         elif Event == 'except':
             print ("-> Except")
+
+        return LiveObj
         
     def __HandleCall(self, Frame, ClEvent, Statement):
         CE = CallEvent (Frame, ClEvent, Statement)

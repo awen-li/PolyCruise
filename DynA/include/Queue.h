@@ -32,7 +32,7 @@ typedef struct tag_Queue
 }Queue;
 
 
-unsigned InitQueue (unsigned QueueNum);
+void InitQueue (unsigned QueueNum);
 QNode* InQueue ();
 QNode* FrontQueue ();
 void OutQueue ();

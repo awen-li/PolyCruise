@@ -8,6 +8,26 @@
 #include <sys/syscall.h>
 #include "Queue.h"
 
+void TRC_trace0 (ULONG EventId, const char* Msg)
+{
+	QNode *Node = InQueue ();
+    if (Node == NULL)
+    {
+        printf ("Queue Full\r\n");
+        exit (0);
+    }
+
+    strncpy (Node->QBuf, Msg, sizeof(Node->QBuf));
+    Node->ThreadId = pthread_self ();
+    Node->EventId  = EventId;
+    Node->Flag     = TRUE;
+
+    printf ("[TRC_trace][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+
+    return;   
+}
+
+
 void TRC_trace (ULONG EventId, const char* Format, ...)
 {
 	va_list ap;

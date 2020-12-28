@@ -8,14 +8,13 @@
 #include <sys/shm.h>
 #include "Queue.h"
 
-#define SHARE_KEY (0xC3B3C5D6)
+#define SHARE_KEY (0xC3B3C5D9)
 
 static Queue *g_Queue = NULL;
 static int g_SharedId = 0;
 
-unsigned InitQueue (unsigned QueueNum)
+void InitQueue (unsigned QueueNum)
 {
-    unsigned IsInit = 0;
     VOID *SharedMemroy;
 	int SharedId;
     Queue* Q = NULL;
@@ -28,30 +27,21 @@ unsigned InitQueue (unsigned QueueNum)
         assert (SharedId != -1);
 
         SharedMemroy = shmat(SharedId, 0, 0);
-        assert (SharedMemroy != (void*)-1);
-
-        Q = (Queue *)SharedMemroy;
-        Q->NodeList = (QNode *)(Q+1);
-        Q->Hindex  = 0;
-        Q->Tindex  = 0;
-        Q->NodeNum = QueueNum;
-        mutex_lock_init(&Q->InLock);
+        assert (SharedMemroy != (void*)-1);     
     }
-    else
-    {
-        SharedMemroy = shmat(SharedId, 0, 0);
-        assert (SharedMemroy != (void*)-1);
 
-        Q = (Queue *)SharedMemroy;
-        Q->NodeList = (QNode *)(Q+1);
-        assert (Q->NodeNum == QueueNum);
-        IsInit = 1;
-    }
+    Q = (Queue *)SharedMemroy;
+    printf ("SharedMemroy: %p\r\n", SharedMemroy);
+    Q->NodeList = (QNode *)(Q+1);
+    Q->Hindex  = 0;
+    Q->Tindex  = 0;
+    Q->NodeNum = QueueNum;
+    mutex_lock_init(&Q->InLock);
 
     g_Queue = Q;
     g_SharedId = SharedId;
 
-    return IsInit;
+    return;
 }
 
 

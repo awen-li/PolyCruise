@@ -45,7 +45,7 @@ def main(argv):
         }
 
         #print (Globs)
-        with Inspector ("pyList"):
+        with Inspector ("pyList", "Entry"):
             #exec (Code, Globs)
             Entry ()
         print('tracing finished...')

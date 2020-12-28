@@ -9,7 +9,7 @@
 #include "Event.h"
 #include "Queue.h"
 
-void TRC_trace (ULONG EventId, const char* Format, ...);
+void TRC_trace0 (ULONG EventId, const char* Msg);
 
 /* unsigned long PyEventTy (unsigned FuncId, unsigned InstId, 
                             unsigned EventType, unsigned SSFlg) 
@@ -35,17 +35,18 @@ static  PyObject *PyEventTy(PyObject *self, PyObject *args)
     return Py_BuildValue("k", EventId);
 }
 
-/* void TRC_trace (ULONG EventId, const char* Format, ...) */
+/* void TRC_trace0 (ULONG EventId, const char* Msg) */
 static PyObject *PyTrace(PyObject *self, PyObject *args)
 {
-    const int a, b;
+    unsigned long EventId;
+    const char *Msg;
 	
-    if (!PyArg_ParseTuple(args, "ii", &a, &b))
+    if (!PyArg_ParseTuple(args, "ks", &EventId, &Msg))
 	{
         return NULL;
 	}
 	
-	//int result = 0;
+	TRC_trace0 (EventId, Msg);
 	
     Py_RETURN_NONE;
 }
