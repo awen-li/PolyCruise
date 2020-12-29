@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<unit xmlns="http://www.srcML.org/srcML/src" xmlns:cpp="http://www.srcML.org/srcML/cpp" revision="1.0.0" language="C" filename="PyTrace.c"><comment type="block" format="doxygen">/***********************************************************
+ * Author: Wen Li
+ * Date  : 7/24/2020
+ * Describe: Queue.c - FIFO Queue
+ * History:
+   &lt;1&gt; 7/24/2020 , create
+************************************************************/</comment>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>&lt;Python.h&gt;</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"Event.h"</cpp:file></cpp:include>
+<cpp:include>#<cpp:directive>include</cpp:directive> <cpp:file>"Queue.h"</cpp:file></cpp:include>
+
+<function_decl><type><name>void</name></type> <name>TRC_trace0</name> <parameter_list>(<parameter><decl><type><name>ULONG</name></type> <name>EventId</name></decl></parameter>, <parameter><decl><type><specifier>const</specifier> <name>char</name><modifier>*</modifier></type> <name>Msg</name></decl></parameter>)</parameter_list>;</function_decl>
+
+<comment type="block">/* unsigned long PyEventTy (unsigned FuncId, unsigned InstId, 
+                            unsigned EventType, unsigned SSFlg) 
+    Event Id definition:
+    |4b language|4b type|2b soure/sink|18b FunctionId|12b Blockid|24b Instructionid|
+*/</comment>
+<function><type><specifier>static</specifier>  <name>PyObject</name> <modifier>*</modifier></type><name>PyEventTy</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>FuncId</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>InstId</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>EvType</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>SSFlg</name></decl>;</decl_stmt>
+	
+    <if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"kkkk"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>FuncId</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>InstId</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>EvType</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>SSFlg</name></expr></argument>)</argument_list></call></expr>)</condition>
+	<block>{<block_content>
+        <return>return <expr><name>NULL</name></expr>;</return>
+	</block_content>}</block></if></if_stmt>
+
+	<decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>EventId</name> <init>= <expr><call><name>F_LANG2EID</name> <argument_list>(<argument><expr><name>PYLANG_TY</name></expr></argument>)</argument_list></call> <operator>|</operator> <call><name>F_ETY2EID</name> <argument_list>(<argument><expr><name>EvType</name></expr></argument>)</argument_list></call> <operator>|</operator> <call><name>F_SSD2EID</name> <argument_list>(<argument><expr><name>SSFlg</name></expr></argument>)</argument_list></call> <operator>|</operator>
+                            <call><name>F_FID2EID</name> <argument_list>(<argument><expr><name>FuncId</name></expr></argument>)</argument_list></call> <operator>|</operator> <call><name>F_BID2EID</name> <argument_list>(<argument><expr><literal type="number">0</literal></expr></argument>)</argument_list></call> <operator>|</operator> <call><name>F_IID2EID</name> <argument_list>(<argument><expr><name>InstId</name></expr></argument>)</argument_list></call></expr></init></decl>;</decl_stmt>
+    <comment type="line">//printf ("EventId = (%lu, %lu, %lu, %lu) -&gt; %lx \r\n", FuncId, InstId, EvType, SSFlg, EventId);</comment>
+	
+    <return>return <expr><call><name>Py_BuildValue</name><argument_list>(<argument><expr><literal type="string">"k"</literal></expr></argument>, <argument><expr><name>EventId</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+
+<comment type="block">/* void TRC_trace0 (ULONG EventId, const char* Msg) */</comment>
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type><name>PyTrace</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+    <decl_stmt><decl><type><name>unsigned</name> <name>long</name></type> <name>EventId</name></decl>;</decl_stmt>
+    <decl_stmt><decl><type><specifier>const</specifier> <name>char</name> <modifier>*</modifier></type><name>Msg</name></decl>;</decl_stmt>
+	
+    <if_stmt><if>if <condition>(<expr><operator>!</operator><call><name>PyArg_ParseTuple</name><argument_list>(<argument><expr><name>args</name></expr></argument>, <argument><expr><literal type="string">"ks"</literal></expr></argument>, <argument><expr><operator>&amp;</operator><name>EventId</name></expr></argument>, <argument><expr><operator>&amp;</operator><name>Msg</name></expr></argument>)</argument_list></call></expr>)</condition>
+	<block>{<block_content>
+        <return>return <expr><name>NULL</name></expr>;</return>
+	</block_content>}</block></if></if_stmt>
+	
+	<expr_stmt><expr><call><name>TRC_trace0</name> <argument_list>(<argument><expr><name>EventId</name></expr></argument>, <argument><expr><name>Msg</name></expr></argument>)</argument_list></call></expr>;</expr_stmt>
+	
+    <expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<comment type="block">/* void TRC_init () */</comment>
+<function_decl><type><name>void</name></type> <name>TRC_init</name> <parameter_list>()</parameter_list>;</function_decl>
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type><name>PyTraceInit</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+    <expr_stmt><expr><call><name>TRC_init</name> <argument_list>()</argument_list></call></expr>;</expr_stmt>
+	
+    <expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+<comment type="block">/* void TRC_exit () */</comment>
+<function_decl><type><name>void</name></type> <name>TRC_exit</name> <parameter_list>()</parameter_list>;</function_decl>
+<function><type><specifier>static</specifier> <name>PyObject</name> <modifier>*</modifier></type><name>PyTraceExit</name><parameter_list>(<parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>self</name></decl></parameter>, <parameter><decl><type><name>PyObject</name> <modifier>*</modifier></type><name>args</name></decl></parameter>)</parameter_list>
+<block>{<block_content>
+    <expr_stmt><expr><call><name>TRC_exit</name> <argument_list>()</argument_list></call></expr>;</expr_stmt>
+	
+    <expr_stmt><expr><name>Py_RETURN_NONE</name></expr>;</expr_stmt>
+</block_content>}</block></function>
+
+
+<decl_stmt><decl><type><specifier>static</specifier> <name>PyMethodDef</name></type> <name><name>TraceMethods</name><index>[]</index></name> <init>= 
+<expr><block>{
+    <expr><block>{<expr><literal type="string">"PyTrace"</literal></expr>,     <expr><name>PyTrace</name></expr>,     <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Python tracing method."</literal></expr>}</block></expr>,
+    <expr><block>{<expr><literal type="string">"PyEventTy"</literal></expr>,   <expr><name>PyEventTy</name></expr>,   <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Python Event type."</literal></expr>}</block></expr>,
+    <expr><block>{<expr><literal type="string">"PyTraceInit"</literal></expr>, <expr><name>PyTraceInit</name></expr>, <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Python trace init."</literal></expr>}</block></expr>,
+    <expr><block>{<expr><literal type="string">"PyTraceExit"</literal></expr>, <expr><name>PyTraceExit</name></expr>, <expr><name>METH_VARARGS</name></expr>, <expr><literal type="string">"Python trace exit."</literal></expr>}</block></expr>,
+    <expr><block>{<expr><name>NULL</name></expr>, <expr><name>NULL</name></expr>, <expr><literal type="number">0</literal></expr>, <expr><name>NULL</name></expr>}</block></expr> 
+}</block></expr></init></decl>;</decl_stmt>
+
+<decl_stmt><decl><type><specifier>static</specifier> <name><name>struct</name> <name>PyModuleDef</name></name></type> <name>ModPyTrace</name> <init>=
+<expr><block>{
+    <expr><name>PyModuleDef_HEAD_INIT</name></expr>,
+    <expr><literal type="string">"ModPyTrace"</literal></expr>, <comment type="block">/* name of module */</comment>
+    <expr><literal type="string">""</literal></expr>,           <comment type="block">/* module documentation, may be NULL */</comment>
+    <expr><operator>-</operator><literal type="number">1</literal></expr>,           <comment type="block">/* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */</comment>
+    <expr><name>TraceMethods</name></expr>
+}</block></expr></init></decl>;</decl_stmt>
+
+<function><type><name>PyMODINIT_FUNC</name></type> <name>PyInit_PyTrace</name><parameter_list>(<parameter><decl><type><name>void</name></type></decl></parameter>)</parameter_list>
+<block>{<block_content>
+    <return>return <expr><call><name>PyModule_Create</name><argument_list>(<argument><expr><operator>&amp;</operator><name>ModPyTrace</name></expr></argument>)</argument_list></call></expr>;</return>
+</block_content>}</block></function>
+</unit>
