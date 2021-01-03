@@ -280,6 +280,19 @@ public:
     {
         return m_InstSet.end();
     }
+
+    inline void AddEntry (Function *Entry)
+    {
+        m_EntryFQ.InQueue (Entry);
+        unsigned ArgNum = Entry->arg_size ();
+        unsigned TaintBits = 0;
+        for (unsigned bit = 2; bit <= ArgNum; bit++) 
+        {
+            TaintBits |= TAINT_BIT (bit);
+        }
+        m_EntryTaintBits[Entry] = TaintBits;
+        return;
+    }
     
 private:
     inline unsigned GetEntryTaintbits (Function *Entry)
@@ -521,6 +534,11 @@ private:
 
     inline void InitCriterions (Function *Func, unsigned TaintBit, set<Value*> *LexSet)
     {
+        if (m_Source == NULL)
+        {
+            return;
+        }
+        
         for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
         {
             Source *S = *ItS;
@@ -736,6 +754,11 @@ private:
 
     inline bool IsSourceInst (Instruction *Inst)
     {
+        if (m_Source == NULL)
+        {
+            return false;
+        }
+        
         for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
         {
             Source *S = *ItS;

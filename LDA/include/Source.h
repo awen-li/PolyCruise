@@ -44,14 +44,19 @@ private:
     ModuleManage *m_Ms;
 
 public:
+    /*
+      ScFName: the caller function contains source
+      ApiName: the callee function of the source, can be null
+      TaintBit: the taint bitmap      
+    */
     Source (ModuleManage *Ms,
-              string ScFName, string ApiName, unsigned TaintBit)
+            string ScFName, string ApiName, unsigned TaintBit)
     {
         m_Ms = Ms;
 
         Function* ScF = GetScFunc (ScFName);
         assert ((ScF != NULL) && "Source Caller should exists!");
-        
+
         Compute (ScF, ApiName, TaintBit);
         m_ScCaller = ScF;
 

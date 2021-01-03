@@ -1,10 +1,10 @@
 
 if(DEFINED IN_SOURCE_BUILD)
     set(LLVM_LINK_COMPONENTS BitWriter Core IPO IrReader InstCombine Instrumentation Target Linker Analysis ScalarOpts Support)
-    add_llvm_tool( ldi Main.cpp)
+    add_llvm_tool( ldi Main.cpp LibEntry.cpp)
 else()
     llvm_map_components_to_libnames(llvm_libs BitWriter Core IPO IrReader InstCombine Instrumentation Target Linker Analysis ScalarOpts Support )
-    add_executable( ldi Main.cpp)
+    add_executable( ldi Main.cpp LibEntry.cpp)
 
     target_link_libraries( ldi LLVMldi ${llvm_libs} )
 

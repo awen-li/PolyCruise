@@ -35,6 +35,7 @@ InputFilename("file", cl::desc("<input bitcode file>"), cl::init("-"), cl::value
 static cl::opt<std::string>
 PreProcess("pre", cl::desc("<preprocess before analysis >"), cl::init("0"), cl::value_desc("switch"));
 
+void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
 
 VOID GetModulePath (vector<string> &ModulePathVec)
 {   
@@ -91,13 +92,11 @@ VOID RunPasses (vector<string> &ModulePathVec)
     {
         case 0:
         {
-            set <Source *> SS;
-            Source S1 (&ModuleMng, "ProcessEntry", "strtol", TAINT_RET);
-            Source S2 (&ModuleMng, "ThrProcess2", "strtol", TAINT_RET);
-            SS.insert (&S1);
-            SS.insert (&S2);
+            set <Function*> Entry;
+            GetLibEntry (&ModuleMng, &Entry);
+            break;
             
-            Lda lda (&ModuleMng, &SS, &Sf);           
+            Lda lda (&ModuleMng, NULL, &Sf);           
             break;
         }
         case 1:
