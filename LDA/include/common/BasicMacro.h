@@ -34,6 +34,8 @@
 
 
 #define TAINT_NONE          (unsigned)(0)
+#define TAINT_UNKNOWN       (unsigned)(-1)
+
 #define TAINT_BIT(Bit)      (unsigned)(1 << (32-Bit))
 
 #define TAINT_RET           TAINT_BIT(RET_NO)

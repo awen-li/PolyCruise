@@ -248,12 +248,6 @@ public:
 
         m_CurEntry = NULL;
         InitGlv ();
-        
-        Compute ();
-
-        printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
-
-        
     }
 
     ~Lda ()
@@ -286,12 +280,45 @@ public:
         m_EntryFQ.InQueue (Entry);
         unsigned ArgNum = Entry->arg_size ();
         unsigned TaintBits = 0;
-        for (unsigned bit = 2; bit <= ArgNum; bit++) 
+        for (unsigned bit = 2; bit <= ArgNum+1; bit++) 
         {
             TaintBits |= TAINT_BIT (bit);
         }
         m_EntryTaintBits[Entry] = TaintBits;
         return;
+    }
+
+    inline void Compute ()
+    {      
+        Function *MainEntry = m_Ms->GetEntryFunction ();
+        if (MainEntry != NULL)
+        {
+            m_EntryFQ.InQueue (MainEntry);
+        }
+        
+        while (!m_EntryFQ.IsEmpty ())
+        {
+            m_CurEntry = m_EntryFQ.OutQueue ();
+            if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ()+1)
+            {
+                continue;
+            }
+            
+            
+            errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
+            unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
+            printf ("IN TaintBits = %x\r\n", TaintBits);
+            
+            /* update entry tainted bits */
+            TaintBits = ComputeFlda (m_CurEntry, TaintBits);
+            m_EntryTaintBits [m_CurEntry] = TaintBits; 
+
+            UpdateEntryExeNum (m_CurEntry);
+            printf ("OUT TaintBits = %x\r\n", TaintBits);
+        }
+
+        Dump ();
+        printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
     }
     
 private:
@@ -534,23 +561,21 @@ private:
 
     inline void InitCriterions (Function *Func, unsigned TaintBit, set<Value*> *LexSet)
     {
-        if (m_Source == NULL)
+        if (m_Source != NULL)
         {
-            return;
-        }
-        
-        for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
-        {
-            Source *S = *ItS;
-            if (Func == S->GetSrcCaller ())
+            for (auto ItS = m_Source->begin(), EndS = m_Source->end(); ItS != EndS; ItS++)
             {
-                for (auto It = S->begin(), End = S->end(); It != End; It++)
+                Source *S = *ItS;
+                if (Func == S->GetSrcCaller ())
                 {
-                    LexSet->insert (*It);
+                    for (auto It = S->begin(), End = S->end(); It != End; It++)
+                    {
+                        LexSet->insert (*It);
+                    }
                 }
             }
         }
-      
+
         unsigned BitNo = ARG0_NO;
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++) 
         {
@@ -648,6 +673,34 @@ private:
         return true;
     }
 
+    inline unsigned DefaultTaints (LLVMInst *LI, Function *Func, unsigned InTaintBits)
+    {
+        unsigned TaintBits = 0;
+
+        if (InTaintBits == 0)
+        {
+            return TAINT_NONE;
+        }
+
+        if (!Func->getReturnType ()->isVoidTy())
+        {
+            TaintBits |= TAINT_RET;
+        }
+        
+        unsigned BitNo = ARG0_NO;
+        for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
+        {
+            Value *U = *It;
+            if (LI->IsConst (U))
+            {
+                continue;
+            }
+
+            TaintBits |= TAINT_BIT (BitNo);
+        }
+        return TaintBits;
+    }
+
     inline void ExeFunction (LLVMInst *LI, Function *Callee, CSTaint *Cst, set<Value*> *LexSet)
     {
         unsigned FTaintBits;
@@ -655,8 +708,17 @@ private:
         if (Callee->isDeclaration ())
         {
             FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), Cst->m_InTaintBits);
-            printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
-                    Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+            if (FTaintBits == TAINT_UNKNOWN)
+            {
+                FTaintBits = DefaultTaints (LI, Callee, Cst->m_InTaintBits);
+                printf ("[CALL Library] %s -> IN:%#x, TaintBits unknown, GetDefault: %#x\r\n", 
+                        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+            }
+            else
+            {
+                printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
+                        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+            }
         }
         else
         {
@@ -994,36 +1056,6 @@ private:
         
         m_RunStack.erase (Func);
         return FTaintBits;
-    }
-
-    inline void Compute ()
-    {      
-        Function *MainEntry = m_Ms->GetEntryFunction ();
-        assert (MainEntry != NULL);
-        m_EntryFQ.InQueue (MainEntry);
-        
-        while (!m_EntryFQ.IsEmpty ())
-        {
-            m_CurEntry = m_EntryFQ.OutQueue ();
-            if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ()+1)
-            {
-                continue;
-            }
-            
-            
-            errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
-            unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
-            printf ("IN TaintBits = %x\r\n", TaintBits);
-            
-            /* update entry tainted bits */
-            TaintBits = ComputeFlda (m_CurEntry, TaintBits);
-            m_EntryTaintBits [m_CurEntry] = TaintBits; 
-
-            UpdateEntryExeNum (m_CurEntry);
-            printf ("OUT TaintBits = %x\r\n", TaintBits);
-        }
-
-        Dump ();
     }
 
 

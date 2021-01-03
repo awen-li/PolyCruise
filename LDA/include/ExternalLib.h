@@ -57,14 +57,13 @@ public:
 private:
     VOID InitExtLib ();
 
-
 public:
     inline unsigned ComputeTaintBits (string FuncName, unsigned InTaintBits)
     {
         auto It = m_ExtFuncMap.find(FuncName);
         if (It == m_ExtFuncMap.end())
         {
-            return TAINT_NONE;
+            return TAINT_UNKNOWN;
         }
 
         LibTaintBits *Ltb = It->second;

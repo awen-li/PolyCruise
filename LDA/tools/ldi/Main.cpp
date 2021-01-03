@@ -94,9 +94,15 @@ VOID RunPasses (vector<string> &ModulePathVec)
         {
             set <Function*> Entry;
             GetLibEntry (&ModuleMng, &Entry);
-            break;
             
-            Lda lda (&ModuleMng, NULL, &Sf);           
+            Lda lda (&ModuleMng, NULL, &Sf);
+
+            for (auto It = Entry.begin (); It != Entry.end (); It++)
+            {
+                lda.AddEntry (*It);
+            }
+
+            lda.Compute ();
             break;
         }
         case 1:
@@ -106,6 +112,7 @@ VOID RunPasses (vector<string> &ModulePathVec)
             SS.insert (&S);
             
             Lda lda (&ModuleMng, &SS, &Sf);
+            lda.Compute ();
             break;
         }
     }
