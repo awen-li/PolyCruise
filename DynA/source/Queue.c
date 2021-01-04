@@ -13,7 +13,7 @@
 static Queue *g_Queue = NULL;
 static int g_SharedId = 0;
 
-static inline unsigned GetKey ()
+static inline key_t GetKey ()
 {
     char *ShareKey = getenv("LDI_SHARE_KEY");
     if (ShareKey == NULL)
@@ -22,26 +22,30 @@ static inline unsigned GetKey ()
     }
     else
     {
-        return atoi (ShareKey);        
+        return (key_t)strtol(ShareKey, NULL, 16);       
     }  
 }
 
 void InitQueue (unsigned QueueNum)
 {
-    VOID *SharedMemroy;
+    VOID *SharedMemroy = NULL;
 	int SharedId;
     Queue* Q = NULL;
 
+    key_t ShareKey = GetKey();
+    printf ("ShareKey = %lx sizeof (key_t) = %u\r\n", ShareKey, sizeof (key_t));
+
     unsigned Size = sizeof (Queue) + QueueNum * sizeof (QNode);
-    SharedId = shmget((key_t)GetKey(), Size, 0666);
+    SharedId = shmget(ShareKey, Size, 0666);
     if(SharedId == -1)
     {
-        SharedId = shmget((key_t)GetKey(), Size, 0666|IPC_CREAT);
+        printf ("Shared Memroy not exist....\r\n");
+        SharedId = shmget(ShareKey, Size, 0666|IPC_CREAT);
         assert (SharedId != -1);
-
-        SharedMemroy = shmat(SharedId, 0, 0);
-        assert (SharedMemroy != (void*)-1);     
     }
+
+    SharedMemroy = shmat(SharedId, 0, 0);
+    assert (SharedMemroy != (void*)-1);    
 
     Q = (Queue *)SharedMemroy;
     printf ("SharedMemroy: %p\r\n", SharedMemroy);

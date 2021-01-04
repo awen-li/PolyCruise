@@ -48,7 +48,7 @@ def main(argv):
         #print (Globs)
         with Inspector ("pyList", "DemoTr"):
             #exec (Code, Globs)
-            DemoTr ()
+            DemoTr (8)
         print('tracing finished...')
 
 if __name__ == "__main__":
