@@ -324,7 +324,7 @@ private:
     inline void LoadLdaBin ()
     {
         size_t N;
-        FILE *Bf = fopen ("LdaBin.bin", "rb");
+        FILE *Bf = fopen ("/tmp/LdaBin.bin", "rb");
         assert (Bf != NULL);
         
         LdaBin Lb;

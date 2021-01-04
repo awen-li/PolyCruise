@@ -7,6 +7,7 @@ from Inspector import Inspector
 from ModRewriter import PyRecompile
 from os.path import join, abspath, splitext, realpath
 from Add import Entry
+from Demo import DemoTr
 
 def main(argv):
     Action = ""
@@ -45,9 +46,9 @@ def main(argv):
         }
 
         #print (Globs)
-        with Inspector ("pyList", "Entry"):
+        with Inspector ("pyList", "DemoTr"):
             #exec (Code, Globs)
-            Entry ()
+            DemoTr ()
         print('tracing finished...')
 
 if __name__ == "__main__":

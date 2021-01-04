@@ -9,8 +9,7 @@ OBJ_PATH     = obj
 #CFLAGS      = -fPIC -O3 -I$(INCLUDE_PATH)
 CFLAGS       = -D__DEBUG__ -O3 -I$(INCLUDE_PATH)
 
-#SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
-SOURCE_FILES = DynTrace.c Queue.c
+SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 OBJ_FILES    = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
 
 TARGET = libDynAnalyze.a

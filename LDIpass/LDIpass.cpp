@@ -34,11 +34,11 @@
 using namespace llvm;
 using namespace std;
 
-struct IBSpass : public ModulePass 
+struct LDIpass : public ModulePass 
 {
     static char ID;
     
-    IBSpass() : ModulePass(ID)
+    LDIpass() : ModulePass(ID)
     {
     }
 	    
@@ -60,12 +60,12 @@ struct IBSpass : public ModulePass
 };
 
 
-char IBSpass::ID = 0;
-static RegisterPass<IBSpass> X("ibs", "full instrumentation");
+char LDIpass::ID = 0;
+static RegisterPass<LDIpass> X("ibs", "full instrumentation");
 
 static void registerCTPass(const PassManagerBuilder &, legacy::PassManagerBase &PM) 
 {
-    PM.add(new IBSpass());
+    PM.add(new LDIpass());
 }
                                
 static RegisterStandardPasses RegisterCTPass(PassManagerBuilder::EP_OptimizerLast, registerCTPass);

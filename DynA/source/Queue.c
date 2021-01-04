@@ -8,10 +8,23 @@
 #include <sys/shm.h>
 #include "Queue.h"
 
-#define SHARE_KEY (0xC3B3C5D9)
+#define SHARE_KEY (0xC3B3C5D0)
 
 static Queue *g_Queue = NULL;
 static int g_SharedId = 0;
+
+static inline unsigned GetKey ()
+{
+    char *ShareKey = getenv("LDI_SHARE_KEY");
+    if (ShareKey == NULL)
+    {
+        return SHARE_KEY;
+    }
+    else
+    {
+        return atoi (ShareKey);        
+    }  
+}
 
 void InitQueue (unsigned QueueNum)
 {
@@ -20,10 +33,10 @@ void InitQueue (unsigned QueueNum)
     Queue* Q = NULL;
 
     unsigned Size = sizeof (Queue) + QueueNum * sizeof (QNode);
-    SharedId = shmget((key_t)SHARE_KEY, Size, 0666);
+    SharedId = shmget((key_t)GetKey(), Size, 0666);
     if(SharedId == -1)
     {
-        SharedId = shmget((key_t)SHARE_KEY, Size, 0666|IPC_CREAT);
+        SharedId = shmget((key_t)GetKey(), Size, 0666|IPC_CREAT);
         assert (SharedId != -1);
 
         SharedMemroy = shmat(SharedId, 0, 0);
@@ -47,6 +60,11 @@ void InitQueue (unsigned QueueNum)
 
 QNode* InQueue ()
 {
+    if (g_Queue == NULL)
+    {
+        InitQueue (4096);
+    }
+    
     Queue* Q = g_Queue;
     QNode* Node = NULL;
 
