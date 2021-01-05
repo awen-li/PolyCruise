@@ -57,6 +57,13 @@ static inline DWORD IsFieldSensitive ()
     return DA->IsFieldSensitive;
 }
 
+static inline unsigned Eid2DifgKey (unsigned long Eid)
+{
+    unsigned Fid  = R_EID2FID(Eid);
+    unsigned Lang = R_EID2LANG(Eid);
+
+    return (Fid | (Lang<<28));
+}
 
 static inline List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId)
 {
@@ -274,7 +281,7 @@ static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
             continue;
         }
 
-        DEBUG ("===>Definition: %s \r\n", DV->Name);
+        DEBUG ("\t===>Prenode definition: %s \r\n", DV->Name);
 
         UseNo = 0;
         LNode *Use = CurNode->EMsg.Use.Header;
@@ -283,7 +290,7 @@ static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
             Variable *UV = (Variable *)Use->Data;
             assert (UV != NULL);
 
-            DEBUG ("===>Use: %s \r\n", UV->Name);
+            DEBUG ("\t===>Curnode use: %s \r\n", UV->Name);
             if (Um->UseMap[UseNo] == 0 &&
                 strcmp (UV->Name, DV->Name) == 0)
             {
@@ -316,18 +323,35 @@ static inline VOID SetEdgeType (Edge* E, DWORD EType)
 static inline VOID AddCallEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 {
     DifNode* LastDifN = GN_2_DIFN (LastNd);
+    DifNode* CurDifN  = GN_2_DIFN (CurNd);
 
     List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, 
-                            R_EID2FID (LastDifN->EventId), DifGraph->ThreadId);
+                            Eid2DifgKey (LastDifN->EventId), DifGraph->ThreadId);
     assert (FDifG != NULL && FDifG->Header != NULL);
-    
-    Node *LastCallNode = (Node *)(FDifG->Header->Data);
-    Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
-    SetEdgeType (E, EDGE_CG);
 
-    if (LastCallNode == LastNd)
+    if (R_EID2LANG (CurDifN->EventId) == R_EID2LANG (LastDifN->EventId))
     {
-        SetEdgeType (E, EDGE_CF);
+        Node *LastCallNode = (Node *)(FDifG->Header->Data);
+        Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
+        SetEdgeType (E, EDGE_CG);
+
+        DifNode* LastCallDifN = GN_2_DIFN (LastCallNode);
+        if (LastCallNode == LastNd && 
+            R_EID2ETY (LastCallDifN->EventId) == EVENT_CALL)
+        {
+            SetEdgeType (E, EDGE_CF);
+        }
+    }
+    else
+    {  
+        Node *LastCallNode = (Node *)(FDifG->Tail->Data);
+        Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
+        SetEdgeType (E, EDGE_CG);
+
+        if (LastCallNode == LastNd)
+        {
+            SetEdgeType (E, EDGE_CF);
+        }       
     }
 
     return;
@@ -337,7 +361,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 {
     DifNode* LastDifN = GN_2_DIFN (LastNd);
 
-    List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, R_EID2FID (LastDifN->EventId), DifGraph->ThreadId);
+    List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, Eid2DifgKey (LastDifN->EventId), DifGraph->ThreadId);
     assert (FDifG != NULL && FDifG->Header != NULL);
     
     Node *FEntryNode = (Node *)(FDifG->Header->Data);
@@ -669,7 +693,7 @@ static inline VOID AddSharePropagateEdge (Graph *DifGraph, Node *CurNd)
 static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 {
     DifNode* DifN = GN_2_DIFN (N);
-    DWORD FID = R_EID2FID (DifN->EventId);
+    DWORD FID = Eid2DifgKey (DifN->EventId);
 
     Node *LastGNode = GetLastNode (DifGraph);
 
@@ -730,7 +754,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
         // add ret edge
         DifNode* LastDifN = GN_2_DIFN (LastGNode);
         //ViewEMsg (&LastDifN->EMsg);
-        if (R_EID2FID (LastDifN->EventId) != R_EID2FID (DifN->EventId) &&
+        if (Eid2DifgKey (LastDifN->EventId) != Eid2DifgKey (DifN->EventId) &&
             R_EID2ETY (DifN->EventId) == EVENT_CALL)
         {
             AddRetEdge (DifGraph, LastGNode, N);

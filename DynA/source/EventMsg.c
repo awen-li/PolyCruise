@@ -120,7 +120,7 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
         assert (Type != 0);
 
         Variable *V = AllotVariable (Pos, NameLen, Type);
-        if (IsDef)
+        if (IsDef || Type == VT_FUNCTION)
         {
             ListInsert (&EM->Def, V);
         }

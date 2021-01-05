@@ -11,30 +11,43 @@ from ModRewriter import NewASTInfo
 from HandleEvent import *
 
 
-class Analyzer:
+class FuncDef ():
+    def __init__(self, FName, Fid, FormalParas):
+        self.Id    = Fid
+        self.Name  = FName
+        self.Paras = FormalParas
+
+
+class Analyzer ():
     def __init__(self, RecordFile):
         self.AstInfo = self.LoadPlks (RecordFile)
-        self.FuncID  = {}
+        self.FuncDef  = {}
         self.InitFuncSet ()
 
+    def GetFuncParas (self, Stmt):
+        #print (ast.dump (Stmt))
+        Fparas = []
+        Args = Stmt.args.args
+        for arg in Args:
+            Fparas.append (arg.arg)
+        return Fparas
+
     def InitFuncSet (self):
-        self.FuncID["main"] = 1
+        self.FuncDef["main"] = FuncDef ("main", 1, [])
         for Mod, ModAst in self.AstInfo.items ():
             Line2Stmt = ModAst.lineno2stmt
             for Line, Stmt in Line2Stmt.items ():
                 if isinstance(Stmt, FunctionDef):
-                    self.FuncID[Stmt.name] = len (self.FuncID)+1
-                    #print (Stmt.name, " -> ", self.FuncID[Stmt.name])
+                    Fid = len (self.FuncDef)+1
+                    Paras = self.GetFuncParas (Stmt)
+                    self.FuncDef[Stmt.name] = FuncDef (Stmt.name, Fid, Paras)
 
-        for name, Id in self.FuncID.items ():
-            print ("Func: ", Id, " ", name)
+        for name, Fdef in self.FuncDef.items ():
+            print ("Func: ", Fdef.Id, " ", Fdef.Name, " ", Fdef.Paras)
         return
 
-    def GetFuncId (self, FuncName):
-        FuncId = self.FuncID.get (FuncName)
-        if FuncId == None:
-            return 0
-        return FuncId            
+    def GetFuncDef (self, FuncName):
+        return self.FuncDef.get (FuncName)            
         
     def LoadPlks(self, RecordFile):
         AstInfo = {}

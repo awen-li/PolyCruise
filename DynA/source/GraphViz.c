@@ -22,8 +22,11 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
     DifNode *DN  = GN_2_DIFN (N);
     EventMsg *EM = &DN->EMsg;
 
+    DWORD Lang = R_EID2LANG (DN->EventId);
+    char *LangTy = (Lang == PYLANG_TY)?"Py":"C";
+
     DWORD FID = R_EID2FID (DN->EventId);
-    sprintf (Buffer, "F%u: ", FID);
+    sprintf (Buffer, "%s_F%u: ", LangTy, FID);
 
     LNode *Def = EM->Def.Header;
     while (Def != NULL)
@@ -42,7 +45,7 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
         }
 
         Def = Def->Nxt;
-        if (Def != NULL)
+        if (Def != NULL || Var->Type == VT_FUNCTION)
         {
             strcat (Buffer, ", ");
         }

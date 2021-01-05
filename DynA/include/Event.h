@@ -43,7 +43,7 @@
 #define R_EID2FID(EID)    (unsigned)((EID >> 36) & 0x3FFFF)
 #define R_EID2SSD(EID)    (unsigned)((EID >> 54) & 0x3)
 #define R_EID2ETY(EID)    (unsigned)((EID >> 56) & 0x0F)
-#define R_EID2LANG(EID)   (unsigned)((EID >> 56) & 0xF0)
+#define R_EID2LANG(EID)   (unsigned)((EID >> 60) & 0x0F)
 
 
 #define EVENT_DF          (0UL)

@@ -33,13 +33,10 @@ void InitQueue (unsigned QueueNum)
     Queue* Q = NULL;
 
     key_t ShareKey = GetKey();
-    printf ("ShareKey = %lx sizeof (key_t) = %u\r\n", ShareKey, sizeof (key_t));
-
     unsigned Size = sizeof (Queue) + QueueNum * sizeof (QNode);
     SharedId = shmget(ShareKey, Size, 0666);
     if(SharedId == -1)
     {
-        printf ("Shared Memroy not exist....\r\n");
         SharedId = shmget(ShareKey, Size, 0666|IPC_CREAT);
         assert (SharedId != -1);
     }

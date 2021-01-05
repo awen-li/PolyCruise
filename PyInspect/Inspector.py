@@ -46,9 +46,16 @@ class Inspector:
 
         # init main ctx
         self.CallCtx = None
-        self.CurCtx  = Context (EntryFunc, [])
+        
+        FuncDef      = self.Analyzer.GetFuncDef (EntryFunc)
+        TaintBits    = self.Crtn.GetTaintBits (EntryFunc)
+        self.CurCtx  = Context (EntryFunc, TaintBits)
+        if TaintBits != None:
+            for bit in TaintBits:
+                self.CurCtx.InsertLexicon (FuncDef.Paras[bit])
+        
         self.CtxStack.append (self.CurCtx)
-        print ("-----------> Push Context: ", self.CurCtx.Func)
+        print ("-----------> Push Context: ", self.CurCtx.Func, " Taintlex:", self.CurCtx.TaintLexical)
 
         self.IsTaint = False
 
@@ -57,9 +64,9 @@ class Inspector:
         PyTraceInit ()
 
         #Entry msg
-        FuncId  = self.Analyzer.GetFuncId (self.CurCtx.Func)
-        EventId = PyEventTy (FuncId, 0, EVENT_FENTRY, 0)
-        PyTrace (EventId, "{"+self.CurCtx.Func+"}")
+        FuncDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+        EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, 0)
+        #PyTrace (EventId, "{"+self.CurCtx.Func+"}")
 
         threading.settrace(self.Tracing)
         sys.settrace(self.Tracing)
@@ -140,7 +147,7 @@ class Inspector:
 
     def TaintAnalysis (self, Event, LiveObj):
         if Event == "line" and LiveObj.Callee != None:
-            if self.Analyzer.GetFuncId (LiveObj.Callee) != 0:                
+            if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
             else:
                 self.Propogate (LiveObj)
@@ -166,6 +173,7 @@ class Inspector:
         Msg = ""
         if LiveObj.Def != None:
             Msg += LiveObj.Def + ":U="
+        
         for use in LiveObj.Uses:
             Msg += str(use) + ":U"
             if use != LiveObj.Uses[-1]:
@@ -200,9 +208,9 @@ class Inspector:
         EventTy  = self.TaintAnalysis (Event, LiveObj)
         #print ("\t Taint flag = ", self.IsTaint)
         if self.IsTaint == True:
-            FuncId   = self.Analyzer.GetFuncId (Code.co_name)
+            FuncDef  = self.Analyzer.GetFuncDef (Code.co_name)
             IsSource = self.Crtn.IsCriterion (LiveObj.Callee)
-            EventId = PyEventTy (FuncId, LineNo, EventTy, IsSource)     
+            EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, IsSource)     
 
             Msg = ""
             if EventTy   == EVENT_CALL:
@@ -220,8 +228,8 @@ class Inspector:
                     CalleeObj = self.CurCtx.CalleeLo;
 
                     CallCtx = self.CtxStack[-1]
-                    FuncId  = self.Analyzer.GetFuncId (CallCtx.Func)
-                    EventId = PyEventTy (FuncId, CalleeObj.LineNo, EVENT_CALL, 0)
+                    FuncDef = self.Analyzer.GetFuncDef (CallCtx.Func)
+                    EventId = PyEventTy (FuncDef.Id, CalleeObj.LineNo, EVENT_CALL, 0)
                     Msg = "{" + CalleeObj.Callee + "," + self.FormatDefUse (CalleeObj) + "}"
 
             if Msg != "":
