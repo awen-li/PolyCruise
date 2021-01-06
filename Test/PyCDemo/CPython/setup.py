@@ -3,9 +3,9 @@
 import os
 from distutils.core import setup, Extension
 
-os.environ["CC"]  = "clang -Xclang -load -Xclang llvmLDIpass.so"
-os.environ["CXX"] = "clang -Xclang -load -Xclang llvmLDIpass.so"
-os.environ["LDSHARED"] = "clang -pthread -shared"
+os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmLDIpass.so"
+os.environ["CXX"] = "clang -emit-llvm -Xclang -load -Xclang llvmLDIpass.so"
+os.environ["LDSHARED"] = "clang -flto -pthread -shared"
 
 module1 = Extension('Trace',
                     define_macros = [('MAJOR_VERSION', '1'), ('MINOR_VERSION', '0')],

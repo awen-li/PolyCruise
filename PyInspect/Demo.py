@@ -14,9 +14,11 @@ def DemoTr(Value):
     Res = v3
     v4 = 'Add'
     DemoTrace(v4, Res)
-v6 = '__main__'
-v5 = (__name__ == v6)
-if v5:
+    v5 = 'trace end'
+    print(v5, Res)
+v7 = '__main__'
+v6 = (__name__ == v7)
+if v6:
     PyTraceInit()
-    v7 = 8
-    DemoTr(v7)
+    v8 = 8
+    DemoTr(v8)

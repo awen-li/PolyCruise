@@ -716,6 +716,8 @@ private:
             }
             else
             {
+                Cst->m_InTaintBits &= ~FTaintBits;
+                FTaintBits |= Cst->m_InTaintBits; 
                 printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
                         Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
             }

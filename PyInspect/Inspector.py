@@ -44,6 +44,8 @@ class Inspector:
         self.Crtn  = Criterion ()
         self.CtxStack = []
 
+        self.CacheMsg = None
+
         # init main ctx
         self.CallCtx = None
         
@@ -73,6 +75,10 @@ class Inspector:
         return self
 
     def __exit__(self, *_):
+        if self.CacheMsg != None:
+            print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
+            PyTrace (self.CacheEvent, self.CacheMsg)
+            self.CacheMsg = None
         print ("----> __exit__................")
         sys.settrace(None)
         threading.settrace(None)
@@ -186,6 +192,11 @@ class Inspector:
         ModuleName = ""
         ModulePath = ""
 
+        if self.CacheMsg != None:
+            print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
+            PyTrace (self.CacheEvent, self.CacheMsg)
+            self.CacheMsg = None
+
         if Module:
             ModulePath = Module.__file__
             ModuleName = Module.__name__
@@ -215,7 +226,8 @@ class Inspector:
             Msg = ""
             if EventTy   == EVENT_CALL:
                 if self.CallCtx == None:
-                    Msg = "{" + LiveObj.Callee + "," + self.FormatDefUse (LiveObj) + "}"
+                    self.CacheMsg   = "{" + LiveObj.Callee + "," + self.FormatDefUse (LiveObj) + "}"
+                    self.CacheEvent = EventId
             elif EventTy == EVENT_FENTRY:
                 Msg = "{" + LiveObj.Callee + "}";
             else:

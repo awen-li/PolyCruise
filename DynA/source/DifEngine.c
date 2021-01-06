@@ -329,29 +329,13 @@ static inline VOID AddCallEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
                             Eid2DifgKey (LastDifN->EventId), DifGraph->ThreadId);
     assert (FDifG != NULL && FDifG->Header != NULL);
 
-    if (R_EID2LANG (CurDifN->EventId) == R_EID2LANG (LastDifN->EventId))
+    Node *LastCallNode = (Node *)(FDifG->Tail->Data);
+    Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
+    SetEdgeType (E, EDGE_CG);
+
+    if (LastCallNode == LastNd)
     {
-        Node *LastCallNode = (Node *)(FDifG->Header->Data);
-        Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
-        SetEdgeType (E, EDGE_CG);
-
-        DifNode* LastCallDifN = GN_2_DIFN (LastCallNode);
-        if (LastCallNode == LastNd && 
-            R_EID2ETY (LastCallDifN->EventId) == EVENT_CALL)
-        {
-            SetEdgeType (E, EDGE_CF);
-        }
-    }
-    else
-    {  
-        Node *LastCallNode = (Node *)(FDifG->Tail->Data);
-        Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
-        SetEdgeType (E, EDGE_CG);
-
-        if (LastCallNode == LastNd)
-        {
-            SetEdgeType (E, EDGE_CF);
-        }       
+        SetEdgeType (E, EDGE_CF);      
     }
 
     return;

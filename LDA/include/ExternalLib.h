@@ -69,7 +69,7 @@ public:
         LibTaintBits *Ltb = It->second;
         if (Ltb->InTaintBit & InTaintBits)
         {
-            return (InTaintBits | Ltb->OutTaintBit);
+            return Ltb->OutTaintBit;
         }
         else
         {

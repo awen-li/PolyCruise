@@ -667,13 +667,47 @@ private:
             }
             case 3:
             {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2]});
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2]});
+                break;
+            }
+            case 4:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3]});
+                break;
+            }
+            case 5:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4]});
+                break;
+            }
+            case 6:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
+                                   Pf->m_ArgBuf[5]});
+                break;
+            }
+            case 7:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
+                                   Pf->m_ArgBuf[5], Pf->m_ArgBuf[6]});
+                break;
+            }
+            case 8:
+            {
+                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
+                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
+                                   Pf->m_ArgBuf[5], Pf->m_ArgBuf[6], Pf->m_ArgBuf[7]});
                 break;
             }
             default:
             {
                 errs()<<*Inst;
-                printf ("ArgNum = %u\r\n", Pf->m_ArgNum);
+                printf ("!!!!Assert: ArgNum = %u, Maxsupport=%u\r\n", Pf->m_ArgNum, MAX_ARG_NUM);
             }
         }
 

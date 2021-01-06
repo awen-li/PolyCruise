@@ -13,6 +13,7 @@ def Add(a, b):
 def DemoTr (Value):
     Res = Add (1, Value)
     DemoTrace ("Add", Res)
+    print ("trace end", Res)
 
 if __name__ == '__main__':
     PyTraceInit ()
