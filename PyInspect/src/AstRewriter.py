@@ -372,6 +372,7 @@ class ASTVisitor(NodeTransformer):
     def visit_classdef(self, node, expanded=False):
         classdef = ClassDef(name=self.visit_identifier(node.name),
                             bases=[self.visit(base) for base in node.bases],
+                            keywords=[self.visit(kw) for kw in node.keywords],
                             body=node.body,
                             decorator_list=[self.visit(deco) for deco in node.decorator_list],
                             lineno=self._new_lineno(),

@@ -3,9 +3,9 @@
 import sys
 import inspect
 import threading
-from PyTrace import *
-from Criterion import Criterion
-from Analyzer import Analyzer
+from lib.PyTrace import *
+from src.Criterion import Criterion
+from src.Analyzer import Analyzer
 
 EVENT_DF     = 0
 EVENT_FENTRY = 1
@@ -60,6 +60,7 @@ class Inspector:
         print ("-----------> Push Context: ", self.CurCtx.Func, " Taintlex:", self.CurCtx.TaintLexical)
 
         self.IsTaint = False
+        self.__enter__ ()
 
     def __enter__(self):
         print ("----> __enter__................")
@@ -203,11 +204,11 @@ class Inspector:
         else:
             return
 
-        if ModuleName == "Inspector":
+        if ModuleName == "src.Inspector":
             return
         
         LineNo = Frame.f_lineno
-        #print(LineNo, Event, Code.co_name, end=" => ")
+        #print(ModulePath, ModuleName, LineNo, Event, Code.co_name)
         LiveObj = self.Analyzer.HandleEvent (ModulePath, Frame, Event, LineNo)
         if LiveObj == None:
             return 

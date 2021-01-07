@@ -2,7 +2,7 @@
 
 import sys
 from ast import *
-from PyEvent import PyEvent
+from src.PyEvent import PyEvent
 
 class RetEvent (PyEvent):
     def __init__(self, Frame, Event, Statement):

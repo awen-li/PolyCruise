@@ -5,8 +5,9 @@ import ast
 from ast import parse
 from os.path import abspath, sep, join
 import astunparse
-from AstRewriter import ASTVisitor
 import pickle
+from src.AstRewriter import ASTVisitor
+
 
 def encode_filename(filename):
     return str(filename).replace(sep, '#')

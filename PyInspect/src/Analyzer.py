@@ -7,8 +7,8 @@ import ast
 import pickle
 from ast import Name
 from os.path import abspath, sep, join
-from ModRewriter import NewASTInfo
-from HandleEvent import *
+from src.ModRewriter import *
+from src.HandleEvent import *
 
 
 class FuncDef ():
@@ -23,6 +23,7 @@ class Analyzer ():
         self.AstInfo = self.LoadPlks (RecordFile)
         self.FuncDef  = {}
         self.InitFuncSet ()
+        print ("Load AST info:", self.AstInfo)
 
     def GetFuncParas (self, Stmt):
         #print (ast.dump (Stmt))
@@ -80,6 +81,8 @@ class Analyzer ():
  
     def HandleEvent(self, Module, Frame, Event, LineNo):
         Mod = self.AstInfo.get(Module)
+        if Mod == None:
+            return
         Line2Stmt = Mod.lineno2stmt
         #for lineNo, Stmt in Line2Stmt.items ():
         #    print (lineNo, "->", ast.dump (Stmt))

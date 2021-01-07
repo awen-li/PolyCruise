@@ -3,8 +3,8 @@
 import os
 import sys, getopt
 import marshal
-from Inspector import Inspector
-from ModRewriter import PyRecompile
+from src.Inspector import Inspector
+from src.ModRewriter import PyRecompile
 from os.path import join, abspath, splitext, realpath
 from Add import Entry
 from Demo import DemoTr

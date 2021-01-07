@@ -5,13 +5,11 @@ import inspect
 import threading
 from PyDemo import *
 from PyTrace import *
-
-def Add(a, b):
-    Result = a + b
-    return Result
+from DemoAdd import DemoAdd
     
 def DemoTr (Value):
-    Res = Add (1, Value)
+    Da = DemoAdd (1)
+    Res = Da.Add (Value)
     DemoTrace ("Add", Res)
     print ("trace end", Res)
 
