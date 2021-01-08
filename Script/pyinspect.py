@@ -65,8 +65,10 @@ def InitArgument (parser):
     
     
 def RunCtx(Cmd, globals=None, locals=None):
-    if globals is None: globals = {}
-    if locals is None: locals = {}
+    if globals == None: 
+        globals = {}
+    if locals == None: 
+        locals = {}
     exec(Cmd, globals, locals)
     
 

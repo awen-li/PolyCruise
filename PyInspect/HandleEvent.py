@@ -38,8 +38,18 @@ class LineEvent (PyEvent):
         return
    
     def LE_assign(self, Statement):
-        Def = Statement.targets[0].id
-        self.LiveObj.SetDef (Def)
+        Target = Statement.targets[0]
+        if isinstance(Target, Name):
+            Def = Target.id
+            self.LiveObj.SetDef (Def)
+        elif isinstance(Target, Attribute):
+            Def = Target.value.id
+            if hasattr (Target, "attr") == True:
+               Def += "." + Target.attr             
+            self.LiveObj.SetDef (Def)
+        else:
+            print ("!!! LE_assign, unsupport type: ", type (Target))
+            exit (0)
 
         Value = Statement.value
         if isinstance(Value, Name):
@@ -56,6 +66,14 @@ class LineEvent (PyEvent):
             self.LiveObj.SetUse (Value.right.id)
         elif isinstance(Value, Str):
             pass
+        elif isinstance(Value, Compare):
+            self.LiveObj.SetUse (Value.left.id)
+            self.LiveObj.SetUse (Value.comparators[0].id)
+        elif isinstance(Value, Attribute):
+            Use = Value.value.id     
+            if hasattr (Value, "attr") == True:
+                Use += "." + Value.attr
+            self.LiveObj.SetUse (Use)
         else:
             assert (0), "!!!!!!!!! unknown assignment."
 

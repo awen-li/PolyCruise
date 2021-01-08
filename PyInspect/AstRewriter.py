@@ -378,7 +378,8 @@ class ASTVisitor(NodeTransformer):
                             lineno=self._new_lineno(),
                             col_offset=self._col_offset)
         fix_missing_locations(classdef)
-        self._lineno += (node.body[-1].lineno-node.lineno + 5)
+        #Wen, line number is not consistent with that of runtime.
+        #self._lineno += (node.body[-1].lineno-node.lineno+5)
         self._add_to_codelist(classdef)
         self._add_to_lineno2ids(self._lineno, (node.name,))
         if not (expanded or self._nestedexpand):

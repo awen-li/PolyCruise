@@ -63,8 +63,8 @@ class Analyzer ():
                 with open(PklFile, 'rb') as Pkl:
                     print (Pkl)
                     Mod = pickle.load(Pkl)
-                    Path = self.GetSource (FName)
-                    AstInfo[Path] = Mod
+                    #Path = self.GetSource (FName)
+                    AstInfo[FName] = Mod
         return AstInfo
         
     def GetSource(self, Object):
@@ -78,21 +78,37 @@ class Analyzer ():
             return abspath(filename) if filename is not None else None
         else:
             return None
- 
-    def HandleEvent(self, Module, Frame, Event, LineNo):
-        Mod = self.AstInfo.get(Module)
+
+    def IsIgnore (self, Stmt):
+        IgnoreList = ["Import", "ClassDef"]
+        if Stmt.__class__.__name__ in IgnoreList:
+            print ("IsIgnore ---> ", Stmt.__class__, Stmt.__class__.__name__)
+            return True
+        else:
+            return False
+
+    def DebugAst (self, Line2Stmt):
+        for line, stmt in Line2Stmt.items ():
+            print (line, " ---> ", ast.dump (stmt))
+        exit (0)
+
+    
+    def HandleEvent(self, ScriptName, Frame, Event, LineNo):
+        Mod = self.AstInfo.get(ScriptName)
         if Mod == None:
-            return
+            return None
         Line2Stmt = Mod.lineno2stmt
-        #for lineNo, Stmt in Line2Stmt.items ():
-        #    print (lineNo, "->", ast.dump (Stmt))
-        #exit (0)
+
+        #self.DebugAst (Line2Stmt)
 
         Stmt = Line2Stmt.get(LineNo)
         if Stmt == None:
             return None
 
-        #print (ast.dump (Stmt), end=" ")
+        if self.IsIgnore (Stmt) == True:
+            return None
+
+        print (ast.dump (Stmt))
         LiveObj = None
         if Event == 'call':
             LiveObj = self.__HandleCall (Frame, Event, Stmt)

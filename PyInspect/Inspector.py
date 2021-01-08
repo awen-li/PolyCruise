@@ -1,11 +1,28 @@
 #!/usr/bin/python
 
+import os
 import sys
 import inspect
-import threading
 from PyTrace import *
 from .Criterion import Criterion
 from .Analyzer import Analyzer
+
+try:
+    import threading
+except ImportError:
+    _settrace = sys.settrace
+
+    def _unsettrace():
+        sys.settrace(None)
+else:
+    def _settrace(func):
+        threading.settrace(func)
+        sys.settrace(func)
+
+    def _unsettrace():
+        sys.settrace(None)
+        threading.settrace(None)
+
 
 EVENT_DF     = 0
 EVENT_FENTRY = 1
@@ -27,6 +44,8 @@ class Context:
         self.CalleeLo = None
 
     def InsertLexicon (self, Lexicon):
+        if Lexicon == None:
+            return
         self.TaintLexical [Lexicon] = True
         #print ("self.TaintLexical = ", self.TaintLexical)
 
@@ -63,7 +82,7 @@ class Inspector:
         print ("-----------> Push Context: ", self.CurCtx.Func, " Taintlex:", self.CurCtx.TaintLexical)
 
         self.IsTaint = False
-        #self.__enter__ ()
+        self.Scripts = ["pyinspect.py", "pyinspect.py", "Inspector.py"]
 
     def __enter__(self):
         print ("----> __enter__................")
@@ -74,8 +93,7 @@ class Inspector:
         EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, 0)
         #PyTrace (EventId, "{"+self.CurCtx.Func+"}")
 
-        threading.settrace(self.Tracing)
-        sys.settrace(self.Tracing)
+        _settrace(self.Tracing)
         return self
 
     def __exit__(self, *_):
@@ -84,8 +102,7 @@ class Inspector:
             PyTrace (self.CacheEvent, self.CacheMsg)
             self.CacheMsg = None
         print ("----> __exit__................")
-        sys.settrace(None)
-        threading.settrace(None)
+        _unsettrace()
         PyTraceExit ()
 
     def GetTaintedParas (self, LiveObj):
@@ -98,8 +115,16 @@ class Inspector:
         return TaintSet
 
     def SetCallCtx (self, LiveObj):
-        if self.Crtn.IsCriterion (LiveObj.Callee):
+        TaintBits = self.Crtn.GetTaintBits (LiveObj.Callee)
+        if TaintBits != None:
             self.CurCtx.InsertLexicon (LiveObj.Def)
+            if len (TaintBits) != 0:
+                pi = 0
+                FuncDef = self.Analyzer.GetFuncDef (LiveObj.Callee)
+                for para in FuncDef.Paras:
+                    if pi in TaintBits:
+                        self.CurCtx.InsertLexicon (para)
+                    pi += 1
             self.IsTaint = True
             print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
             
@@ -192,7 +217,6 @@ class Inspector:
 
     def Tracing(self, Frame, Event, Arg):        
         Code = Frame.f_code
-        Module = inspect.getmodule(Code)
         ModuleName = ""
         ModulePath = ""
 
@@ -201,29 +225,24 @@ class Inspector:
             PyTrace (self.CacheEvent, self.CacheMsg)
             self.CacheMsg = None
 
-        if Module:
-            ModulePath = Module.__file__
-            ModuleName = Module.__name__
-        else:
-            return
-
-        if ModuleName == "src.Inspector":
-            return
-        
+        _, ScriptName = os.path.split(Code.co_filename) 
+        if ScriptName in self.Scripts:
+            return self.Tracing
+       
         LineNo = Frame.f_lineno
-        #print(ModulePath, ModuleName, LineNo, Event, Code.co_name)
-        LiveObj = self.Analyzer.HandleEvent (ModulePath, Frame, Event, LineNo)
-        if LiveObj == None:
-            return 
-        
-        #LiveObj.View ()
-        #print ("\t", self.CurCtx.TaintLexical)
+        LiveObj = self.Analyzer.HandleEvent (ScriptName, Frame, Event, LineNo)
+        if LiveObj == None or (LiveObj.Def == None and len (LiveObj.Uses) == 0):
+            return self.Tracing
+
+        print(ScriptName, LineNo, Event, Code.co_name, self.CurCtx.TaintLexical)
+        LiveObj.View ()
 
         self.IsTaint = False
         EventTy  = self.TaintAnalysis (Event, LiveObj)
         #print ("\t Taint flag = ", self.IsTaint)
         if self.IsTaint == True:
-            FuncDef  = self.Analyzer.GetFuncDef (Code.co_name)
+            print ("self.CurCtx.Func -> ", self.CurCtx.Func)
+            FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
             IsSource = self.Crtn.IsCriterion (LiveObj.Callee)
             EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, IsSource)     
 
