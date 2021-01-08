@@ -34,7 +34,7 @@ else
 cd CPython
 rm -rf build
 python setup.py build
+pip3 install .
 cd -
 
-cp CPython/build/lib.linux-x86_64-3.6/Trace.cpython-36m-x86_64-linux-gnu.so PyDemo.so
 fi

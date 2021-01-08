@@ -31,7 +31,7 @@ static struct PyModuleDef ModPyDemo =
     DemoMethods
 };
 
-PyMODINIT_FUNC PyInit_PyDemo(void)
+PyMODINIT_FUNC PyInit_DemoTrace(void)
 {
     return PyModule_Create(&ModPyDemo);
 }

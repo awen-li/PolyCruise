@@ -10,6 +10,9 @@ class Criterion ():
     def InitCriterion (self, TaineBits=[]):
         self.Criterions["Source"] = TaineBits
         self.Criterions["DemoTr"] = [0]
+    
+    def Insert (self, Function, TaineBits=[]):
+        self.Criterions[Function] = TaineBits 
 
     def GetTaintBits (self, FuncName):
         TaineBits = self.Criterions.get (FuncName)

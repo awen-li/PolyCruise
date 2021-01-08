@@ -88,7 +88,7 @@ class ASTVisitor(NodeTransformer):
             self._oldlineno = node.lineno
         method = 'visit_' + node.__class__.__name__.lower()
         visitor = getattr(self, method, self.generic_visit)
-        print (method, node.__class__.__name__.lower())
+        #print (method, node.__class__.__name__.lower())
         return visitor(node)
 
     def visit_module(self, node):

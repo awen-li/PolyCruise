@@ -6,7 +6,7 @@ from ast import parse
 from os.path import abspath, sep, join
 import astunparse
 import pickle
-from src.AstRewriter import ASTVisitor
+from .AstRewriter import ASTVisitor
 
 
 def encode_filename(filename):
@@ -23,20 +23,17 @@ class PyRecompile (object):
         self.RecompilePyFile (PyFile, OutDir)
 
     def RecompilePyFile(self, filename, tmpdir='.'):
+        print ("Recompile python source: ", filename)
         with open(filename) as pyfile:
             ori_ast = parse(pyfile.read(), filename, 'exec')
         visitor = ASTVisitor(nestedexpand=True)
         new_ast = visitor.visit(ori_ast)
         newast_info = NewASTInfo(filename, visitor.lineno2stmt, visitor.newlineno2oldlineno)
-
-        # only for debug the astrewriter module
-        cachepydir = os.path.join(tmpdir, 'cachepy')
-        if not os.path.exists(cachepydir):
-            os.makedirs(cachepydir)
-        newsource_filename = os.path.join(cachepydir, encode_filename(filename))
         #print (ast.dump (ori_ast))
         #print (ast.dump (new_ast))
 
+        newsource_filename = tmpdir + "/" + filename
+        print ("\t => Generate new python source: ", newsource_filename)
         with open(newsource_filename, 'w') as sourcefile:
             #print (new_ast.__class__.__name__)
             source = astunparse.unparse(new_ast)  
@@ -52,17 +49,12 @@ class PyRecompile (object):
                     break
 
         # write the pickle files
+        Path, Name = os.path.split(filename)
         cachepklpath = os.path.join(tmpdir, 'cachepkl')
         if not os.path.exists(cachepklpath):
             os.mkdir(cachepklpath)
-        pkl_filename = os.path.join(cachepklpath, encode_filename(filename)+'.pkl')
+        pkl_filename = os.path.join(cachepklpath, Name+'.pkl')
         with open(pkl_filename, 'wb') as pklfile:
-            # print '{filename}\n ' \
-            #       '[lineno2stmt]:\n' \
-            #       '{ls}'.format(filename=newast_info.filename,
-            #                     ls='\n'.join('{k}:{v}'.format(k=k,
-            #                                                   v=dump(v))
-            #                     for k, v in newast_info.lineno2stmt.iteritems()))
             pickle.dump(newast_info, pklfile)
         astunparse.dump(new_ast)
         return new_ast

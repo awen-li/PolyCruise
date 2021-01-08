@@ -7,8 +7,8 @@ import ast
 import pickle
 from ast import Name
 from os.path import abspath, sep, join
-from src.ModRewriter import *
-from src.HandleEvent import *
+from .ModRewriter import *
+from .HandleEvent import *
 
 
 class FuncDef ():
@@ -19,8 +19,8 @@ class FuncDef ():
 
 
 class Analyzer ():
-    def __init__(self, RecordFile):
-        self.AstInfo = self.LoadPlks (RecordFile)
+    def __init__(self, RecordFile, SrcDir="."):
+        self.AstInfo = self.LoadPlks (SrcDir, RecordFile)
         self.FuncDef  = {}
         self.InitFuncSet ()
         print ("Load AST info:", self.AstInfo)
@@ -50,7 +50,7 @@ class Analyzer ():
     def GetFuncDef (self, FuncName):
         return self.FuncDef.get (FuncName)            
         
-    def LoadPlks(self, RecordFile):
+    def LoadPlks(self, SrcDir, RecordFile):
         AstInfo = {}
         with open(RecordFile) as FList:
             PyList = FList.read().splitlines()
@@ -58,7 +58,7 @@ class Analyzer ():
                 PyList.remove('')
             print (PyList)
             for FName in PyList:
-                PklFile = 'cachepkl/' + FName + '.pkl'
+                PklFile = SrcDir + '/cachepkl/' + FName + '.pkl'
                 print('load the pickled module {%s}' %PklFile)
                 with open(PklFile, 'rb') as Pkl:
                     print (Pkl)

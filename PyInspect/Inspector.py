@@ -3,9 +3,9 @@
 import sys
 import inspect
 import threading
-from lib.PyTrace import *
-from src.Criterion import Criterion
-from src.Analyzer import Analyzer
+from PyTrace import *
+from .Criterion import Criterion
+from .Analyzer import Analyzer
 
 EVENT_DF     = 0
 EVENT_FENTRY = 1
@@ -38,10 +38,10 @@ class Context:
             return True
 
 class Inspector:
-    def __init__(self, RecordFile, EntryFunc):
+    def __init__(self, RecordFile, Criten, EntryFunc="main", SrcDir="."):
         print ("----> __init__................")
-        self.Analyzer = Analyzer (RecordFile)
-        self.Crtn  = Criterion ()
+        self.Analyzer = Analyzer (RecordFile, SrcDir)
+        self.Crtn  = Criten
         self.CtxStack = []
 
         self.CacheMsg = None
@@ -49,18 +49,21 @@ class Inspector:
         # init main ctx
         self.CallCtx = None
         
-        FuncDef      = self.Analyzer.GetFuncDef (EntryFunc)
-        TaintBits    = self.Crtn.GetTaintBits (EntryFunc)
-        self.CurCtx  = Context (EntryFunc, TaintBits)
-        if TaintBits != None:
-            for bit in TaintBits:
-                self.CurCtx.InsertLexicon (FuncDef.Paras[bit])
+        FuncDef = self.Analyzer.GetFuncDef (EntryFunc)
+        if FuncDef == None:
+            self.CurCtx  = Context (EntryFunc, [])
+        else:
+            TaintBits    = self.Crtn.GetTaintBits (EntryFunc)
+            self.CurCtx  = Context (EntryFunc, TaintBits)
+            if TaintBits != None:
+                for bit in TaintBits:
+                    self.CurCtx.InsertLexicon (FuncDef.Paras[bit])
         
         self.CtxStack.append (self.CurCtx)
         print ("-----------> Push Context: ", self.CurCtx.Func, " Taintlex:", self.CurCtx.TaintLexical)
 
         self.IsTaint = False
-        self.__enter__ ()
+        #self.__enter__ ()
 
     def __enter__(self):
         print ("----> __enter__................")
