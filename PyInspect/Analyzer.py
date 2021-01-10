@@ -10,6 +10,14 @@ from os.path import abspath, sep, join
 from .ModRewriter import *
 from .HandleEvent import *
 
+class ClassDef ():
+    def __init__(self, ClsName, Cid):
+        self.Id   = Cid
+        self.Name = ClsName
+        self.Funcs = []
+
+    def AddFunc (self, Func):
+        self.Funcs.append (Func)
 
 class FuncDef ():
     def __init__(self, FName, Fid, FormalParas):
@@ -20,9 +28,10 @@ class FuncDef ():
 
 class Analyzer ():
     def __init__(self, RecordFile, SrcDir="."):
-        self.AstInfo = self.LoadPlks (SrcDir, RecordFile)
-        self.FuncDef  = {}
-        self.InitFuncSet ()
+        self.AstInfo   = self.LoadPlks (SrcDir, RecordFile)
+        self.FuncDef   = {}
+        self.ClassDef  = {}
+        self.InitClsFuncSet ()
         print ("Load AST info:", self.AstInfo)
 
     def GetFuncParas (self, Stmt):
@@ -33,22 +42,48 @@ class Analyzer ():
             Fparas.append (arg.arg)
         return Fparas
 
-    def InitFuncSet (self):
+    def ParseFuncDef (self, Stmt, ClfName=None):
+        Fid = len (self.FuncDef)+1
+        Paras = self.GetFuncParas (Stmt)
+        if ClfName == None:
+            return FuncDef (Stmt.name, Fid, Paras)
+        else:
+            FullName = ClfName + "." + Stmt.name
+            return FuncDef (FullName, Fid, Paras)
+   
+    def ParseClsDef (self, Stmt):
+        Cid = len (self.ClassDef)+1
+        Cls = ClassDef (Stmt.name, Cid)
+        Body = Stmt.body
+        for Fdef in Body:
+            Cls.AddFunc (Fdef.name) 
+            Def = self.ParseFuncDef (Fdef, Stmt.name)
+            self.FuncDef[Def.Name] = Def 
+        return Cls
+
+    def InitClsFuncSet (self):
         self.FuncDef["main"] = FuncDef ("main", 1, [])
         for Mod, ModAst in self.AstInfo.items ():
             Line2Stmt = ModAst.lineno2stmt
             for Line, Stmt in Line2Stmt.items ():
-                if isinstance(Stmt, FunctionDef):
-                    Fid = len (self.FuncDef)+1
-                    Paras = self.GetFuncParas (Stmt)
-                    self.FuncDef[Stmt.name] = FuncDef (Stmt.name, Fid, Paras)
+                #print ("\r\n", ast.dump (Stmt))
+                Type= Stmt.__class__.__name__
+                if Type == "FunctionDef":
+                    self.FuncDef[Stmt.name] = self.ParseFuncDef (Stmt)
+                elif Type == "ClassDef":
+                    self.ClassDef[Stmt.name] = self.ParseClsDef (Stmt)
 
         for name, Fdef in self.FuncDef.items ():
             print ("Func: ", Fdef.Id, " ", Fdef.Name, " ", Fdef.Paras)
+        for name, Cdef in self.ClassDef.items ():
+            print ("Class: ", Cdef.Id, " ", Cdef.Name, " ", Cdef.Funcs)
         return
 
     def GetFuncDef (self, FuncName):
-        return self.FuncDef.get (FuncName)            
+        return self.FuncDef.get (FuncName)
+
+    def GetClsDef (self, ClsName):
+        return self.ClassDef.get (ClsName) 
         
     def LoadPlks(self, SrcDir, RecordFile):
         AstInfo = {}
@@ -108,7 +143,7 @@ class Analyzer ():
         if self.IsIgnore (Stmt) == True:
             return None
 
-        print (ast.dump (Stmt))
+        #print (ast.dump (Stmt))
         LiveObj = None
         if Event == 'call':
             LiveObj = self.__HandleCall (Frame, Event, Stmt)
@@ -116,6 +151,9 @@ class Analyzer ():
         elif Event == 'line':
             LiveObj = self.__HandleLine (Frame, Event, Stmt)
             LiveObj.SetLineNo (LineNo)
+            if LiveObj.Callee != None and self.GetClsDef (LiveObj.Callee) != None:
+                LiveObj.Class   = LiveObj.Callee
+                LiveObj.Callee += ".__init__"
         elif Event == 'return':
             LiveObj = self.__HandleReturn (Frame, Event, Stmt)
             LiveObj.SetLineNo (LineNo)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <criterions code_directory="." entry_script="Demo.py">
 
-<criterion> <function>DemoTr</function> <parameters>0 1</parameters> </criterion>
+<criterion> <function>DemoTr</function> <parameters>0</parameters> </criterion>
 <criterion> <function>testFunc</function> <parameters>NULL</parameters> </criterion>
 
 </criterions>

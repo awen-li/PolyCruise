@@ -9,6 +9,7 @@ class RetEvent (PyEvent):
         super(RetEvent, self).__init__(Frame, Event, Statement)
 
     def GetDefUse (self):
+        self.LiveObj.SetRet (True)
         return
 
 
@@ -21,9 +22,14 @@ class CallEvent (PyEvent):
         Callee = Statement.name
         Args   = Statement.args.args
 
+        Class  = None
         for arg in Args:
-            self.LiveObj.SetUse (arg.arg)
-        self.LiveObj.SetCallee (Callee)
+            ArgVal = arg.arg
+            self.LiveObj.SetUse (ArgVal)
+            if ArgVal == "self":
+                Class  = self.Self2Obj (ArgVal)
+                Callee = Class + "." + Callee
+        self.LiveObj.SetCallee (Callee, Class)
         return
 
 class LineEvent (PyEvent):
@@ -45,7 +51,9 @@ class LineEvent (PyEvent):
         elif isinstance(Target, Attribute):
             Def = Target.value.id
             if hasattr (Target, "attr") == True:
-               Def += "." + Target.attr             
+               RealDef = self.Self2Obj (Def)
+               print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", RealDef)
+               Def = RealDef + "." + Target.attr             
             self.LiveObj.SetDef (Def)
         else:
             print ("!!! LE_assign, unsupport type: ", type (Target))
@@ -70,9 +78,10 @@ class LineEvent (PyEvent):
             self.LiveObj.SetUse (Value.left.id)
             self.LiveObj.SetUse (Value.comparators[0].id)
         elif isinstance(Value, Attribute):
-            Use = Value.value.id     
+            Use = Value.value.id
             if hasattr (Value, "attr") == True:
-                Use += "." + Value.attr
+                RealUse = self.Self2Obj (Use)
+                Use = RealUse + "." + Value.attr
             self.LiveObj.SetUse (Use)
         else:
             assert (0), "!!!!!!!!! unknown assignment."
@@ -91,7 +100,10 @@ class LineEvent (PyEvent):
         if isinstance(Func, Name):
             self.LiveObj.SetCallee (Func.id)
         elif isinstance(Func, Attribute):
-            self.LiveObj.SetDef (Func.value.id)
+            #self.LiveObj.SetDef (Func.value.id)
+            Class  = self.Self2Obj (Func.value.id)
+            CallFunc = Class + "." + Func.attr
+            self.LiveObj.SetCallee (CallFunc, Class)
         else:
             print("Unsupport LE_expr -> ", Func.value.id, Func.attr)
             return
@@ -116,7 +128,7 @@ class LineEvent (PyEvent):
         pass
       
     def LE_if(self, Statement):
-        print ("LE_if")
+        pass
         
     def LE_for(self, Statement):
         Def = Statement.target.elts[1].id

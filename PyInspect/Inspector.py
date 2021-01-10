@@ -62,6 +62,7 @@ class Inspector:
         self.Analyzer = Analyzer (RecordFile, SrcDir)
         self.Crtn  = Criten
         self.CtxStack = []
+        self.GlobalTaintLexical = {}
 
         self.CacheMsg = None
 
@@ -91,7 +92,9 @@ class Inspector:
         #Entry msg
         FuncDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, 0)
-        #PyTrace (EventId, "{"+self.CurCtx.Func+"}")
+        Msg = "{"+ self.CurCtx.Func + "}"
+        print ("Python---> %lx %s" %(EventId, Msg))
+        PyTrace (EventId, Msg)
 
         _settrace(self.Tracing)
         return self
@@ -118,17 +121,13 @@ class Inspector:
         TaintBits = self.Crtn.GetTaintBits (LiveObj.Callee)
         if TaintBits != None:
             self.CurCtx.InsertLexicon (LiveObj.Def)
-            if len (TaintBits) != 0:
-                pi = 0
-                FuncDef = self.Analyzer.GetFuncDef (LiveObj.Callee)
-                for para in FuncDef.Paras:
-                    if pi in TaintBits:
-                        self.CurCtx.InsertLexicon (para)
-                    pi += 1
             self.IsTaint = True
             print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
-            
+
         TaintSet = self.GetTaintedParas (LiveObj)
+        if TaintBits != None:
+            TaintSet += TaintBits
+            TaintSet = list(set(TaintSet))
         print (LiveObj.Callee, " TaintSet = ", TaintSet)
         self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
@@ -172,8 +171,6 @@ class Inspector:
         return
 
     def Ret2Callsite (self, LiveObj):
-        if len (LiveObj.Uses) == 0:
-            return
         Ret = LiveObj.Uses[0]
         if self.CurCtx.IsTaint (Ret):
             return True, self.CurCtx.Ret
@@ -186,15 +183,16 @@ class Inspector:
                 self.SetCallCtx (LiveObj)
             else:
                 self.Propogate (LiveObj)
-            #self.IsTaint = True
             return EVENT_CALL
         if Event == "call" and LiveObj.Callee != None:
             self.PushCtx ()
             self.Real2FormalParas (LiveObj)
             return EVENT_FENTRY
         if LiveObj.Ret != False:
-            Taint, Ret = self.Ret2Callsite (LiveObj)
-            self.IsTaint = Taint
+            Ret = None
+            if len (LiveObj.Uses) != 0:
+                Taint, Ret = self.Ret2Callsite (LiveObj)
+                self.IsTaint = Taint
             self.PopCtx ()
             if Ret != None:
                 self.CurCtx.InsertLexicon (Ret)
@@ -215,6 +213,18 @@ class Inspector:
                 Msg += ","
         return Msg
 
+    def IsLiveObjValid (self, LiveObj):
+        if LiveObj == None:
+            return False
+
+        if LiveObj.Ret == True and self.CurCtx.Func != "main":
+            return True
+
+        if LiveObj.Def == None and len (LiveObj.Uses) == 0:
+            return False
+
+        return True
+
     def Tracing(self, Frame, Event, Arg):        
         Code = Frame.f_code
         ModuleName = ""
@@ -229,47 +239,49 @@ class Inspector:
         if ScriptName in self.Scripts:
             return self.Tracing
        
-        LineNo = Frame.f_lineno
+        LineNo  = Frame.f_lineno
         LiveObj = self.Analyzer.HandleEvent (ScriptName, Frame, Event, LineNo)
-        if LiveObj == None or (LiveObj.Def == None and len (LiveObj.Uses) == 0):
+        if self.IsLiveObjValid (LiveObj) == False:
             return self.Tracing
 
-        print(ScriptName, LineNo, Event, Code.co_name, self.CurCtx.TaintLexical)
+        print(ScriptName, LineNo, Event, Code.co_name, self.CurCtx.TaintLexical, LiveObj.Class) #, Frame.f_locals
         LiveObj.View ()
 
         self.IsTaint = False
-        EventTy  = self.TaintAnalysis (Event, LiveObj)
-        #print ("\t Taint flag = ", self.IsTaint)
-        if self.IsTaint == True:
-            print ("self.CurCtx.Func -> ", self.CurCtx.Func)
-            FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
-            IsSource = self.Crtn.IsCriterion (LiveObj.Callee)
-            EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, IsSource)     
+        EventTy  = self.TaintAnalysis (Frame, Event, LiveObj)
+        if self.IsTaint == False:
+            return self.Tracing
 
+        FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+        if FuncDef == None:
+            return self.Tracing
+        IsSource = self.Crtn.IsCriterion (LiveObj.Callee)
+        EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, IsSource)     
+
+        Msg = ""
+        if EventTy   == EVENT_CALL:
+            if self.CallCtx == None:
+                self.CacheMsg   = "{" + LiveObj.Callee + "," + self.FormatDefUse (LiveObj) + "}"
+                self.CacheEvent = EventId
+        elif EventTy == EVENT_FENTRY:
+            Msg = "{" + LiveObj.Callee + "}";
+        else:
+            Msg = "{" + self.FormatDefUse (LiveObj) + "}"
+            print ("Python---> %lx %s" %(EventId, Msg))
+            PyTrace (EventId, Msg)
             Msg = ""
-            if EventTy   == EVENT_CALL:
-                if self.CallCtx == None:
-                    self.CacheMsg   = "{" + LiveObj.Callee + "," + self.FormatDefUse (LiveObj) + "}"
-                    self.CacheEvent = EventId
-            elif EventTy == EVENT_FENTRY:
-                Msg = "{" + LiveObj.Callee + "}";
-            else:
-                Msg = "{" + self.FormatDefUse (LiveObj) + "}"
-                print ("Python---> %lx %s" %(EventId, Msg))
-                PyTrace (EventId, Msg)
-                Msg = ""
 
-                if EventTy == EVENT_RET:
-                    CalleeObj = self.CurCtx.CalleeLo;
+            if EventTy == EVENT_RET:
+                CalleeObj = self.CurCtx.CalleeLo;
 
-                    CallCtx = self.CtxStack[-1]
-                    FuncDef = self.Analyzer.GetFuncDef (CallCtx.Func)
-                    EventId = PyEventTy (FuncDef.Id, CalleeObj.LineNo, EVENT_CALL, 0)
-                    Msg = "{" + CalleeObj.Callee + "," + self.FormatDefUse (CalleeObj) + "}"
+                CallCtx = self.CtxStack[-1]
+                FuncDef = self.Analyzer.GetFuncDef (CallCtx.Func)
+                EventId = PyEventTy (FuncDef.Id, CalleeObj.LineNo, EVENT_CALL, 0)
+                Msg = "{" + CalleeObj.Callee + "," + self.FormatDefUse (CalleeObj) + "}"
 
-            if Msg != "":
-                print ("Python---> %lx %s" %(EventId, Msg))
-                PyTrace (EventId, Msg)
+        if Msg != "":
+            print ("Python---> %lx %s" %(EventId, Msg))
+            PyTrace (EventId, Msg)
         
         return self.Tracing
 

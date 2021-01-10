@@ -11,6 +11,7 @@ class LiveObject ():
         self.Callee = None
         self.Ret = False
         self.LineNo = 0
+        self.Class = None
 
     def SetDef (self, Def):
         self.Def = Def
@@ -21,14 +22,15 @@ class LiveObject ():
     def SetUse (self, Use):
         self.Uses.append (Use)
 
-    def SetCallee (self, CallFunc):
+    def SetCallee (self, CallFunc, Class=None):
         self.Callee = CallFunc
+        self.Class  = Class
 
     def SetRet (self, RetFlg = False):
         self.Ret = RetFlg
 
     def View (self):
-        print ("==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
+        print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
 
 class PyEvent(metaclass=abc.ABCMeta):
     def __init__(self, Frame, Event, Statement):
@@ -40,6 +42,9 @@ class PyEvent(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def GetDefUse (self):
         pass
+
+    def Self2Obj (self, SelfName):
+        return self.Frame.f_locals[SelfName].__class__.__name__
 
     def GetLiveObject(self, ValName):
         if isinstance(ValName, Name):
