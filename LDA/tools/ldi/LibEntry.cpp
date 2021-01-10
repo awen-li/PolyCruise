@@ -68,7 +68,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
         {
             continue;
         }
-
+       
         Entry->insert (Func);
         errs()<<"Add entry function: "<<Func->getName ()<<"\r\n";
     }

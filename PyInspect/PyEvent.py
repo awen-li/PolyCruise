@@ -5,11 +5,15 @@ import abc
 from ast import Name
 
 class LiveObject ():
+    RET_CALLER = 2
+    RET_VALUE  = 1
+    RET_NONE   = 0
+    
     def __init__(self):
         self.Def = None
         self.Uses = []
         self.Callee = None
-        self.Ret = False
+        self.Ret = LiveObject.RET_NONE
         self.LineNo = 0
         self.Class = None
 
@@ -26,7 +30,7 @@ class LiveObject ():
         self.Callee = CallFunc
         self.Class  = Class
 
-    def SetRet (self, RetFlg = False):
+    def SetRet (self, RetFlg = 0):
         self.Ret = RetFlg
 
     def View (self):

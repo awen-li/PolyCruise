@@ -8,17 +8,28 @@ from .ModRewriter import PyRecompile
 from os.path import join, abspath, splitext, realpath
 
 ROOTDIR = "Temp"
-PyList  = ROOTDIR + "/pyList"
+PYLIST  = ROOTDIR + "/pyList"
 
 def __MakeDir (Dir):
     if os.path.exists (Dir):
         return
-    os.mkdir (Dir)
+    #os.mkdir (Dir)
+    Cmd = "mkdir -p " + Dir
+    print (Cmd)
+    os.system (Cmd)
 
 def __Copy (Dir):
-    RootDir = ROOTDIR
-    __MakeDir (RootDir)
-    CpCmd = "cp -rf " + Dir + " " + RootDir + "/" + Dir
+    if Dir[-1] == "/":
+        Dir = Dir[:-1]
+    BaseName = os.path.basename(Dir)
+
+    Target = ROOTDIR + "/" + Dir
+    if BaseName != Dir:
+        Lendir = len (Dir) - len (BaseName)
+        Target = ROOTDIR + "/" + Dir[0:Lendir]
+    
+    __MakeDir (Target)
+    CpCmd = "cp -rf " + Dir + " " + Target
     os.system (CpCmd)
 
 def PyTranslateFile (PyFile):
@@ -45,7 +56,7 @@ def PyTranslate (PyDir):
             _, Name = os.path.split(py)
             PyLists.append (Name)
     
-    with open(PyList, "w") as File:
+    with open(PYLIST, "w") as File:
         for Py in PyLists:
             File.write(Py + "\n")
     

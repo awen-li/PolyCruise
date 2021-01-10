@@ -2,14 +2,14 @@
 
 import sys
 from ast import *
-from .PyEvent import PyEvent
+from .PyEvent import *
 
 class RetEvent (PyEvent):
     def __init__(self, Frame, Event, Statement):
         super(RetEvent, self).__init__(Frame, Event, Statement)
 
     def GetDefUse (self):
-        self.LiveObj.SetRet (True)
+        self.LiveObj.SetRet (LiveObject.RET_CALLER)
         return
 
 
@@ -52,7 +52,7 @@ class LineEvent (PyEvent):
             Def = Target.value.id
             if hasattr (Target, "attr") == True:
                RealDef = self.Self2Obj (Def)
-               print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", RealDef)
+               #print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", RealDef)
                Def = RealDef + "." + Target.attr             
             self.LiveObj.SetDef (Def)
         else:
@@ -116,7 +116,7 @@ class LineEvent (PyEvent):
 
     def LE_return(self, Statement):
         Value = Statement.value
-        self.LiveObj.SetRet (True)
+        self.LiveObj.SetRet (LiveObject.RET_VALUE)
         if not isinstance(Value, Name):
             return
         self.LiveObj.SetUse (Value.id)

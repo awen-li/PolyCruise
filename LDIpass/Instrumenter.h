@@ -922,6 +922,7 @@ private:
                 
         BasicBlock *entryBlock = &mainFunc->front();
         CallInst::Create(m_InitFunc, "", entryBlock->getFirstNonPHI());
+        errs()<<"@@@@@ Instrument Init Function...\r\n";
 
         GetTermInstofFunction(mainFunc);
         for (auto it = m_ExitInsts.begin(); it != m_ExitInsts.end(); ++it) 

@@ -26,35 +26,55 @@ static inline key_t GetKey ()
     }  
 }
 
-void InitQueue (unsigned QueueNum)
+static inline void* GetQueueMemory (DWORD IsShared, DWORD Size)
 {
-    VOID *SharedMemroy = NULL;
-	int SharedId;
-    Queue* Q = NULL;
-
-    key_t ShareKey = GetKey();
-    unsigned Size = sizeof (Queue) + QueueNum * sizeof (QNode);
-    SharedId = shmget(ShareKey, Size, 0666);
-    if(SharedId == -1)
+    void *MemAddr;
+    
+    if (IsShared)
     {
-        SharedId = shmget(ShareKey, Size, 0666|IPC_CREAT);
-        assert (SharedId != -1);
+        key_t ShareKey = GetKey();
+        int SharedId = shmget(ShareKey, Size, 0666);
+        if(SharedId == -1)
+        {
+            SharedId = shmget(ShareKey, Size, 0666|IPC_CREAT);
+            assert (SharedId != -1);
+        }
+
+        MemAddr = shmat(SharedId, 0, 0);
+        assert (MemAddr != (void*)-1);
+
+        g_SharedId = SharedId;
+    }
+    else
+    {
+        MemAddr = malloc (Size);
+        assert (MemAddr != NULL);
     }
 
-    SharedMemroy = shmat(SharedId, 0, 0);
-    assert (SharedMemroy != (void*)-1);    
+    memset (MemAddr, 0, Size);
+    return MemAddr;
+}
 
-    Q = (Queue *)SharedMemroy;
-    printf ("SharedMemroy: %p\r\n", SharedMemroy);
+void InitQueue (unsigned QueueNum)
+{
+    Queue* Q;
+
+    if (g_Queue != NULL)
+    {
+        printf ("@@@@@ Warning: Repeat comimg into InitQueue: %p-%u\r\n", g_Queue, g_SharedId);
+        exit (0);
+    }
+ 
+    DWORD Size = sizeof (Queue) + QueueNum * sizeof (QNode);
+    Q = (Queue *)GetQueueMemory (FALSE, Size);
     Q->NodeList = (QNode *)(Q+1);
     Q->Hindex  = 0;
     Q->Tindex  = 0;
     Q->NodeNum = QueueNum;
     mutex_lock_init(&Q->InLock);
 
+    printf ("@@@@@ Queue Memory:%p \r\n", Q);
     g_Queue = Q;
-    g_SharedId = SharedId;
-
     return;
 }
 
@@ -63,6 +83,7 @@ QNode* InQueue ()
 {
     if (g_Queue == NULL)
     {
+        printf ("@@@@@@@@@ InQueue, entry InitQueue!!!!\r\n");
         InitQueue (4096);
     }
     
@@ -124,19 +145,22 @@ VOID DelQueue ()
 {
     if(g_SharedId == 0)
     {
-        return;
+        free (g_Queue);
+        g_Queue = NULL;
     }
+    else
+    {
+        if(shmdt(g_Queue) == -1)
+    	{
+    		fprintf(stderr, "shmdt failed\n");
+    		return;
+    	}
 
-    if(shmdt(g_Queue) == -1)
-	{
-		fprintf(stderr, "shmdt failed\n");
-		return;
-	}
-
-	if(shmctl(g_SharedId, IPC_RMID, 0) == -1)
-	{
-		fprintf(stderr, "shmctl(IPC_RMID) failed\n");
-	}
+    	if(shmctl(g_SharedId, IPC_RMID, 0) == -1)
+    	{
+    		fprintf(stderr, "shmctl(IPC_RMID) failed\n");
+    	}
+    }
 
     return;
 }

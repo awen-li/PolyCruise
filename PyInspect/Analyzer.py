@@ -115,9 +115,9 @@ class Analyzer ():
             return None
 
     def IsIgnore (self, Stmt):
-        IgnoreList = ["Import", "ClassDef"]
+        IgnoreList = ["Import", "ClassDef", "ImportFrom"]
         if Stmt.__class__.__name__ in IgnoreList:
-            print ("IsIgnore ---> ", Stmt.__class__, Stmt.__class__.__name__)
+            #print ("IsIgnore ---> ", Stmt.__class__, Stmt.__class__.__name__)
             return True
         else:
             return False

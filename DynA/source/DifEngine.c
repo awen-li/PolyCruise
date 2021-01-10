@@ -327,6 +327,7 @@ static inline VOID AddCallEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 
     List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, 
                             Eid2DifgKey (LastDifN->EventId), DifGraph->ThreadId);
+    //printf ("[%u]LastDifN: %#lx , FDifG = %p/%#x, \r\n", LastNd->Id, LastDifN->EventId, FDifG, Eid2DifgKey (LastDifN->EventId));
     assert (FDifG != NULL && FDifG->Header != NULL);
 
     Node *LastCallNode = (Node *)(FDifG->Tail->Data);
@@ -685,7 +686,8 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     if (FDifG == NULL)
     {
         FDifG = CreateFDifG (DifA.FDifHandle, FID, DifGraph->ThreadId);
-
+        //printf ("\t [%u]CreateFDifG: %#x-%p\r\n", N->Id, FID, FDifG);
+        
         if (LastGNode != NULL)
         {
             AddCallEdge (DifGraph, LastGNode, N);
@@ -764,10 +766,10 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         return;
     }
     
-    DEBUG ("[DIF][%lx][T:%X]%lx: %s \r\n", Event, ThreadId, Event, Msg);
     Node *N = AddDifNode (DifGraph, Event);
     DifNode* DifN = GN_2_DIFN (N);
     DifN->EventId = Event;
+    DEBUG ("[DIF][T:%X][%lx]%u: %s \r\n", ThreadId, DifN->EventId, N->Id, Msg);
 
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
     EventMsg *EM = &DifN->EMsg; 

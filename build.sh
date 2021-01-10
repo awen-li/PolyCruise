@@ -30,3 +30,10 @@ cd $LDI && cd ..
 cd PyTrace
 ./makePyTrace.sh
 cd -
+
+#5. install PyInspect module
+pip3 install .
+
+#6. install pyinspect tool
+PYTHON_PATH=/usr/local/lib/python3.6/
+cp Script/pyinspect.py $PYTHON_PATH
