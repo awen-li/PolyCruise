@@ -152,17 +152,21 @@ def Daemonize(pid_file=None):
    
 def main(argv):
     Function = 'crawler'
+    IsDaemon = False
 
     try:
-        opts, args = getopt.getopt(argv,"f:",["Function="])
+        opts, args = getopt.getopt(argv,"df:",["Function="])
     except getopt.GetoptError:
         print ("run.py -f <Function>")
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-f", "--Function"):
             Function = arg;
+        elif opt in ("-d", "--daemon"):
+            IsDaemon = True;
 
-    Daemonize ()
+    if IsDaemon == True:
+        Daemonize ()
     
     if (Function == "crawler"):
         Cl = Crawler()
