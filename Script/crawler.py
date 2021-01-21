@@ -101,7 +101,7 @@ class Crawler():
         #self.Save()
 
     def Clone (self):
-        BaseDir = os.getpwd () + "/Repository/"
+        BaseDir = os.getcwd () + "/Repository/"
         if not os.path.exists (BaseDir):
             os.mkdir (BaseDir)
         
@@ -118,12 +118,37 @@ class Crawler():
 
             CloneUrl = Row['CloneUrl']
             CloneCmd = "git clone " + CloneUrl
-            print ("[", Id, "] --> ", CloneCmd)
+            print ("[", Index, "] --> ", CloneCmd)
             os.system (CloneCmd)
 
             CleanCmd = "find . -name \".git\" | xargs rm -rf"
             os.system (CleanCmd)
 
+def Daemonize(pid_file=None):
+    pid = os.fork()
+    if pid:
+        sys.exit(0)
+ 
+    #os.chdir('/')
+    os.umask(0)
+    os.setsid()
+
+    _pid = os.fork()
+    if _pid:
+        sys.exit(0)
+ 
+    sys.stdout.flush()
+    sys.stderr.flush()
+ 
+    with open('/dev/null') as read_null, open('/dev/null', 'w') as write_null:
+        os.dup2(read_null.fileno(), sys.stdin.fileno())
+        os.dup2(write_null.fileno(), sys.stdout.fileno())
+        os.dup2(write_null.fileno(), sys.stderr.fileno())
+ 
+    if pid_file:
+        with open(pid_file, 'w+') as f:
+            f.write(str(os.getpid()))
+        atexit.register(os.remove, pid_file)
    
 def main(argv):
     Function = 'crawler'
@@ -136,11 +161,13 @@ def main(argv):
     for opt, arg in opts:
         if opt in ("-f", "--Function"):
             Function = arg;
+
+    Daemonize ()
     
     if (Function == "crawler"):
         Cl = Crawler()
         Cl.CrawlerProject ()
-    elif (step == "clone"):
+    elif (Function == "clone"):
         Cl = Crawler()
         Cl.Clone () 
 
