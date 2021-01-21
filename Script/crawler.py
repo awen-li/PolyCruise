@@ -3,6 +3,7 @@
 
 import csv
 import os
+import re
 import requests
 import sys, getopt
 import pandas as pd
@@ -73,15 +74,16 @@ class Crawler():
 
     def CrawlerProject (self):
         PageNum = 10  
-        Star = 15000
+        Star    = 15000
+        Delta   = 300
         while Star > 2000:
-            Bstar = Star - 500
+            Bstar = Star - Delta
             Estar = Star
-            Star  = Star - 500
+            Star  = Star - Delta
 
             StarRange = str(Bstar) + ".." + str(Estar)
-            print ("===> Process star: ", StarRange)
             for PageNo in range (1, PageNum+1):
+                print ("===>[Star]: ", StarRange, ", [Page] ", PageNo)
                 Result = self.GetPageofRepos (StarRange, PageNo)
                 if 'items' not in Result:
                     break
@@ -124,6 +126,36 @@ class Crawler():
             CleanCmd = "find . -name \".git\" | xargs rm -rf"
             os.system (CleanCmd)
 
+    def Sniffer (self, Dir):
+        CRegex  = "#include <Python.h>|PyObject|Py_Initialize|PyMethodDef|cdll.LoadLibrary"
+        PyRegex = "from cffi import FFI|from ctypes import|from.*cimport|cdef extern from"
+        RuleSet = {".c":CRegex, ".py":PyRegex}
+        
+        RepoDirs = os.walk(Dir)
+        for Path, Dirs, Fs in RepoDirs:
+            for f in Fs:
+                File = os.path.join(Path, f)
+                if not os.path.exists (File):
+                    continue
+            
+                Ext = os.path.splitext(File)[-1].lower()
+                Rules = RuleSet.get (Ext)
+                if Rules == None:
+                    continue
+                with open (File, "r", encoding="utf8", errors="ignore") as sf:
+                    for line in sf:
+                        if len (line) < 4:
+                            continue
+
+                        if re.search(Rules, line) != None:
+                            print (Dir, " -> Python interacts with C.")
+                            return True
+        return False
+                            
+
+                            
+        return False
+
 def Daemonize(pid_file=None):
     pid = os.fork()
     if pid:
@@ -153,15 +185,18 @@ def Daemonize(pid_file=None):
 def main(argv):
     Function = 'crawler'
     IsDaemon = False
+    RepoDir  = ""
 
     try:
-        opts, args = getopt.getopt(argv,"df:",["Function="])
+        opts, args = getopt.getopt(argv,"df:r:",["Function="])
     except getopt.GetoptError:
         print ("run.py -f <Function>")
         sys.exit(2)
     for opt, arg in opts:
         if opt in ("-f", "--Function"):
             Function = arg;
+        if opt in ("-r", "--Repository"):
+            RepoDir = arg;
         elif opt in ("-d", "--daemon"):
             IsDaemon = True;
 
@@ -173,7 +208,10 @@ def main(argv):
         Cl.CrawlerProject ()
     elif (Function == "clone"):
         Cl = Crawler()
-        Cl.Clone () 
+        Cl.Clone ()
+    elif (Function == "sniffer"):
+        Cl = Crawler()
+        Cl.Sniffer (RepoDir) 
 
 if __name__ == "__main__":
     main(sys.argv[1:])
