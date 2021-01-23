@@ -546,7 +546,13 @@ private:
             return true;
         }
 
+        if (Inst->GetInst()->getNumOperands() <= 2)
+        {
+            return true;
+        }
+
         Value *Ival = Inst->GetValue (2);
+        //errs()<<*(Inst->GetInst())<<" -> OpNum:"<<<<" -> Val: "<<Ival<<"\r\n";
         if (ConstantInt* CI = dyn_cast<ConstantInt>(Ival)) 
         {
             Index = (unsigned)CI->getSExtValue();
@@ -801,7 +807,12 @@ private:
         else
         {
             FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
-            assert (Fset != NULL);
+            //assert (Fset != NULL);
+            if (Fset == NULL)
+            {
+                // library function, do not entry
+                return;
+            }
 
             for (auto Fit = Fset->begin(), End = Fset->end(); Fit != End; Fit++)
             {
@@ -1091,9 +1102,14 @@ private:
         fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
         fwrite (&Lb, sizeof(Lb), 1, Bf);
 
+        unsigned TotalInstNum = 0;
+        unsigned TaintInstNum = 0;
         for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
         {
             Flda *Fd = &(It->second);
+
+            TotalInstNum += Fd->GetInstNum ();
+            TaintInstNum += Fd->GetTaintInstNum ();
             
             FldaBin Fdb = {0};
             strcpy (Fdb.FuncName, Fd->GetName());
@@ -1138,6 +1154,8 @@ private:
 
         fclose (Bf);
         fclose (BfTxt);
+        printf ("@@@@@@@@@ Instrumentation rate: %0.2f [%u/%u]\r\n", 
+                TaintInstNum*1.0/TotalInstNum, TaintInstNum, TotalInstNum);
     }  
 };
 

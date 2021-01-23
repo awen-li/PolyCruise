@@ -71,16 +71,26 @@ string GetCaseName (string FileName)
     return FileName.substr(0, Pos);
 }
 
+VOID Preprocess (vector<string> &ModulePathVec)
+{
+    if (llaf::GetParaValue (PARA_PREPROFESS) != "1")
+    {
+        return;
+    }
+
+    Stat::StartTime ("LoadModule");
+    ModuleManage ModuleMng (ModulePathVec);
+    Stat::EndTime ("LoadModules");
+
+    exit (0);
+}
+
 VOID RunPasses (vector<string> &ModulePathVec)
 {
     Stat::StartTime ("LoadModule");
     ModuleManage ModuleMng (ModulePathVec);
     Stat::EndTime ("LoadModules");
-
-    if (llaf::GetParaValue (PARA_PREPROFESS) == "1")
-    {
-        return;
-    }
+ 
 
     StField Sf;
     Sf.AddStFields ("struct.bz_stream", 0);
@@ -160,6 +170,8 @@ int main(int argc, char ** argv)
         errs()<<"get none module paths!!\n";
         return 0;
     }
+
+    Preprocess (ModulePathVec);
     
     RunPasses (ModulePathVec);
 

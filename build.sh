@@ -23,7 +23,7 @@ echo "add_subdirectory(LDIpass)" >> CMakeLists.txt
 fi
 cd $LLVM_PATH/build
 make
-cp $$LLVM_PATH/build/lib/llvmLDIpass.so
+cp $LLVM_PATH/build/lib/llvmLDIpass.so /usr/lib/
 cd $LDI && cd ..
 
 #4. buld PyTrace
@@ -35,5 +35,6 @@ cd -
 pip3 install .
 
 #6. install pyinspect tool
-PYTHON_PATH=/usr/local/lib/python3.6/
+PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
+PYTHON_PATH=/usr/local/lib/python$PyVersion/
 cp Script/pyinspect.py $PYTHON_PATH

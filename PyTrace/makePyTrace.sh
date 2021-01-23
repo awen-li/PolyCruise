@@ -6,6 +6,6 @@ fi
 cp ../DynA/include ./ -rf
 cp ../DynA/libDynAnalyze.so /usr/lib/
 
-python ./setup.py build
+python setup.py build
 
 pip3 install .
