@@ -235,6 +235,10 @@ private:
                 {
                     m_Use.push_back(m_Def);
                 }
+                else
+                {
+                    SetUse (OpNum);
+                }
                 break;
             }
             case Instruction::Load:
