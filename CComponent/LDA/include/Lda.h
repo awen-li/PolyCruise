@@ -484,15 +484,17 @@ private:
                 continue;
             }
 
-            DWORD ExeNum = GetEntryExeNum (Entry);
-            errs ()<<"****** Entry: "<<Entry->getName()<<" execute number: "<<GetEntryExeNum (Entry)<<"\r\n";
+            DWORD ExeNum = GetEntryExeNum (Entry);       
             if (ExeNum > m_Entry2GlvUse[Entry].size ())
-            {                
+            {  
+                //errs ()<<"****** Entry: "<<Entry->getName()<<" execute number: "<<GetEntryExeNum (Entry)<<"\r\n";
                 continue;
             }
 
-            m_EntryFQ.InQueue (Entry);
-            errs ()<<"===> Add Entry: "<<Entry->getName()<<" Use Glv: "<<Glv->getName ()<<"\r\n";
+            if (m_EntryFQ.InQueue (Entry))
+            {
+                errs ()<<"===> Add Entry: "<<Entry->getName()<<" Use Glv: "<<Glv->getName ()<<"\r\n";
+            }
         }
 
         return;
@@ -688,7 +690,7 @@ private:
             return TAINT_NONE;
         }
 
-        if (!Func->getReturnType ()->isVoidTy())
+        if (Func != NULL && !Func->getReturnType ()->isVoidTy())
         {
             TaintBits |= TAINT_RET;
         }
@@ -710,8 +712,12 @@ private:
     inline void ExeFunction (LLVMInst *LI, Function *Callee, CSTaint *Cst, set<Value*> *LexSet)
     {
         unsigned FTaintBits;
-        
-        if (Callee->isDeclaration ())
+
+        if (Callee == NULL)
+        {
+            FTaintBits = DefaultTaints (LI, NULL, Cst->m_InTaintBits);
+        }
+        else if (Callee->isDeclaration ())
         {
             FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), Cst->m_InTaintBits);
             if (FTaintBits == TAINT_UNKNOWN)
@@ -810,7 +816,7 @@ private:
             //assert (Fset != NULL);
             if (Fset == NULL)
             {
-                // library function, do not entry
+                ExeFunction (LI, NULL, Cst, LexSet);
                 return;
             }
 
@@ -849,8 +855,8 @@ private:
 
     inline unsigned BackwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
-        printf ("=>BackwardDeduce %s: FTaintBits = %#x, InstNum = %u\r\n",
-                Fd->GetName (), FTaintBits, Fd->GetInstNum ());
+        //printf ("=>BackwardDeduce %s: FTaintBits = %#x, InstNum = %u\r\n",
+        //        Fd->GetName (), FTaintBits, Fd->GetInstNum ());
         unsigned InstID = Fd->GetInstNum ();
         Function *Func  = Fd->GetFunc ();
         inst_iterator ItI = inst_end(*Func);
@@ -887,11 +893,11 @@ private:
             {
                 m_InstSet.insert (Inst);
                 Fd->InsertInst (Inst, InstID, 0);
-                errs ()<<"["<<InstID<<"]BackwardDeduce -> "<<*Inst<<"\r\n";
+                //errs ()<<"["<<InstID<<"]BackwardDeduce -> "<<*Inst<<"\r\n";
             }
         }
 
-        printf ("=>BackwardDeduce %s exit\r\n", Fd->GetName ());
+        //printf ("=>BackwardDeduce %s exit\r\n", Fd->GetName ());
 
         return FTaintBits;
     }
@@ -899,7 +905,7 @@ private:
 
     inline unsigned ForwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
-        printf ("=>ForwardDeduce Entry %s : FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
+        //printf ("=>ForwardDeduce Entry %s : FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
         Function *Func = Fd->GetFunc ();
         InitCriterions (Func, FTaintBits, LocalLexSet);
 
@@ -1032,12 +1038,12 @@ private:
 
                 m_InstSet.insert (Inst);
                 Fd->InsertInst (Inst, InstID, 0);
-                errs ()<<"\t["<<InstID<<"]Tainted Inst: "<<*Inst<<"\r\n";
+                //errs ()<<"\t["<<InstID<<"]Tainted Inst: "<<*Inst<<"\r\n";
             }
         }
 
         Fd->SetInstNum (InstID-1);
-        printf ("=>ForwardDeduce Exit %s: FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
+        //printf ("=>ForwardDeduce Exit %s: FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
 
         return FTaintBits;
     }
@@ -1091,8 +1097,12 @@ private:
 
     inline void Dump ()
     {
-        FILE *Bf = fopen ("LdaBin.bin", "wb");
-        FILE *BfTxt = fopen ("LdaBin.txt", "wb");
+        printf ("\r\n");
+        printf ("************************************************************************\r\n");
+        printf ("Start dump tainted instructions ...... \r\n");
+        printf ("************************************************************************\r\n");
+        FILE *Bf = fopen ("/tmp/LdaBin.bin", "wb");
+        FILE *BfTxt = fopen ("/tmp/LdaBin.txt", "wb");
         assert (Bf != NULL);
         assert (BfTxt != NULL);
 
@@ -1119,6 +1129,8 @@ private:
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
             fprintf (BfTxt, "Function[%u, %s]: TaintInstNum:%u \r\n", 
                      Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
+            printf ("Function[%u, %s]: TaintInstNum:%u \r\n", 
+                     Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
 
             unsigned long *IID = new unsigned long [Fdb.TaintInstNum];
             assert (IID != NULL);
@@ -1126,6 +1138,7 @@ private:
             for (auto Iit = Fd->inst_begin (); Iit != Fd->inst_end (); Iit++)
             {
                 IID [Index++] = Iit->second;
+                //errs ()<<"["<<(unsigned)R_EID2IID(Iit->second)<<"]"<<*Iit->first<<"\r\n";
             }
             fwrite (IID, sizeof(unsigned long), Index, Bf);
             delete IID;

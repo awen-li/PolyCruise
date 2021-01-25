@@ -44,7 +44,7 @@ struct LDIpass : public ModulePass
 	    
     StringRef getPassName() const override 
     {
-        return StringRef("IBSpass");
+        return StringRef("LDIpass");
     }
 	  	
     bool runOnModule(Module &M) override 

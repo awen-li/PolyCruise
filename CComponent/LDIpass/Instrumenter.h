@@ -81,7 +81,7 @@ struct CSTaint
 };
 
 typedef map <unsigned, CSTaint>::iterator mcs_iterator;
-typedef map <unsigned, unsigned long>::iterator taint_iterator;
+typedef map <unsigned, Instruction*>::iterator instid_iterator;
 typedef set <unsigned>::iterator thr_iterator;
 
 class Flda
@@ -93,6 +93,7 @@ private:
     map <unsigned long, CSTaint> m_CsID2Cst;
     map <unsigned, unsigned long> m_TaintInstID2EventID;
     map <unsigned, Instruction*> m_InstID2Inst;
+    map <BasicBlock*, Instruction*> m_BB2Inst;
     
     set <unsigned> m_ThrCInstIDs;
 
@@ -105,6 +106,23 @@ public:
     ~Flda ()
     {
 
+    }
+
+    inline void InitBlocks (Function *F)
+    {
+        for (Function::iterator BB = F->begin(); BB != F->end(); ++BB) 
+        {
+            BasicBlock *CurBlock = &*BB;
+            m_BB2Inst [CurBlock] = CurBlock->getFirstNonPHI();
+        }
+    }
+
+    inline Instruction* GetFirstNonPHI (BasicBlock *BBlock)
+    {
+        auto It = m_BB2Inst.find (BBlock);
+        assert (It != NULL);
+
+        return It->second;
     }
 
     inline unsigned GetId ()
@@ -172,7 +190,7 @@ public:
         return;
     }
 
-    inline unsigned long GetEventID (unsigned    InstId)
+    inline unsigned long GetEventID (unsigned      InstId)
     {
         auto It = m_TaintInstID2EventID.find (InstId);
         if (It == m_TaintInstID2EventID.end())
@@ -220,14 +238,14 @@ public:
         return It->second;
     }
 
-    inline taint_iterator tt_begin ()
+    inline instid_iterator tt_begin ()
     {
-        return m_TaintInstID2EventID.begin ();
+        return m_InstID2Inst.begin ();
     }
 
-    inline taint_iterator tt_end ()
+    inline instid_iterator tt_end ()
     {
-        return m_TaintInstID2EventID.end ();
+        return m_InstID2Inst.end ();
     }
 
     inline thr_iterator thr_begin ()
@@ -329,7 +347,11 @@ private:
         
         LdaBin Lb;
         N = fread (&Lb, sizeof(Lb), 1, Bf);
-        assert (N == 1);
+        if (N == 0)
+        {
+            printf ("LoadLdaBin: read ldabin error...\r\n");
+            exit (0);
+        }
         printf ("FldaNum = %u \r\n", Lb.FuncNum);
 
         for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
@@ -339,14 +361,14 @@ private:
             assert (N == 1);
             Flda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
 
-            printf ("Load Function: %s, FID = %u\r\n", Fdb.FuncName, Fdb.FuncId);
+            printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
             {
                 unsigned long Id = 0;
                 N = fread (&Id, sizeof(Id), 1, Bf);
                 assert (N == 1);
                 Fd->AddInstID (Id);
-                printf ("\tTaintInst:[%u] %lx\r\n", R_EID2IID (Id), Id);
+                //printf ("\tTaintInst:[%u] %lx\r\n", R_EID2IID (Id), Id);
             }        
 
             for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
@@ -482,7 +504,7 @@ private:
     }
    
 
-    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf)
+    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf, set <Value*> *DefSets)
     { 
         Value *Def = NULL;
 
@@ -493,8 +515,6 @@ private:
         func,def:use=use:value,use:value.....
         ret=use:value
         */
-
-        errs()<<*Inst<<"\r\n";
         
         Pf->AppendFormat ("{");
         if (LI.IsGep ())
@@ -622,6 +642,11 @@ private:
                 continue;
             }
 
+            if (DefSets->find (Val) == DefSets->end ())
+            {
+                continue;
+            }
+
             //errs()<<"visit use:" <<Val->getName ()<<"\r\n";
             if (AddVarFormat (Pf, Val))
             {
@@ -644,6 +669,7 @@ private:
     { 
         IRBuilder<> Builder(Inst);
 
+        errs()<<"\t InstrumentCite: "<<*Inst<<"\r\n";
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
@@ -803,6 +829,7 @@ private:
         {
             Instruction *Inst = &*ItI;
             Fd->AddInstMap (InstId, Inst);
+            //errs ()<<"[*VisitInst*]-["<<InstId<<"] "<<*Inst<<"\r\n";
 
             if (IsThreadEntry (Inst))
             {
@@ -812,48 +839,66 @@ private:
             GetProgramExitInsts (Inst);
         }
 
+        Fd->InitBlocks(F);
+
         return;
     }
     
     inline void VisitFunction ()
     {
+        set <Value*> DefSets;
         for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
         {
-            Function *F = &*it;  
-            if (F->isIntrinsic() || F->isDeclaration ())
+            Function *Func = &*it;
+            if (Func->isIntrinsic() || Func->isDeclaration ())
             {
                 continue;
             }
 
-            Flda *Fd = GetFlda (F->getName ().data());
+            Flda *Fd = GetFlda (Func->getName ().data());
             if (Fd == NULL)
             {
                 continue;
             }
 
             m_Value2Id.clear ();
-            errs()<<"Process Function: "<<F->getName ()<<"\r\n";
+            errs()<<"Process Function: "<<Func->getName ()<<"\r\n";
 
-            VisitInst (F, Fd);
+            VisitInst (Func, Fd);
 
             /* basic instrumentation */
             ParaFt Pf;
-            for (auto TIt = Fd->tt_begin (), TEnd = Fd->tt_end (); TIt != TEnd; TIt++)
+            DefSets.clear ();            
+            for (auto IIt = Fd->tt_begin(), IEd = Fd->tt_end(); IIt != IEd; ++IIt) 
             {
-                unsigned InstId       = TIt->first;
-                Instruction *CurInst  = Fd->GetInstById (InstId);
+                unsigned InstID = IIt->first;
+                Instruction *CurInst = IIt->second;
+                DefSets.insert (CurInst);
+
+                unsigned long EventId = Fd->GetEventID (InstID);
+                if (EventId == 0)
+                {
+                    continue;
+                }
+                errs ()<<EventId<<"["<<InstID<<"] "<<*CurInst<<"\r\n";
 
                 Pf.Reset ();
-                GetInstrPara (Fd, InstId, CurInst, &Pf);
+                GetInstrPara (Fd, InstID, CurInst, &Pf, &DefSets);
                 if (Pf.m_Format != "")
                 {
-                    Instruction *InstrumentSite = Fd->GetInstById (InstId+1);
+                    Instruction *InstrumentSite = Fd->GetInstById (InstID+1);
                     if (InstrumentSite == NULL)
                     {
                         InstrumentSite = CurInst;
                     }
+                    else
+                    {
+                        if (InstrumentSite->getOpcode() == Instruction::PHI)
+                        {
+                            InstrumentSite = Fd->GetFirstNonPHI(CurInst->getParent ());
+                        }
+                    }
 
-                    unsigned long EventId = TIt->second;
                     AddTrack (EventId, InstrumentSite, &Pf);
                 }
             }
@@ -869,9 +914,10 @@ private:
                 InstrumThrc (Fd, InstId, ThrcInst, InstrumentSite);
             }
 
-            AddCallTrack (F, Fd);
+            AddCallTrack (Func, Fd);
         }
 
+        //DumpInsts ();
         return;
     }
 
@@ -930,6 +976,23 @@ private:
             Instruction *Inst = *it;
             CallInst::Create(m_ExitFunc, "", Inst);
         }
+        return;
+    }
+
+
+    
+    inline void DumpInsts ()
+    {
+        for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
+        {
+            Function *F = &*it;  
+            for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI) 
+            {
+                Instruction *Inst = &*ItI;
+                errs ()<<"[*DumpInsts*] -> "<<*Inst<<"\r\n";
+            }
+        }
+
         return;
     }
 };

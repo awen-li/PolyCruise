@@ -38,6 +38,7 @@ private:
 
     Value *m_Def;
     vector<Value*> m_Use;
+    set<Value*> m_UseSet;
 
     Function* m_CallFunc;
     
@@ -171,8 +172,11 @@ private:
         while (Index < OpNum)
         {
             Value *U = m_Inst->getOperand (Index);
-
-            m_Use.push_back(U);
+            auto It = m_UseSet.find (U);
+            if (It == m_UseSet.end ())
+            {
+                m_Use.push_back(U);
+            }
             Index++;
         }
 
@@ -225,6 +229,14 @@ private:
                 break;
             }
             case Instruction::PHI:
+            {
+                m_Def = m_Inst;
+                if (m_Def->getType()->isPointerTy())
+                {
+                    m_Use.push_back(m_Def);
+                }
+                break;
+            }
             case Instruction::Load:
             case Instruction::GetElementPtr:      
             case Instruction::Trunc:
