@@ -53,5 +53,5 @@ echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
-PYTHON_PATH=/usr/local/lib/python$PyVersion/
+PYTHON_PATH=/usr/lib/python$PyVersion/
 cp $LDI_PATH/Script/pyinspect.py $PYTHON_PATH

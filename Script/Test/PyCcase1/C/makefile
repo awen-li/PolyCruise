@@ -6,8 +6,8 @@ SOURCE_PATH  = source
 INCLUDE_PATH = include
 OBJ_PATH     = obj
 
-#ENV_LDFLAGS= -flto
-#ENV_CFLAGS = -emit-llvm | -Xclang -load -Xclang ***.so
+ENV_LDFLAGS= -flto
+ENV_CFLAGS = -emit-llvm
 CFLAGS      = -D__DEBUG__ $(ENV_CFLAGS) -fPIC -O3 -I$(INCLUDE_PATH)
 
 SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)

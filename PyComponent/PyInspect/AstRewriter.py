@@ -4,8 +4,24 @@
 __author__ = 'gui'
 
 import re
+import ast
 from ast import *
 from copy import deepcopy, copy
+
+#################################################################
+#website: https://sites.google.com/site/pypredictor/
+#
+#@inproceedings{xu2016python,
+#  title={Python predictive analysis for bug detection},
+#  author={Xu, Zhaogui and Liu, Peng and Zhang, Xiangyu and Xu, Baowen},
+#  booktitle={Proceedings of the 2016 24th ACM SIGSOFT International Symposium on Foundations of Software Engineering},
+#  pages={121--132},
+#  year={2016}
+#}
+#################################################################
+# Wen Li: adapt to Python3.7
+#################################################################
+
 
 
 class ASTVisitor(NodeTransformer):
@@ -82,7 +98,7 @@ class ASTVisitor(NodeTransformer):
     def visit(self, node):
         """Visit a node."""
         if node is None:
-            print ("node is None")
+            #print ("node is None")
             return
         if hasattr(node, 'lineno'):
             self._oldlineno = node.lineno
@@ -502,14 +518,22 @@ class ASTVisitor(NodeTransformer):
                        col_offset=self._col_offset)
         fix_missing_locations(while_)
         self._add_to_codelist(while_)
-        self._add_to_lineno2ids(self._lineno, (while_.test.id,))
+        
+        _test = while_.test
+        if isinstance (_test, Name):
+            self._add_to_lineno2ids(self._lineno, (_test.id,))
+        elif isinstance (_test, NameConstant):
+            #print ("while.test => NameConstant", ast.dump (_test))
+            pass
+        
         ori_code = self._codelist
         # process the body part
         self._codelist = []
         self._col_offset += 4
         for s in node.body:
             self.visit(s)
-        if not isinstance(node.test, Name):
+        if not isinstance(node.test, Name) and not isinstance(node.test, NameConstant):
+            #print (ast.dump (node.test))
             assign = Assign(targets=[Name(id=while_.test.id, ctx=Store())],
                             value=self.visit(node.test),
                             lineno=self._new_lineno(),
@@ -529,9 +553,9 @@ class ASTVisitor(NodeTransformer):
         self._col_offset -= 4
 
     def visit_with(self, node):
-        context_name = self.visit(node.context_expr)
-        if node.optional_vars is None or isinstance(node.optional_vars, Name):
-            optional_vars_name = self.visit(node.optional_vars)
+        context_name = self.visit(node.items[0].context_expr)
+        if node.items[0].optional_vars is None or isinstance(node.items[0].optional_vars, Name):
+            optional_vars_name = self.visit(node.items[0].optional_vars)
             flag = False
         else:
             optional_vars_name = self._new_tmp_name(Store())
@@ -552,7 +576,7 @@ class ASTVisitor(NodeTransformer):
         self._codelist = []
         self._col_offset += 4
         if flag:
-            tmp_assign = Assign(targets=[deepcopy(node.optional_vars)],
+            tmp_assign = Assign(targets=[deepcopy(node.items[0].optional_vars)],
                                 value=Name(id=optional_vars_name.id,
                                            ctx=Load()),
                                 lineno=self._new_lineno(),
@@ -672,7 +696,12 @@ class ASTVisitor(NodeTransformer):
         self._add_to_lineno2ids(self._lineno, node.names)
 
     def visit_nonlocal(self, node):
-        raise NotImplementedError('Nonlocal')
+        nonl_ = Nonlocal(names=node.names,
+                         lineno=self._new_lineno(),
+                         col_offset=self._col_offset)
+        fix_missing_locations(nonl_)
+        self._add_to_codelist(nonl_)
+        #raise NotImplementedError('Nonlocal')
 
     def visit_return(self, node):
         return_ = Return(value=self.visit(node.value),
@@ -693,17 +722,18 @@ class ASTVisitor(NodeTransformer):
                              col_offset=self._col_offset)
         self._add_to_codelist(continue_)
 
+    # Raise(expr? exc, expr? cause)
     def visit_raise(self, node):
-        raise_ = Raise(type=self.visit(node.type),
-                       inst=self.visit(node.inst),
-                       tback=self.visit(node.tback),
+        raise_ = Raise(exc=self.visit(node.exc),
+                       cause=self.visit(node.cause),
+                       #tback=self.visit(node.tback),
                        lineno=self._new_lineno(),
                        col_offset=self._col_offset)
         fix_missing_locations(raise_)
         self._add_to_codelist(raise_)
-        self._add_to_lineno2ids(self._new_lineno(), [x.id for x in
-                                                     (node.type, node.inst, node.tback)
-                                                     if isinstance(x, Name)])
+        #self._add_to_lineno2ids(self._new_lineno(), [x.id for x in
+        #                                             (node.type, node.inst, node.tback)
+        #                                             if isinstance(x, Name)])
 
     # Expressions
 
@@ -783,7 +813,13 @@ class ASTVisitor(NodeTransformer):
         return Name(id=assign.targets[0].id, ctx=Load())
 
     def visit_bytes(self, node):
-        raise NotImplementedError('bytes')
+        bytes = Bytes(s=node.s,
+                      lineno=self._new_lineno(),
+                      col_offset=self._col_offset)
+        fix_missing_locations(bytes)
+        self._add_to_codelist(bytes)
+        return bytes
+        #raise NotImplementedError('bytes')
 
     def visit_num(self, node):
         assign = Assign(targets=[self._new_tmp_name(Store())],
@@ -1221,6 +1257,6 @@ class ASTVisitor(NodeTransformer):
 
     def visit_arguments(self, node):
         return arguments(args=[self.visit(arg) for arg in node.args],
-                         vararg=self.visit_identifier(node.vararg),
-                         kwarg=self.visit_identifier(node.kwarg),
+                         vararg=self.visit(node.vararg),
+                         kwarg=self.visit(node.kwarg),
                          defaults=[self.visit(default) for default in node.defaults])

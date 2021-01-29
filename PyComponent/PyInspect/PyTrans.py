@@ -19,15 +19,7 @@ def __MakeDir (Dir):
     os.system (Cmd)
 
 def __Copy (Dir):
-    if Dir[-1] == "/":
-        Dir = Dir[:-1]
-    BaseName = os.path.basename(Dir)
-
-    Target = ROOTDIR + "/" + Dir
-    if BaseName != Dir:
-        Lendir = len (Dir) - len (BaseName)
-        Target = ROOTDIR + "/" + Dir[0:Lendir]
-    
+    Target = ROOTDIR + "/"   
     __MakeDir (Target)
     CpCmd = "cp -rf " + Dir + " " + Target
     os.system (CpCmd)
@@ -47,7 +39,7 @@ def PyTranslate (PyDir):
     for Path, Dirs, Pys in PyDirs:
         for py in Pys:
             _, Ext = os.path.splitext(py)
-            if Ext != ".py":
+            if Ext != ".py" or py in ["setup.py", "__init__.py"]:
                 continue
             
             PyFile = os.path.join(Path, py)

@@ -6,9 +6,9 @@ SOURCE_PATH  = ./
 INCLUDE_PATH = ../C/include
 OBJ_PATH     = obj
 
-#ENV_LDFLAGS= -flto
-#ENV_CFLAGS = -emit-llvm
-CFLAGS      = -D__DEBUG__ $(ENV_CFLAGS) -fPIC -O3 -I$(INCLUDE_PATH) -I/usr/local/include/python3.6m
+ENV_LDFLAGS= -flto
+ENV_CFLAGS = -emit-llvm
+CFLAGS      = -D__DEBUG__ $(ENV_CFLAGS) -fPIC -O3 -I$(INCLUDE_PATH) -I/usr/include/python3.6
 
 SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 OBJ_FILES     = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
