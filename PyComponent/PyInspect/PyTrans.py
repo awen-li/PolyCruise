@@ -31,7 +31,7 @@ def PyTranslateFile (PyFile):
         _, Name = os.path.split(PyFile)
         File.write(Name + "\n")
 
-def PyTranslate (PyDir):
+def PyTranslate (PyDir, ExpList=None):
     __Copy (PyDir)
 
     PyLists = []
@@ -39,14 +39,17 @@ def PyTranslate (PyDir):
     for Path, Dirs, Pys in PyDirs:
         for py in Pys:
             _, Ext = os.path.splitext(py)
-            if Ext != ".py" or py in ["setup.py", "__init__.py"]:
+            if Ext != ".py":
+                continue
+
+            if (ExpList != None) and (py in ExpList):
                 continue
             
             PyFile = os.path.join(Path, py)
             PyRecompile (PyFile, ROOTDIR)
             
-            _, Name = os.path.split(py)
-            PyLists.append (Name)
+            #_, Name = os.path.split(py)
+            PyLists.append (PyFile)
     
     with open(PYLIST, "w") as File:
         for Py in PyLists:

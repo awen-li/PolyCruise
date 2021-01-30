@@ -7,10 +7,6 @@ from os.path import abspath, sep, join
 import astunparse
 import pickle
 from .AstRewriter import ASTVisitor
-
-
-def encode_filename(filename):
-    return str(filename).replace(sep, '#')
     
 class NewASTInfo(object):
     def __init__(self, filename, lineno2stmt, newlineno2oldlineno):
@@ -22,7 +18,7 @@ class PyRecompile (object):
     def __init__(self, PyFile, OutDir="."):
         self.RecompilePyFile (PyFile, OutDir)
 
-    def RecompilePyFile(self, filename, tmpdir='.'):
+    def RecompilePyFile(self, filename, OutDir='.'):
         print ("Recompile python source: ", filename)
         with open(filename) as pyfile:
             ori_ast = parse(pyfile.read(), filename, 'exec')
@@ -32,7 +28,7 @@ class PyRecompile (object):
         #print (ast.dump (ori_ast))
         #print (ast.dump (new_ast))
 
-        newsource_filename = tmpdir + "/" + filename
+        newsource_filename = OutDir + "/" + filename
         print ("\t => Generate new python source: ", newsource_filename)
         with open(newsource_filename, 'w') as sourcefile:
             #print (new_ast.__class__.__name__)
@@ -49,15 +45,15 @@ class PyRecompile (object):
                     break
 
         # write the pickle files
-        Path, Name = os.path.split(filename)
-        cachepklpath = os.path.join(tmpdir, 'cachepkl')
+        #Path, Name = os.path.split(filename)
+        filename = str(filename).replace(sep, '#')
+        cachepklpath = os.path.join(OutDir, 'cachepkl')
         if not os.path.exists(cachepklpath):
             os.mkdir(cachepklpath)
-        pkl_filename = os.path.join(cachepklpath, Name+'.pkl')
+        pkl_filename = os.path.join(cachepklpath, filename+'.pkl')
         with open(pkl_filename, 'wb') as pklfile:
             pickle.dump(newast_info, pklfile)
         astunparse.dump(new_ast)
         return new_ast
     
 
-#recompile_pyfile ("Add.py")

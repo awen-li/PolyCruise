@@ -27,8 +27,8 @@ class FuncDef ():
 
 
 class Analyzer ():
-    def __init__(self, RecordFile, SrcDir="."):
-        self.AstInfo   = self.LoadPlks (SrcDir, RecordFile)
+    def __init__(self, PyListFile, SrcDir="."):
+        self.AstInfo   = self.LoadPlks (SrcDir, PyListFile)
         self.FuncDef   = {}
         self.ClassDef  = {}
         self.InitClsFuncSet ()
@@ -85,18 +85,19 @@ class Analyzer ():
     def GetClsDef (self, ClsName):
         return self.ClassDef.get (ClsName) 
         
-    def LoadPlks(self, SrcDir, RecordFile):
+    def LoadPlks(self, SrcDir, PyListFile):
         AstInfo = {}
-        with open(RecordFile) as FList:
+        with open(PyListFile) as FList:
             PyList = FList.read().splitlines()
             if '' in PyList:
                 PyList.remove('')
             print (PyList)
             for FName in PyList:
-                PklFile = SrcDir + '/cachepkl/' + FName + '.pkl'
+                Name = str(FName).replace(sep, '#')
+                PklFile = SrcDir + '/cachepkl/' + Name + '.pkl'
                 print('load the pickled module {%s}' %PklFile)
                 with open(PklFile, 'rb') as Pkl:
-                    print (Pkl)
+                    #print (Pkl)
                     Mod = pickle.load(Pkl)
                     #Path = self.GetSource (FName)
                     AstInfo[FName] = Mod
@@ -131,6 +132,7 @@ class Analyzer ():
     def HandleEvent(self, ScriptName, Frame, Event, LineNo):
         Mod = self.AstInfo.get(ScriptName)
         if Mod == None:
+            #print (ScriptName, " -> get ast fail!!!")
             return None
         Line2Stmt = Mod.lineno2stmt
 

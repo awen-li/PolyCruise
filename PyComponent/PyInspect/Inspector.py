@@ -60,7 +60,6 @@ class Context:
 
 class Inspector:
     def __init__(self, RecordFile, Criten, EntryFunc="main", SrcDir="."):
-        print ("----> __init__................")
         self.Analyzer = Analyzer (RecordFile, SrcDir)
         self.Crtn  = Criten
         self.CtxStack = []
@@ -232,8 +231,8 @@ class Inspector:
 
     def Tracing(self, Frame, Event, Arg):        
         Code = Frame.f_code
-        ModuleName = ""
-        ModulePath = ""
+
+        #print ("Tracing -> ", ModuleName, "->", Code.co_filename)
 
         if self.CacheMsg != None:
             print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
@@ -245,7 +244,7 @@ class Inspector:
             return self.Tracing
        
         LineNo  = Frame.f_lineno
-        LiveObj = self.Analyzer.HandleEvent (ScriptName, Frame, Event, LineNo)
+        LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
         if self.IsLiveObjValid (LiveObj) == False:
             return self.Tracing
 

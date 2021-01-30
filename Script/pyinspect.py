@@ -46,6 +46,12 @@ class xmlParse ():
             Func, Paras = self.ParseCrite (Crite)
             self.InitCrite (Func, Paras)
 
+def ParseExpList (ExpFile):
+    ExpList = []
+    with open(ExpFile, 'r', encoding='latin1') as exfile:
+        for line in exfile:
+            ExpList = ExpList + list (line.split ())
+    return ExpList
 
 def InitArgument (parser):
     parser.add_argument('--version', action='version', version='trace 2.0')
@@ -59,6 +65,8 @@ def InitArgument (parser):
                      help='trace the program during runtime ')
     grp.add_argument('-C', '--criterion',
                      help='the xml file for defining criterion ')
+    grp.add_argument('-E', '--exceptfile',
+                     help='the configure file for elimiate unnecesssay py files')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -72,9 +80,9 @@ def RunCtx(Cmd, globals=None, locals=None):
     exec(Cmd, globals, locals)
     
 
-def Recompile (Dir):
+def Recompile (Dir, ExpList=None):
     if os.path.isdir(Dir):
-        PyTranslate (Dir)
+        PyTranslate (Dir, ExpList)
     elif os.path.isfile(Dir):
         PyTranslateFile (Dir)
     else:
@@ -109,8 +117,12 @@ def main():
 
     opts = parser.parse_args()  
     if opts.compile == True:
+        ExpList=["setup.py", "__init__.py", "build.py"]
+        if opts.exceptfile != None:
+            ExpList = ParseExpList (opts.exceptfile)
+
         if opts.directory != None:
-            Recompile (opts.directory)
+            Recompile (opts.directory, ExpList)
         else:
             if opts.filename is None:
                 parser.error('filename is missing: required with the main options')
