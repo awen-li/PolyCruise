@@ -1,4 +1,0 @@
-obj/Trace.o
--r=obj/Trace.o,Trace,px
--r=obj/Trace.o,sprintf,
--r=obj/Trace.o,printf,

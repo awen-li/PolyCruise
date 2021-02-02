@@ -7,6 +7,11 @@ from os.path import abspath, sep, join
 import astunparse
 import pickle
 from .AstRewriter import ASTVisitor
+
+def RelatPath (File, PrjName):
+    Index = File.find (PrjName) + len (PrjName) + 1
+    Relat = File [Index:]
+    return Relat
     
 class NewASTInfo(object):
     def __init__(self, filename, lineno2stmt, newlineno2oldlineno):
@@ -18,43 +23,44 @@ class PyRecompile (object):
     def __init__(self, PyFile, PrjDir, OutDir="."):
         self.RecompilePyFile (PyFile, PrjDir, OutDir)
 
-    def RecompilePyFile(self, filename, PrjDir, OutDir='.'):
+    def RecompilePyFile(self, SrcFile, PrjName, OutDir='.'):
         
-        print ("Recompile python source: ", filename)
-        with open(filename) as pyfile:
-            ori_ast = parse(pyfile.read(), filename, 'exec')
-        visitor = ASTVisitor(nestedexpand=True)
-        new_ast = visitor.visit(ori_ast)
-        newast_info = NewASTInfo(filename, visitor.lineno2stmt, visitor.newlineno2oldlineno)
-        #print (ast.dump (ori_ast))
-        #print (ast.dump (new_ast))
+        print ("Recompile python source: ", SrcFile)
+        with open(SrcFile) as Pyfile:
+            OrgAst = parse(Pyfile.read(), SrcFile, 'exec')
+        Visitor= ASTVisitor(nestedexpand=True)
+        NewAst = Visitor.visit(OrgAst)
+        NewAstInfo = NewASTInfo(SrcFile, Visitor.lineno2stmt, Visitor.newlineno2oldlineno)
+        #print (ast.dump (OrgAst))
+        #print (ast.dump (NewAst))
 
-        newsource_filename = OutDir + "/" + filename
-        print ("\t => Generate new python source: ", newsource_filename)
-        with open(newsource_filename, 'w') as sourcefile:
-            #print (new_ast.__class__.__name__)
-            source = astunparse.unparse(new_ast)  
+        DestFile = OutDir + "/" + SrcFile
+        print ("\t => Generate new python source: ", DestFile)
+        with open(DestFile, 'w') as NewPyfile:
+            #print (NewAst.__class__.__name__)
+            source = astunparse.unparse(NewAst)  
             if source.startswith('\n'):
                 source = source[1:]
             while (True):
                 BlankLine = source.find ("\n\n")
                 if BlankLine != -1:
-                    sourcefile.write(source[0:BlankLine+1])
+                    NewPyfile.write(source[0:BlankLine+1])
                     source = source [BlankLine+2:]
                 else:
-                    sourcefile.write(source)
+                    NewPyfile.write(source)
                     break
 
         # write the pickle files
-        #Path, Name = os.path.split(filename)
-        filename = str(filename).replace(sep, '#')
-        cachepklpath = OutDir + "/" + PrjDir + '/cachepkl'
-        if not os.path.exists(cachepklpath):
-            os.mkdir(cachepklpath)
-        pkl_filename = os.path.join(cachepklpath, filename+'.pkl')
-        with open(pkl_filename, 'wb') as pklfile:
-            pickle.dump(newast_info, pklfile)
-        astunparse.dump(new_ast)
-        return new_ast
+        PkFile = RelatPath (SrcFile, PrjName)
+        EncodePkFile = str(PkFile).replace(sep, '#')
+        PklPath = OutDir + "/" + PrjName + '/cachepkl'
+        if not os.path.exists(PklPath):
+            os.mkdir(PklPath)
+        PklName = os.path.join(PklPath, EncodePkFile + '.pkl')
+        with open(PklName, 'wb') as Pkl:
+            pickle.dump(NewAstInfo, Pkl)
+        astunparse.dump(NewAst)
+        
+        return NewAst
     
 

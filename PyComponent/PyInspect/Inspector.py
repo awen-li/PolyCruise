@@ -262,8 +262,7 @@ class Inspector:
             return self.Tracing
         #print(ScriptName, LineNo, Event, Code.co_name, self.CurCtx.TaintLexical, LiveObj.Class) #, Frame.f_locals
         #LiveObj.View ()
-
-        self.IsTaint = False
+ 
         EventTy  = self.TaintAnalysis (Event, LiveObj)
         if self.IsTaint == False:
             return self.Tracing
