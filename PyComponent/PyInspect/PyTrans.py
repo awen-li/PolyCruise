@@ -8,7 +8,6 @@ from .ModRewriter import PyRecompile
 from os.path import join, abspath, splitext, realpath
 
 ROOTDIR = "Temp"
-PYLIST  = ROOTDIR + "/pyList"
 
 def __MakeDir (Dir):
     if os.path.exists (Dir):
@@ -46,11 +45,12 @@ def PyTranslate (PyDir, ExpList=None):
                 continue
             
             PyFile = os.path.join(Path, py)
-            PyRecompile (PyFile, ROOTDIR)
+            PyRecompile (PyFile, PyDir, ROOTDIR)
             
             #_, Name = os.path.split(py)
             PyLists.append (PyFile)
-    
+
+    PYLIST  = ROOTDIR + "/" + PyDir + "/pyList"
     with open(PYLIST, "w") as File:
         for Py in PyLists:
             File.write(Py + "\n")

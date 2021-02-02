@@ -18,19 +18,15 @@ class xmlParse ():
         self.Critn = Criterion ()
         self.Parse (CriteCfg)
 
-    def InitCrite (self, Func, Paras):
-        print ("Init critesion: %s:%s" %(Func, Paras))
-        TaintBits = []
-        if Paras != "NULL":
-            List = Paras.split()
-            for Val in List:
-                TaintBits.append (int (Val))
-        self.Critn.Insert (Func, TaintBits)
+    def InitCrite (self, Func, Return, Local):
+        print ("Init critesion: %s:%s:%s" %(Func, Return, Local))
+        self.Critn.Insert (Func, Return, Local)
 
     def ParseCrite (self, Crite):
-        Func  = Crite.getElementsByTagName('function')[0].childNodes[0].data
-        Paras = Crite.getElementsByTagName("parameters")[0].childNodes[0].data
-        return Func, Paras
+        Func   = Crite.getElementsByTagName('function')[0].childNodes[0].data
+        Return = Crite.getElementsByTagName("return")[0].childNodes[0].data
+        Local  = Crite.getElementsByTagName("local")[0].childNodes[0].data
+        return Func, Return, Local
 
     def Parse (self, xmlFile):
         DOMTree  = xml.dom.minidom.parse(xmlFile)
@@ -43,8 +39,8 @@ class xmlParse ():
         # iterate all criterions
         AllCrites = CriteDoc.getElementsByTagName("criterion")
         for Crite in AllCrites:
-            Func, Paras = self.ParseCrite (Crite)
-            self.InitCrite (Func, Paras)
+            Func, Return, Local = self.ParseCrite (Crite)
+            self.InitCrite (Func, Return, Local)
 
 def ParseExpList (ExpFile):
     ExpList = []

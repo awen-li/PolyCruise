@@ -8,8 +8,11 @@ def DemoTr (Value):
     Res = Da.Add (Value)
     DemoTrace ("Add", Res)
     print ("trace end", Res)
+    
+def Source ():
+	return 8
 
 if __name__ == '__main__':
-    Var = 8
+    Var = Source ()
     DemoTr(Var)
 

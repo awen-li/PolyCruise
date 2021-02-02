@@ -71,17 +71,8 @@ class Inspector:
         self.CallCtx = None
         
         FuncDef = self.Analyzer.GetFuncDef (EntryFunc)
-        if FuncDef == None:
-            self.CurCtx  = Context (EntryFunc, [])
-        else:
-            TaintBits    = self.Crtn.GetTaintBits (EntryFunc)
-            self.CurCtx  = Context (EntryFunc, TaintBits)
-            if TaintBits != None:
-                for bit in TaintBits:
-                    self.CurCtx.InsertLexicon (FuncDef.Paras[bit])
-        
+        self.CurCtx  = Context (EntryFunc, [])       
         self.CtxStack.append (self.CurCtx)
-        print ("-----------> Push Context: ", self.CurCtx.Func, " Taintlex:", self.CurCtx.TaintLexical)
 
         self.IsTaint = False
         self.Scripts = ["pyinspect.py", "pyinspect.py", "Inspector.py"]
@@ -122,16 +113,19 @@ class Inspector:
         return TaintSet
 
     def SetCallCtx (self, LiveObj):
-        TaintBits = self.Crtn.GetTaintBits (LiveObj.Callee)
-        if TaintBits != None:
+        TaintSet = self.GetTaintedParas (LiveObj)
+        
+        IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
+        if IsCrn != None:
             self.CurCtx.InsertLexicon (LiveObj.Def)
             self.IsTaint = True
             print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
+        else:
+            TaintBits= self.Crtn.GetTaintParas (LiveObj.Callee)
+            if TaintBits != None:
+                TaintSet += TaintBits
+                TaintSet = list(set(TaintSet))
 
-        TaintSet = self.GetTaintedParas (LiveObj)
-        if TaintBits != None:
-            TaintSet += TaintBits
-            TaintSet = list(set(TaintSet))
         self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
         #print ("\t@@@@@", self.CurCtx.Func, TaintSet, " Cache Callee: ", end="")
@@ -155,6 +149,12 @@ class Inspector:
         return
 
     def Propogate (self, LiveObj):
+        self.IsSource = self.Crtn.IsCriterion (self.CurCtx.Func, LiveObj.Def)
+        if self.IsSource:
+            self.IsTaint = True
+            self.CurCtx.InsertLexicon (LiveObj.Def)
+            return
+        
         Uses = LiveObj.Uses
         for use in Uses:
             if self.CurCtx.IsTaint (use):
@@ -183,6 +183,8 @@ class Inspector:
             return False, None
 
     def TaintAnalysis (self, Event, LiveObj):
+        self.IsSource = False
+        self.IsTaint  = False
         if Event == "line" and LiveObj.Callee != None:
             if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
@@ -232,7 +234,7 @@ class Inspector:
     def Tracing(self, Frame, Event, Arg):        
         Code = Frame.f_code
 
-        #print ("Tracing -> ", ModuleName, "->", Code.co_filename)
+        #print ("Tracing -> ", Code.co_filename)
 
         if self.CacheMsg != None:
             print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
@@ -269,8 +271,8 @@ class Inspector:
         FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         if FuncDef == None:
             return self.Tracing
-        IsSource = self.Crtn.IsCriterion (LiveObj.Callee)
-        EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, IsSource)     
+        
+        EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, self.IsSource)     
 
         Msg = ""
         if EventTy   == EVENT_CALL:

@@ -12,9 +12,9 @@ module1 = Extension('DemoTrace',
                     #extra_link_args=[]
                     #extra_compile_args=[]
                     include_dirs = ['../C/include'],
-                    libraries = ['DemoTrace'],
-                    library_dirs = ['/usr/lib'],
-                    sources = ['Demo.c'])
+                    #libraries = ['DemoTrace'],
+                    #library_dirs = ['/usr/lib'],
+                    sources = ['Demo.c', '../C/source/Trace.c'])
 
 setup (name = 'PyDemo',
        version = '1.0',

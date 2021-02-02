@@ -2,29 +2,36 @@
 
 import sys
 
+class CrnF ():
+    def __init__(self, Name, Return, Local):
+        self.Name       = Name
+        self.Return     = Return
+        self.Local      = Local
+
 class Criterion ():
     def __init__(self):
         self.Criterions = {}
-        self.InitCriterion ()
 
-    def InitCriterion (self, TaineBits=[]):
-        self.Criterions["Source"] = TaineBits
-        self.Criterions["DemoTr"] = [0]
-    
-    def Insert (self, Function, TaineBits=[]):
-        self.Criterions[Function] = TaineBits 
+    def Insert (self, Function,  Return, Local):
+        self.Criterions[Function] = CrnF (Function, Return, Local) 
 
-    def GetTaintBits (self, FuncName):
-        TaineBits = self.Criterions.get (FuncName)
-        if TaineBits == None:
+    def GetTaintParas (self, FuncName):
+        crnF = self.Criterions.get (FuncName)
+        if crnF == None:
             return None
         else:
-            return TaineBits
+            return crnF.Parameters
 
-    def IsCriterion (self, FuncName):
-        TaintBits = self.GetTaintBits (FuncName)
-        if TaintBits == None:
+    def IsCriterion (self, FuncName, Def=None):
+        crnF = self.Criterions.get (FuncName)
+        if crnF == None:
             return False
         else:
-            return True
+            if crnF.Return != 'False':
+                return True
+            elif Def != None and crnF.Local == Def:
+                return True
+            else:
+                return False
+
         

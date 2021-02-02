@@ -15,10 +15,11 @@ class NewASTInfo(object):
         self.newlineno2oldlineno = newlineno2oldlineno
 
 class PyRecompile (object):
-    def __init__(self, PyFile, OutDir="."):
-        self.RecompilePyFile (PyFile, OutDir)
+    def __init__(self, PyFile, PrjDir, OutDir="."):
+        self.RecompilePyFile (PyFile, PrjDir, OutDir)
 
-    def RecompilePyFile(self, filename, OutDir='.'):
+    def RecompilePyFile(self, filename, PrjDir, OutDir='.'):
+        
         print ("Recompile python source: ", filename)
         with open(filename) as pyfile:
             ori_ast = parse(pyfile.read(), filename, 'exec')
@@ -47,7 +48,7 @@ class PyRecompile (object):
         # write the pickle files
         #Path, Name = os.path.split(filename)
         filename = str(filename).replace(sep, '#')
-        cachepklpath = os.path.join(OutDir, 'cachepkl')
+        cachepklpath = OutDir + "/" + PrjDir + '/cachepkl'
         if not os.path.exists(cachepklpath):
             os.mkdir(cachepklpath)
         pkl_filename = os.path.join(cachepklpath, filename+'.pkl')
