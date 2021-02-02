@@ -7,48 +7,41 @@
 ************************************************************/
 #include "MacroDef.h"
 #include "DifGraph.h"
+#include "Plugins.h"
 
 static DifAgent DifA;
 
-
-VOID InitDif ()
+static inline VOID InitPlugins ()
 {
-    DWORD Ret;
     DifAgent *DA = &DifA;
 
-    DA->IsFieldSensitive = TRUE;
-
-    DA->NodeHandle = DB_TYPE_DIF_NODE;
-    DA->EdgeHandle = DB_TYPE_DIF_EDGE;
-    DA->FDifHandle = DB_TYPE_DIF_FUNC;
-    DA->ThrHandle  = DB_TYPE_DIF_THR;
-    DA->GlvHandle  = DB_TYPE_DIF_GLV;
-    DA->ShareHandle= DB_TYPE_DIF_SHARE;
-    DA->AMHandle   = DB_TYPE_DIF_ADDRMAPING;
-    
-    Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
-    assert (Ret != R_FAIL);
-
-    Ret = DbCreateTable(DA->EdgeHandle, sizeof (Edge)+sizeof (DifEdge), sizeof (Edge));
-    assert (Ret != R_FAIL);
-    
-    Ret = DbCreateTable(DA->FDifHandle, sizeof(List), sizeof (EventKey));
-    assert (Ret != R_FAIL);
-    
-    Ret = DbCreateTable(DA->ThrHandle, sizeof (Node*), sizeof (DWORD));
-    assert (Ret != R_FAIL);
-
-    Ret = DbCreateTable(DA->GlvHandle, sizeof (Node*), sizeof (ULONG));
-    assert (Ret != R_FAIL);
-
-    Ret = DbCreateTable(DA->ShareHandle, sizeof (DWORD), sizeof (ULONG));
-    assert (Ret != R_FAIL);
-
-    Ret = DbCreateTable(DA->AMHandle, sizeof (ULONG), sizeof (ULONG));
-    assert (Ret != R_FAIL);
-
+    DA->PluginList = InstallPlugins();
     return;
 }
+
+static inline VOID DeinitPlugins ()
+{
+    DifAgent *DA = &DifA;
+
+    UnInstallPlugins();
+    DA->PluginList = NULL;
+    return;
+}
+
+
+VOID InvokePlugins (Plugin *Pgn)
+{
+    DifAgent *DA = &DifA;
+    
+    if (Pgn->Active == 0)
+    {
+        return;
+    }
+
+    Pgn->PluginEntry (DA);
+    return;
+}
+
 
 static inline DWORD IsFieldSensitive ()
 {
@@ -158,33 +151,6 @@ Node *GetGraphNodeById (DWORD GraphNodeId)
     }
 
     return (Node *)(Ack.pDataAddr);
-}
-
-
-
-VOID DeInitDif ()
-{
-    DifAgent *DA = &DifA;
-
-    DWORD GraphNum = GetGraphNum ();
-    DEBUG ("GraphNum: %u \r\n", GraphNum);
-
-    DWORD GraphId = 1;
-    while (GraphId <= GraphNum)
-    {
-        Graph *G = GetGraphById (GraphId);
-        DEBUG ("[G%u]ThreadId: %x \r\n", GraphId, G->ThreadId);
-
-        ListVisit (&G->NodeList, (ProcData)DelDifNode);
-        
-        DelGraph (G);
-
-        GraphId++;
-    }
-
-    DelDb ();
-
-    return;
 }
 
 
@@ -759,7 +725,8 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 
 VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 {
-    Graph *DifGraph = GetGraph (ThreadId, DifA.NodeHandle, DifA.EdgeHandle);
+    DifAgent *DA = &DifA;
+    Graph *DifGraph = GetGraph (ThreadId, DA->NodeHandle, DA->EdgeHandle);
 
     if (IsEventExist (DifGraph, Event, ThreadId))
     {
@@ -816,10 +783,78 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 
     InsertNode2Graph (DifGraph, N);
     
+    /* invoke plugins */
+    ListVisit (DA->PluginList, (ProcData)InvokePlugins);
     
     return;
 }
 
 
+VOID InitDif (List* PluginList)
+{
+    DWORD Ret;
+    DifAgent *DA = &DifA;
 
+    DA->IsFieldSensitive = TRUE;
+
+    DA->NodeHandle = DB_TYPE_DIF_NODE;
+    DA->EdgeHandle = DB_TYPE_DIF_EDGE;
+    DA->FDifHandle = DB_TYPE_DIF_FUNC;
+    DA->ThrHandle  = DB_TYPE_DIF_THR;
+    DA->GlvHandle  = DB_TYPE_DIF_GLV;
+    DA->ShareHandle= DB_TYPE_DIF_SHARE;
+    DA->AMHandle   = DB_TYPE_DIF_ADDRMAPING;
+    
+    Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->EdgeHandle, sizeof (Edge)+sizeof (DifEdge), sizeof (Edge));
+    assert (Ret != R_FAIL);
+    
+    Ret = DbCreateTable(DA->FDifHandle, sizeof(List), sizeof (EventKey));
+    assert (Ret != R_FAIL);
+    
+    Ret = DbCreateTable(DA->ThrHandle, sizeof (Node*), sizeof (DWORD));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->GlvHandle, sizeof (Node*), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->ShareHandle, sizeof (DWORD), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->AMHandle, sizeof (ULONG), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    InitPlugins ();
+
+    return;
+}
+
+
+VOID DeInitDif ()
+{
+    DifAgent *DA = &DifA;
+
+    DWORD GraphNum = GetGraphNum ();
+    DEBUG ("GraphNum: %u \r\n", GraphNum);
+
+    DWORD GraphId = 1;
+    while (GraphId <= GraphNum)
+    {
+        Graph *G = GetGraphById (GraphId);
+        DEBUG ("[G%u]ThreadId: %x \r\n", GraphId, G->ThreadId);
+
+        ListVisit (&G->NodeList, (ProcData)DelDifNode);
+        
+        DelGraph (G);
+
+        GraphId++;
+    }
+
+    DelDb ();
+    DeinitPlugins();
+
+    return;
+}
 

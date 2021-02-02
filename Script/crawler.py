@@ -151,10 +151,6 @@ class Crawler():
                             print (Dir, " -> Python interacts with C.")
                             return True
         return False
-                            
-
-                            
-        return False
 
 def Daemonize(pid_file=None):
     pid = os.fork()

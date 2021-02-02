@@ -34,7 +34,7 @@ void TRC_init ()
 {
     DWORD Ret;
     pthread_t Tid;
-    
+
     InitQueue (4096);
     DEBUG ("Queue init success!\r\n");
 

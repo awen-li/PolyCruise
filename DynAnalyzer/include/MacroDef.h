@@ -44,5 +44,8 @@
 #define mutex_unlock(x)        pthread_mutex_unlock(x); 
 
 
+#define PLUGIN_INI             ("/tmp/difg/plugins.ini")
+
+
 #endif
 

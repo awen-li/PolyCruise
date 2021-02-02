@@ -7,7 +7,8 @@
 ************************************************************/
 #include "infotrack.h"
 
-void InfoTrack ()
+void InfoTrack (DifAgent *DifA)
 {
-	return;
+    printf ("entry plugin: InfoTrack..... \r\n");
+    return;
 }

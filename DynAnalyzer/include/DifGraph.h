@@ -51,6 +51,8 @@ typedef struct tag_DifEdge
 
 typedef struct tag_DifAgent
 {
+    List* PluginList;
+
     DWORD NodeHandle;
     DWORD EdgeHandle;
     DWORD FDifHandle;
