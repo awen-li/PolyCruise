@@ -1,6 +1,0 @@
-build/temp.linux-x86_64-3.6/Demo.o
--r=build/temp.linux-x86_64-3.6/Demo.o,PyInit_PyDemo,px
--r=build/temp.linux-x86_64-3.6/Demo.o,PyModule_Create2,
--r=build/temp.linux-x86_64-3.6/Demo.o,PyArg_ParseTuple,
--r=build/temp.linux-x86_64-3.6/Demo.o,Trace,
--r=build/temp.linux-x86_64-3.6/Demo.o,_Py_NoneStruct,

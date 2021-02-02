@@ -1,6 +1,10 @@
 
 export LDI_PATH=`pwd`
 
+#0. temp data directory
+export DATA_DIR="/tmp/difg"
+mkdir -p $DATA_DIR
+
 #1. build CComponent
 echo ""
 echo "@@@@@@@@@@@@@@@ build CComponent:LDA @@@@@@@@@@@@@@@"
@@ -55,3 +59,20 @@ echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
 PYTHON_PATH=/usr/lib/python$PyVersion/
 cp $LDI_PATH/Script/pyinspect.py $PYTHON_PATH
+
+ 
+#6. install pyinspect tool
+echo ""
+echo ""
+echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
+export INCLUDE=$LDI_PATH/DynAnalyzer/include
+vPlugins=$LDI_PATH/vPlugins
+cd $vPlugins
+cp plugins.ini $DATA_DIR/
+plugins=$(ls -l | awk '/^d/ {print $NF}')
+for pdir in $plugins; 
+do
+	cd $vPlugins/$pdir
+	make clean && make
+	cp $vPlugins/$pdir/*.so $DATA_DIR/
+done

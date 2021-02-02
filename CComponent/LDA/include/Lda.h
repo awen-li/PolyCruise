@@ -1101,8 +1101,8 @@ private:
         printf ("************************************************************************\r\n");
         printf ("Start dump tainted instructions ...... \r\n");
         printf ("************************************************************************\r\n");
-        FILE *Bf = fopen ("/tmp/LdaBin.bin", "wb");
-        FILE *BfTxt = fopen ("/tmp/LdaBin.txt", "wb");
+        FILE *Bf = fopen ("/tmp/difg/LdaBin.bin", "wb");
+        FILE *BfTxt = fopen ("/tmp/difg/LdaBin.txt", "wb");
         assert (Bf != NULL);
         assert (BfTxt != NULL);
 

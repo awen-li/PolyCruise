@@ -1,6 +1,0 @@
-obj/Demo.o
--r=obj/Demo.o,PyInit_PyDemo,px
--r=obj/Demo.o,PyModule_Create2,
--r=obj/Demo.o,PyArg_ParseTuple,
--r=obj/Demo.o,Trace,
--r=obj/Demo.o,_Py_NoneStruct,
