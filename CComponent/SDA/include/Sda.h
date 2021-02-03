@@ -1,4 +1,4 @@
-//===-- Lda.h - lexical dependence analysis -------------------------------===//
+//===-- Sda.h - lexical dependence analysis -------------------------------===//
 //
 // Copyright (C) <2019-2024>  <Wen Li>
 //
@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TRANSFORMS_INSTRUMENTATION_LDA_H
-#define LLVM_LIB_TRANSFORMS_INSTRUMENTATION_LDA_H
+#ifndef LLVM_LIB_TRANSFORMS_INSTRUMENTATION_SDA_H
+#define LLVM_LIB_TRANSFORMS_INSTRUMENTATION_SDA_H
 #include <set>
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -26,7 +26,7 @@
 #include "Source.h"
 #include "ExternalLib.h"
 #include "StField.h"
-#include "LdaBin.h"
+#include "SdaBin.h"
 #include "Event.h"
 
 
@@ -57,7 +57,7 @@ struct CSTaint
 typedef map <Instruction*, CSTaint>::iterator mic_iterator;
 
 
-class Flda
+class FSda
 {
 private:
     unsigned m_InstNum;
@@ -68,7 +68,7 @@ private:
     map <BasicBlock*, unsigned> m_BB2Id;
 
 public:
-    Flda (unsigned FuncId, Function *Func)
+    FSda (unsigned FuncId, Function *Func)
     {
         m_CurFunc = Func;
         m_FuncId  = FuncId;
@@ -80,7 +80,7 @@ public:
         }
     }
 
-    ~Flda ()
+    ~FSda ()
     {
 
     }
@@ -200,12 +200,12 @@ private:
     }
 };
 
-class Lda
+class Sda
 {
 private:
     Fts *m_Fts;
 
-    map <Function*, Flda> m_Func2Flda;    
+    map <Function*, FSda> m_Func2Fsda;    
     set <Instruction*> m_InstSet;
 
     ModuleManage *m_Ms;
@@ -233,7 +233,7 @@ private:
 
 public:
     
-    Lda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
+    Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
     {
         m_Ms  = Ms;
         m_Sf  = Sf;
@@ -250,7 +250,7 @@ public:
         InitGlv ();
     }
 
-    ~Lda ()
+    ~Sda ()
     {
         if (m_Fts)
         {
@@ -514,13 +514,13 @@ private:
         return false;
     }
 
-    inline Flda* GetFlda (Function *Func)
+    inline FSda* GetFlda (Function *Func)
     {
-        auto It = m_Func2Flda.find (Func);
-        if (It == m_Func2Flda.end())
+        auto It = m_Func2Fsda.find (Func);
+        if (It == m_Func2Fsda.end())
         {
-            unsigned FuncId = m_Func2Flda.size () + 1;
-            auto Pit = m_Func2Flda.insert (make_pair(Func, Flda (FuncId, Func)));
+            unsigned FuncId = m_Func2Fsda.size () + 1;
+            auto Pit = m_Func2Fsda.insert (make_pair(Func, FSda (FuncId, Func)));
             assert (Pit.second == true);
 
             return &(Pit.first->second);
@@ -853,7 +853,7 @@ private:
     }
 
 
-    inline unsigned BackwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
+    inline unsigned BackwardDeduce (FSda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
         //printf ("=>BackwardDeduce %s: FTaintBits = %#x, InstNum = %u\r\n",
         //        Fd->GetName (), FTaintBits, Fd->GetInstNum ());
@@ -903,7 +903,7 @@ private:
     }
 
 
-    inline unsigned ForwardDeduce (Flda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
+    inline unsigned ForwardDeduce (FSda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
         //printf ("=>ForwardDeduce Entry %s : FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
         Function *Func = Fd->GetFunc ();
@@ -1053,7 +1053,7 @@ private:
     {
         unsigned Count = 0;
         set<Value*> LocalLexSet;
-        Flda *Fd = GetFlda (Func);
+        FSda *Fd = GetFlda (Func);
 
         m_RunStack.insert (Func);
 
@@ -1108,15 +1108,15 @@ private:
 
         LdaBin Lb;
         Lb.Version = 1;
-        Lb.FuncNum = m_Func2Flda.size();
+        Lb.FuncNum = m_Func2Fsda.size();
         fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
         fwrite (&Lb, sizeof(Lb), 1, Bf);
 
         unsigned TotalInstNum = 0;
         unsigned TaintInstNum = 0;
-        for (auto It = m_Func2Flda.begin (); It != m_Func2Flda.end(); It++)
+        for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
         {
-            Flda *Fd = &(It->second);
+            FSda *Fd = &(It->second);
 
             TotalInstNum += Fd->GetInstNum ();
             TaintInstNum += Fd->GetTaintInstNum ();

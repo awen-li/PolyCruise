@@ -11,15 +11,15 @@ set(SOURCES
 	ExternalLib.cpp
     )
 
-#add_llvm_loadable_module(ldi ${SOURCES})
-add_llvm_Library(LLVMldi ${SOURCES})
+#add_llvm_loadable_module(sda ${SOURCES})
+add_llvm_Library(LLVMsda ${SOURCES})
 
 llvm_map_components_to_libnames(llvm_libs bitwriter core ipo irreader instcombine instrumentation target linker analysis scalaropts support )
-target_link_libraries(LLVMldi ${llvm_libs})
+target_link_libraries(LLVMsda ${llvm_libs})
 
-#target_link_libraries(ldi ${llvm_libs})
+#target_link_libraries(sda ${llvm_libs})
 
 if(DEFINED IN_SOURCE_BUILD)
-    #add_dependencies(ldi intrinsics_gen)
-    add_dependencies(LLVMldi intrinsics_gen)
+    #add_dependencies(sda intrinsics_gen)
+    add_dependencies(LLVMsda intrinsics_gen)
 endif()

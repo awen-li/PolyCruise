@@ -19,7 +19,7 @@
 #include "common/Stat.h"
 #include "common/VisitDir.h"
 #include "Fts.h"
-#include "Lda.h"
+#include "Sda.h"
 
 
 using namespace llvm;
@@ -105,14 +105,14 @@ VOID RunPasses (vector<string> &ModulePathVec)
             set <Function*> Entry;
             GetLibEntry (&ModuleMng, &Entry);
             
-            Lda lda (&ModuleMng, NULL, &Sf);
+            Sda sda (&ModuleMng, NULL, &Sf);
 
             for (auto It = Entry.begin (); It != Entry.end (); It++)
             {
-                lda.AddEntry (*It);
+                sda.AddEntry (*It);
             }
 
-            lda.Compute ();
+            sda.Compute ();
             break;
         }
         case 1:
@@ -121,8 +121,8 @@ VOID RunPasses (vector<string> &ModulePathVec)
             Source S (&ModuleMng, "compress", "fread", TAINT_ARG0);
             SS.insert (&S);
             
-            Lda lda (&ModuleMng, &SS, &Sf);
-            lda.Compute ();
+            Sda sda (&ModuleMng, &SS, &Sf);
+            sda.Compute ();
             break;
         }
     }

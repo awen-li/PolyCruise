@@ -6,7 +6,7 @@ echo "@@@@@@@@@ C component.........."
 cd $CASE_PATH/CPython
 rm -rf build
 python setup-lda.py build
-sda -file build/lib.linux-x86_64-3.6/DemoTrace.cpython-36m-x86_64-linux-gnu.so.0.0.preopt.bc
+sda -file build/lib.linux-x86_64-3.7/DemoTrace.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
 rm -rf build
 python setup-instm.py build
 cd $CASE_PATH

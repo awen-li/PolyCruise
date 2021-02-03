@@ -1,4 +1,4 @@
-//===- IBSpass.cpp - IBS pass definition  ---------------------------------===//
+//===- SDIpass.cpp - IBS pass definition  ---------------------------------===//
 //
 // Copyright (C) <2019-2024>  <Wen Li>
 // 
@@ -34,17 +34,17 @@
 using namespace llvm;
 using namespace std;
 
-struct LDIpass : public ModulePass 
+struct SDIpass : public ModulePass 
 {
     static char ID;
     
-    LDIpass() : ModulePass(ID)
+    SDIpass() : ModulePass(ID)
     {
     }
 	    
     StringRef getPassName() const override 
     {
-        return StringRef("LDIpass");
+        return StringRef("SDIpass");
     }
 	  	
     bool runOnModule(Module &M) override 
@@ -60,12 +60,12 @@ struct LDIpass : public ModulePass
 };
 
 
-char LDIpass::ID = 0;
-static RegisterPass<LDIpass> X("ibs", "full instrumentation");
+char SDIpass::ID = 0;
+static RegisterPass<SDIpass> X("ibs", "full instrumentation");
 
 static void registerCTPass(const PassManagerBuilder &, legacy::PassManagerBase &PM) 
 {
-    PM.add(new LDIpass());
+    PM.add(new SDIpass());
 }
                                
 static RegisterStandardPasses RegisterCTPass(PassManagerBuilder::EP_OptimizerLast, registerCTPass);

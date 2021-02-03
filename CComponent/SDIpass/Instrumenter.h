@@ -23,7 +23,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "HookFunc.h"
 #include "LLVMInst.h"
-#include "LdaBin.h"
+#include "SdaBin.h"
 #include "Event.h"
 
 
@@ -84,7 +84,7 @@ typedef map <unsigned, CSTaint>::iterator mcs_iterator;
 typedef map <unsigned, Instruction*>::iterator instid_iterator;
 typedef set <unsigned>::iterator thr_iterator;
 
-class Flda
+class FSda
 {
 private:
     string m_FuncName;
@@ -98,12 +98,12 @@ private:
     set <unsigned> m_ThrCInstIDs;
 
 public:
-    Flda (string FuncName)
+    FSda (string FuncName)
     {
         m_FuncName = FuncName;
     }
 
-    ~Flda ()
+    ~FSda ()
     {
 
     }
@@ -271,7 +271,7 @@ private:
 
     Value *m_ThreadId;
 
-    map <string, Flda> m_Fname2Flda;
+    map <string, FSda> m_Fname2Flda;
 
     map <Value*, unsigned> m_Value2Id;
 
@@ -310,7 +310,7 @@ public:
     
 private:
 
-    inline Flda* GetFlda (string Fname)
+    inline FSda* GetFlda (string Fname)
     {
         auto It = m_Fname2Flda.find (Fname);
         if (It == m_Fname2Flda.end())
@@ -323,12 +323,12 @@ private:
         }
     }
 
-    inline Flda* AddFlda (string Fname, unsigned Id)
+    inline FSda* AddFlda (string Fname, unsigned Id)
     {
-        Flda* Fd = GetFlda (Fname);
+        FSda* Fd = GetFlda (Fname);
         if (Fd == NULL)
         {
-            auto Pit = m_Fname2Flda.insert (make_pair(Fname, Flda (Fname)));
+            auto Pit = m_Fname2Flda.insert (make_pair(Fname, FSda (Fname)));
             assert (Pit.second == true);
 
             Fd = &(Pit.first->second);
@@ -359,7 +359,7 @@ private:
             FldaBin Fdb = {0};
             N = fread (&Fdb, sizeof(Fdb), 1, Bf);
             assert (N == 1);
-            Flda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
+            FSda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
 
             printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
@@ -504,7 +504,7 @@ private:
     }
    
 
-    inline void GetInstrPara (Flda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf, set <Value*> *DefSets)
+    inline void GetInstrPara (FSda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf, set <Value*> *DefSets)
     { 
         Value *Def = NULL;
 
@@ -741,7 +741,7 @@ private:
     }
 
 
-    inline void AddCallTrack (Function* F, Flda *Fd)
+    inline void AddCallTrack (Function* F, FSda *Fd)
     {
         BasicBlock *entryBlock = &F->front();
         Instruction *Site = entryBlock->getFirstNonPHI();
@@ -795,7 +795,7 @@ private:
         return false;
     }
     
-    inline void InstrumThrc (Flda *Fd, unsigned ThrInstId, Instruction* ThrcInst, Instruction *Site)
+    inline void InstrumThrc (FSda *Fd, unsigned ThrInstId, Instruction* ThrcInst, Instruction *Site)
     {
         IRBuilder<> Builder(Site);
 
@@ -822,7 +822,7 @@ private:
     }
 
 
-    inline void VisitInst (Function *F, Flda *Fd)
+    inline void VisitInst (Function *F, FSda *Fd)
     {
         unsigned InstId = 1;
         for (auto ItI = inst_begin(*F), Ed = inst_end(*F); ItI != Ed; ++ItI, InstId++) 
@@ -855,7 +855,7 @@ private:
                 continue;
             }
 
-            Flda *Fd = GetFlda (Func->getName ().data());
+            FSda *Fd = GetFlda (Func->getName ().data());
             if (Fd == NULL)
             {
                 continue;

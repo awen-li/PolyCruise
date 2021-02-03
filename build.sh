@@ -1,5 +1,5 @@
 
-export LDI_PATH=`pwd`
+export SDI_PATH=`pwd`
 
 #0. temp data directory
 export DATA_DIR="/tmp/difg"
@@ -7,33 +7,34 @@ mkdir -p $DATA_DIR
 
 #1. build CComponent
 echo ""
-echo "@@@@@@@@@@@@@@@ build CComponent:LDA @@@@@@@@@@@@@@@"
-cd $LDI_PATH/CComponent/LDA
+echo "@@@@@@@@@@@@@@@ build CComponent:SDA @@@@@@@@@@@@@@@"
+cd $SDI_PATH/CComponent/SDA
 ./build.sh
-cp build/bin/ldi /usr/bin
+cp build/bin/sda /usr/bin
 
 
 #2. build LDIpass
 echo ""
 echo ""
-echo "@@@@@@@@@@@@@@@ build CComponent:LDIpass @@@@@@@@@@@@@@@"
-cd $LDI_PATH/CComponent/LDIpass
-LDIpass=$LLVM_PATH/llvm-7.0.0.src/lib/Transforms/LDIpass
-if [ ! -d $LDIpass ]
+echo "@@@@@@@@@@@@@@@ build CComponent:SDIpass @@@@@@@@@@@@@@@"
+SDI=$SDI_PATH/CComponent/SDIpass
+SDIpass=$LLVM_PATH/llvm-7.0.0.src/lib/Transforms/SDIpass
+if [ ! -d $SDIpass ]
 then
 cd $LLVM_PATH/llvm-7.0.0.src/lib/Transforms/
-ln -s $LDI LDIpass
-echo "add_subdirectory(LDIpass)" >> CMakeLists.txt
+ln -s $SDI SDIpass
+echo "add_subdirectory(SDIpass)" >> CMakeLists.txt
 fi
 cd $LLVM_PATH/build
 make
-cp $LLVM_PATH/build/lib/llvmLDIpass.so /usr/lib/
+cp $LLVM_PATH/build/lib/llvmSDIpass.so /usr/lib/
+
 
 #3. build DynA
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build DynAnalyzer @@@@@@@@@@@@@@@"
-cd $LDI_PATH/DynAnalyzer
+cd $SDI_PATH/DynAnalyzer
 make -f makefile.so clean && make -f makefile.so
 cp libDynA* /usr/lib/
 
@@ -41,7 +42,7 @@ cp libDynA* /usr/lib/
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build PyComponent:PyTrace @@@@@@@@@@@@@@@"
-cd $LDI_PATH/PyComponent/PyTrace
+cd $SDI_PATH/PyComponent/PyTrace
 ./makePyTrace.sh
 
 
@@ -49,7 +50,7 @@ cd $LDI_PATH/PyComponent/PyTrace
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build PyComponent:PyInspect @@@@@@@@@@@@@@@"
-cd $LDI_PATH/PyComponent
+cd $SDI_PATH/PyComponent
 pip3 install .
 
 #6. install pyinspect tool
@@ -58,15 +59,15 @@ echo ""
 echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
 PYTHON_PATH=/usr/lib/python$PyVersion/
-cp $LDI_PATH/Script/pyinspect.py $PYTHON_PATH
+cp $SDI_PATH/Script/pyinspect.py $PYTHON_PATH
 
  
 #6. install pyinspect tool
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
-export INCLUDE=$LDI_PATH/DynAnalyzer/include
-vPlugins=$LDI_PATH/vPlugins
+export INCLUDE=$SDI_PATH/DynAnalyzer/include
+vPlugins=$SDI_PATH/vPlugins
 cd $vPlugins
 cp plugins.ini $DATA_DIR/
 plugins=$(ls -l | awk '/^d/ {print $NF}')
