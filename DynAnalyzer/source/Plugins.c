@@ -7,7 +7,9 @@
 ************************************************************/
 #include <ctype.h>
 #include <Plugins.h>
-#include <dlfcn.h>  
+#include <dlfcn.h>
+#include "Db.h"
+
 
 static List PluginList;
 
@@ -67,15 +69,15 @@ static inline VOID GetPluginCfg (char *Buffer, Plugin *Pgn)
     {  
         if (strstr (Field, "name"))
         {
-            snprintf (Pgn->Name, sizeof (Pgn->Name), "%s", Value);
+            snprintf ((char *)Pgn->Name, sizeof (Pgn->Name), "%s", Value);
         }
         if (strstr (Field, "entry"))
         {
-            snprintf (Pgn->Entry, sizeof (Pgn->Entry), "%s", Value);
+            snprintf ((char *)Pgn->Entry, sizeof (Pgn->Entry), "%s", Value);
         }
         else if (strstr (Field, "module"))
         {
-            snprintf (Pgn->Module, sizeof (Pgn->Module), "%s", Value);
+            snprintf ((char *)Pgn->Module, sizeof (Pgn->Module), "%s", Value);
         }
         else if (strstr (Field, "active"))
         {
@@ -100,7 +102,7 @@ static inline VOID GetPluginEntry (Plugin *Pgn)
         return;   
     }
             
-    Pgn->PluginEntry = (_PLUGIN_ENTRY_)dlsym(PluginSo, Pgn->Entry);
+    Pgn->PluginEntry = (_PLUGIN_ENTRY_)dlsym(PluginSo, (const char *)Pgn->Entry);
     if (dlerror())
     {
         printf ("Plugin[%s]: load entry %s[%s] fail!\r\n", Pgn->Name, Pgn->Entry, Pgn->Module);  
@@ -119,6 +121,8 @@ List* InstallPlugins ()
         printf ("@@@@@@@@ plugins.ini not exist!!!");
         return NULL;
     }
+
+    DWORD DataHandle = DB_TYPE_DIF_PLUGIN_BEGIN;
 
     char Buffer[1024];
     DWORD LineNo = 1;
@@ -141,8 +145,10 @@ List* InstallPlugins ()
         /* load library */
         GetPluginEntry (Pgn);
 
+        Pgn->DataHandle = DataHandle++;
         ListInsert (&PluginList, Pgn);
-        printf ("InstallPlugin [%s]%s->%s(%p), Active=%u\r\n", Pgn->Name, Pgn->Module, Pgn->Entry, Pgn->PluginEntry, Pgn->Active);
+        printf ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
+                 Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Entry, Pgn->PluginEntry, Pgn->Active);
     }
 
     return &PluginList;

@@ -76,4 +76,5 @@ do
 	cd $vPlugins/$pdir
 	make clean && make
 	cp $vPlugins/$pdir/*.so $DATA_DIR/
+	cp $vPlugins/$pdir/*.sink $DATA_DIR/
 done

@@ -5,6 +5,6 @@
      return: consider the call-site of the function as source (True, False),
      local: consider the definition of a local variable as source (string or None)
 -->  
-<criterion> <function>Source</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>module.getenv</function> <return>True</return> <local>None</local> </criterion>
 
 </criterions>

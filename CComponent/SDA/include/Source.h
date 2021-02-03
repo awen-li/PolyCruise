@@ -28,10 +28,8 @@ using namespace std;
 
 
 typedef set<Value*>::iterator svi_iterator;
-
 #define IS_TAINTED(TaintBit, BitNo) (TaintBit & (1 << (32-BitNo)))
 #define SET_TAINTED(TaintBit, BitNo) (TaintBit |= (1 << (32-BitNo)))
-
 
 class Source
 {

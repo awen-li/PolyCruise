@@ -38,7 +38,7 @@ VOID InvokePlugins (Plugin *Pgn)
         return;
     }
 
-    Pgn->PluginEntry (DA);
+    Pgn->PluginEntry (DA, Pgn);
     return;
 }
 
@@ -740,7 +740,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
     EventMsg *EM = &DifN->EMsg; 
-    //ViewEMsg (EM);
+    ViewEMsg (EM);
 
     /* update Glv database */
     Variable *Glv = IsDefGlv (EM);

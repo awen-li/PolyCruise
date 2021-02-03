@@ -114,17 +114,10 @@ class Inspector:
 
     def SetCallCtx (self, LiveObj):
         TaintSet = self.GetTaintedParas (LiveObj)
-        
-        IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
-        if IsCrn != None:
-            self.CurCtx.InsertLexicon (LiveObj.Def)
-            self.IsTaint = True
-            print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
-        else:
-            TaintBits= self.Crtn.GetTaintParas (LiveObj.Callee)
-            if TaintBits != None:
-                TaintSet += TaintBits
-                TaintSet = list(set(TaintSet))
+        TaintBits= self.Crtn.GetTaintParas (LiveObj.Callee)
+        if TaintBits != None:
+            TaintSet += TaintBits
+            TaintSet = list(set(TaintSet))
 
         self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
@@ -146,6 +139,28 @@ class Inspector:
         self.CtxStack.pop ()
         self.CurCtx = self.CtxStack[-1]
         print ("-------------------------> Pop Context: ", PopCtx.Func)
+
+        #trace the call-site
+        CallSiteObj = self.CurCtx.CalleeLo;
+        if CallSiteObj != None:
+            FuncDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+            EventId = PyEventTy (FuncDef.Id, CallSiteObj.LineNo, EVENT_CALL, 0)
+            Msg = "{" + CallSiteObj.Callee 
+            if len (FuncDef.Paras) > 0:
+                Msg += "("
+                Index = 0
+                ParaNum = 0
+                for use in CallSiteObj.Uses:
+                    if use in self.CurCtx.TaintLexical:
+                        if ParaNum > 0:
+                            Msg += ","
+                        Msg += FuncDef.Paras[Index] + ":U"
+                        ParaNum += 1
+                    Index += 1
+                Msg += ")"
+                
+            Msg += "," + self.FormatDefUse (CallSiteObj) + "}"
+            PyTrace (EventId, Msg)
         return
 
     def Propogate (self, LiveObj):
@@ -189,6 +204,12 @@ class Inspector:
             if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
             else:
+                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
+                if IsCrn != False:
+                    self.CurCtx.InsertLexicon (LiveObj.Def)
+                    self.IsTaint = True
+                    print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
+            
                 self.Propogate (LiveObj)
             return EVENT_CALL
         
@@ -281,19 +302,7 @@ class Inspector:
         elif EventTy == EVENT_FENTRY:
             Msg = "{" + LiveObj.Callee + "}";
         else:
-            Msg = "{" + self.FormatDefUse (LiveObj) + "}"
-            print ("Python---> %lx %s" %(EventId, Msg))
-            PyTrace (EventId, Msg)
-            Msg = ""
-
-            if EventTy == EVENT_RET:
-                #caller, the laste two context in the stack
-                CallCtx = self.CtxStack[-2]
-                CurCallObj = CallCtx.CalleeLo;
-                #print ("\t&&&&&&& Return value ", CallCtx.Func)
-                FuncDef = self.Analyzer.GetFuncDef (CallCtx.Func)
-                EventId = PyEventTy (FuncDef.Id, CurCallObj.LineNo, EVENT_CALL, 0)
-                Msg = "{" + CurCallObj.Callee + "," + self.FormatDefUse (CurCallObj) + "}"
+            Msg = "{" + self.FormatDefUse (LiveObj) + "}"                
 
         if Msg != "":
             print ("Python---> %lx %s" %(EventId, Msg))

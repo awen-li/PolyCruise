@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+import os
 from PyDemo import *
 from DemoAdd import DemoAdd
     
@@ -8,11 +8,9 @@ def DemoTr (Value):
     Res = Da.Add (Value)
     DemoTrace ("Add", Res)
     print ("trace end", Res)
-    
-def Source ():
-	return 8
 
 if __name__ == '__main__':
-    Var = Source ()
+    Var = os.getenv("CASE1")
+    Var = int (Var)
     DemoTr(Var)
 

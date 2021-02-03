@@ -11,6 +11,9 @@
 #include "MacroDef.h"
 #include "DifGraph.h"
 
+#include <Db.h>
+
+#define SINK_HANDLE (DB_TYPE_DIF_PLUGIN_BEGIN)
 
 
 

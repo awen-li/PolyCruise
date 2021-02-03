@@ -25,7 +25,6 @@ class FuncDef ():
         self.Name  = FName
         self.Paras = FormalParas
 
-
 class Analyzer ():
     def __init__(self, PyListFile, SrcDir="."):
         self.AstInfo   = self.LoadPlks (SrcDir, PyListFile)

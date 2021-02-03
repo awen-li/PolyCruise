@@ -152,6 +152,11 @@ public:
         }
     }
 
+    inline Function* GetCallee ()
+    {
+        return m_CallFunc;
+    }
+
 private:
 
     inline Function* GetCallee(const Instruction *Inst) 

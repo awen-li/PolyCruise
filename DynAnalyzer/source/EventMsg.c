@@ -51,6 +51,7 @@ static inline DWORD GetVarName (char *Msg)
 
     while (*Pos != MSG_VT && 
            *Pos != MSG_MT &&
+           *Pos != MSG_FP_L &&
            *Pos != MSG_END)
     {
         Pos++;
@@ -104,6 +105,7 @@ static inline VOID DeThrcEvent (EventMsg *EM, char *Msg)
     return;    
 }
 
+
 /* {add:U=or:U,rem:U} */
 static inline VOID DeEvent (EventMsg *EM, char *Msg)
 {
@@ -147,6 +149,42 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
 
     return;    
 }
+
+/* {Function(F1, F2),v3:U=Value:U} */
+static inline VOID DeCallEvent (EventMsg *EM, char *Msg)
+{
+    char *Pos = Msg;
+    DWORD NameLen = GetVarName (Pos);
+    assert (NameLen != 0);
+
+    Variable *V = AllotVariable (Pos, NameLen, VT_FUNCTION);
+    ListInsert (&EM->Def, V);
+    Pos += NameLen;
+
+    if (*Pos == MSG_FP_L)
+    {
+        Pos++;     
+        /* decode paras */
+        while (*Pos != MSG_FP_R && 
+               *Pos != 0)
+        {
+            DWORD NameLen = GetVarName (Pos);
+            assert (NameLen != 0);
+        
+            Variable *V = AllotVariable (Pos, NameLen, VT_FPARA);
+            ListInsert (&EM->Def, V);
+
+            Pos += NameLen+2;
+        }
+        Pos++;
+    }
+
+    Pos++;
+    DeEvent (EM, Pos);
+
+    return;    
+}
+
 
 static inline VOID DeBREvent (EventMsg *EM, char *Msg)
 {
@@ -205,6 +243,11 @@ VOID DecodeEventMsg (EventMsg *EM, ULONG EventId, char *Msg)
         case EVENT_RET:
         {
             DeRETEvent (EM, Msg);
+            break;
+        }
+        case EVENT_CALL:
+        {
+            DeCallEvent (EM, Msg);
             break;
         }
         default:

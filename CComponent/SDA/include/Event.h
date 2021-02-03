@@ -23,15 +23,19 @@
 
 #define MSG_BEGIN         ('{')
 #define MSG_END           ('}')
+#define MSG_FP_L          ('(')
+#define MSG_FP_R          (')')
+
 #define MSG_VT            (':')
 #define MSG_DF            ('=')
 #define MSG_MT            (',')
-
 
 #define VT_INTEGER        ('U')
 #define VT_POINTER        ('P')
 #define VT_FUNCTION       ('F')
 #define VT_GLOBAL         ('G')
+#define VT_FPARA          ('A')
+
 
 /*
     Event Id definition:

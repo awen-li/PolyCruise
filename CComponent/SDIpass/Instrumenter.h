@@ -31,6 +31,8 @@ using namespace llvm;
 using namespace std;
 
 #define MAX_ARG_NUM (8)
+#define IS_TAINTED(TaintBit, BitNo) (TaintBit & (1 << (32-BitNo)))
+
 
 struct ParaFt
 {
@@ -441,9 +443,14 @@ private:
         return (GVal != NULL);
     }
 
+    inline unsigned GetValueType (Value *Val)
+    {
+        return Val->getType ()->getTypeID ();
+    }
+
     inline bool AddVarFormat (ParaFt *Pf, Value *Val)
     {
-        unsigned VType = Val->getType ()->getTypeID ();
+        unsigned VType = GetValueType (Val);
         bool Glv = IsGlv (Val);
         
         switch (VType)
@@ -512,7 +519,7 @@ private:
 
         /*
         def:value=use:value,use:value.....
-        func,def:use=use:value,use:value.....
+        func(x,y),def:use=use:value,use:value.....
         ret=use:value
         */
         
@@ -530,7 +537,7 @@ private:
             string Callee = LI.GetCallName ();
             if (Callee != "")
             {
-                Pf->AppendFormat (Callee + ",");
+                Pf->AppendFormat (Callee);
             }
             
             Fd->SetEventType (InstId, EVENT_CALL);
@@ -546,7 +553,48 @@ private:
                 printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
                         Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);
 
-                // ret tatinted
+                /* In parameters, get formal parameters */
+                Function *CallFunc = LI.GetCallee ();
+                if (CallFunc != NULL && !CallFunc->isDeclaration () && Cst->m_InTaintBits != 0)
+                {
+                    Pf->AppendFormat ("(");
+                    unsigned BitNo = 2; /* ARG0_NO */
+                    unsigned ParaNum = 0;
+                    for (auto Ita = CallFunc->arg_begin(); Ita != CallFunc->arg_end(); Ita++) 
+                    {
+                        Argument *Formal = &(*Ita);
+                        if (!IS_TAINTED (Cst->m_InTaintBits, BitNo))
+                        {
+                            continue;
+                        }
+
+                        if (GetValueType (Formal) == Type::PointerTyID)
+                        {
+                            continue;
+                        }
+
+                        if (ParaNum > 0)
+                        {
+                            Pf->AppendFormat (",");
+                        }
+
+                        if (AddVarFormat (Pf, Formal))
+                        {
+                            
+                            Pf->AddArg (Formal);
+                            ParaNum++;
+                        }
+                        
+                        BitNo++;
+                    }
+                    Pf->AppendFormat ("),");
+                }
+                else
+                {
+                    Pf->AppendFormat (",");
+                }
+
+                /* ret tatinted */
                 if (OutArg & (1<<31))
                 {
                     Def = LI.GetDef ();             
@@ -572,7 +620,8 @@ private:
                     // skip the ret bit
                     OutArg = OutArg << 1;
                 }
-                
+
+                /* Output parameters */
                 unsigned No = 1;
                 bool ArgFlg = false;
                 while (OutArg != 0)

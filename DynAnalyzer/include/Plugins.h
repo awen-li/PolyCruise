@@ -10,17 +10,20 @@
 #define _PLUGINS_H_
 #include <List.h>
 
-
-typedef VOID (*_PLUGIN_ENTRY_) (VOID *Data);
+typedef VOID (*_PLUGIN_ENTRY_) (VOID *DifA, VOID* PlgCtx);
 
 typedef struct tag_Plugin
 {
-    char Name[64];
-    char Entry[64];
-    char Module[64];
+    CHAR Name[64];
+    CHAR Entry[64];
+    CHAR Module[64];
     DWORD Active;
+    DWORD DataHandle;
+    
     _PLUGIN_ENTRY_ PluginEntry; 
 }Plugin;
+
+
 
 List* InstallPlugins ();
 VOID UnInstallPlugins ();
