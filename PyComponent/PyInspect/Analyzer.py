@@ -25,6 +25,9 @@ class FuncDef ():
         self.Name  = FName
         self.Paras = FormalParas
 
+    def View (self):
+        print ("FuncDef: Id = ", self.Id, " Name = ", self.Name, " Paras = ", self.Paras)
+
 class Analyzer ():
     def __init__(self, PyListFile, SrcDir="."):
         self.AstInfo   = self.LoadPlks (SrcDir, PyListFile)

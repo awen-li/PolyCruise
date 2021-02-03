@@ -25,10 +25,13 @@ class CallEvent (PyEvent):
         Class  = None
         for arg in Args:
             ArgVal = arg.arg
-            self.LiveObj.SetUse (ArgVal)
+            
             if ArgVal == "self":
                 Class  = self.Self2Obj (ArgVal)
                 Callee = Class + "." + Callee
+                self.LiveObj.SetUse (Class)
+            else:
+                self.LiveObj.SetUse (ArgVal)
         self.LiveObj.SetCallee (Callee, Class)
         return
 
@@ -104,6 +107,8 @@ class LineEvent (PyEvent):
             Class  = self.Self2Obj (Func.value.id)
             CallFunc = Class + "." + Func.attr
             self.LiveObj.SetCallee (CallFunc, Class)
+            #oo, add the object as the first parameter
+            self.LiveObj.SetUse (Class)
         else:
             print("Unsupport LE_expr -> ", Func.value.id, Func.attr)
             return

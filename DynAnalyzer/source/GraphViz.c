@@ -29,9 +29,11 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
     sprintf (Buffer, "%s_F%u: ", LangTy, FID);
 
     LNode *Def = EM->Def.Header;
+    Variable *Var = NULL;
+    Variable *PreVar = NULL;
     while (Def != NULL)
     {
-        Variable *Var = (Variable *) Def->Data;
+        Var = (Variable *) Def->Data;
         assert (Var != NULL);
 
         if (Var->Type == VT_FUNCTION && R_EID2IID (DN->EventId) == 0)
@@ -39,28 +41,54 @@ static inline char* GetNodeLabel(char *Buffer, Node *N)
             strcat (Buffer, Var->Name);
             return Buffer;
         }
+        else if (Var->Type == VT_FPARA)
+        {
+            strcat (Buffer, "(");
+            strcat (Buffer, Var->Name);
+        }
         else
         {
+            if (PreVar != NULL)
+            {
+                if (PreVar->Type == VT_FPARA)
+                {
+                    strcat (Buffer, "),");
+                }
+                else
+                {
+                    strcat (Buffer, ", ");
+                }
+            }
+            
             strcat (Buffer, Var->Name);
         }
 
         Def = Def->Nxt;
-        if (Def != NULL || Var->Type == VT_FUNCTION)
+        PreVar = Var;
+    }
+
+    if (Var != NULL)
+    {
+        if (Var->Type == VT_FPARA)
         {
-            strcat (Buffer, ", ");
+            strcat (Buffer, "),");
+        }
+        else if (Var->Type == VT_FUNCTION)
+        {
+            strcat (Buffer, ",");
         }
     }
 
     
     LNode *Use = EM->Use.Header;
-    if (Use != NULL)
+    if (Use != NULL && Var != NULL)
     {
         strcat (Buffer, " = ");
     }
     
     while (Use != NULL)
     {
-        Variable *Var = (Variable *) Use->Data;
+        Var = (Variable *) Use->Data;
         assert (Var != NULL);
         strcat (Buffer, Var->Name);
 

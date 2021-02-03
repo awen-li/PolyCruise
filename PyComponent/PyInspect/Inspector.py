@@ -124,14 +124,45 @@ class Inspector:
         #print ("\t@@@@@", self.CurCtx.Func, TaintSet, " Cache Callee: ", end="")
         #LiveObj.View ()
         return
+
+    def Actual2Formal (self, CallSiteObj):
+        TaintedFormal = []
+        
+        if CallSiteObj == None:
+            return TaintedFormal, None
+            
+        FCalleeDef = self.Analyzer.GetFuncDef (CallSiteObj.Callee)
+        if len (FCalleeDef.Paras) == 0:
+            return
+        FCalleeDef.View ()
+
+        Index = 0
+        ParaNum = 0
+        for use in CallSiteObj.Uses:
+            if use not in self.CurCtx.TaintLexical:
+                Index += 1
+                continue
+            TaintedFormal.append(FCalleeDef.Paras[Index])
+            Index += 1  
+            
+        return TaintedFormal, CallSiteObj.Callee
     
     def PushCtx (self):
         if self.CallCtx == None:
             return
+
+        # actual -> formal
+        CallSiteObj = self.CurCtx.CalleeLo
+        TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
+        
         self.CtxStack.append (self.CallCtx)
         self.CurCtx = self.CallCtx
         self.CallCtx = None 
-        print ("-------------------------> Push Context: ", self.CurCtx.Func, " ret = ", self.CurCtx.Ret)
+        print ("-------------------------> Push Context: ", self.CurCtx.Func, " ret = ", self.CurCtx.Ret, " Formal = ", TaintedFormal)
+
+        for para in TaintedFormal:
+            self.CurCtx.InsertLexicon (para)
+            self.IsTaint = True
         return   
     
     def PopCtx (self):
@@ -141,26 +172,25 @@ class Inspector:
         print ("-------------------------> Pop Context: ", PopCtx.Func)
 
         #trace the call-site
-        CallSiteObj = self.CurCtx.CalleeLo;
-        if CallSiteObj != None:
-            FuncDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
-            EventId = PyEventTy (FuncDef.Id, CallSiteObj.LineNo, EVENT_CALL, 0)
-            Msg = "{" + CallSiteObj.Callee 
-            if len (FuncDef.Paras) > 0:
-                Msg += "("
-                Index = 0
-                ParaNum = 0
-                for use in CallSiteObj.Uses:
-                    if use in self.CurCtx.TaintLexical:
-                        if ParaNum > 0:
-                            Msg += ","
-                        Msg += FuncDef.Paras[Index] + ":U"
-                        ParaNum += 1
-                    Index += 1
-                Msg += ")"
+        CallSiteObj = self.CurCtx.CalleeLo
+        TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
+        if len (TaintedFormal) == 0:
+            return
                 
-            Msg += "," + self.FormatDefUse (CallSiteObj) + "}"
-            PyTrace (EventId, Msg)
+        FCallerDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+        EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, 0)
+
+        Msg = "{" + Callee + "("           
+        ParaNum = 0
+        for use in TaintedFormal:           
+            if ParaNum > 0:
+                Msg += ","          
+            Msg += use + ":U"      
+            ParaNum += 1
+        Msg += ")," + self.FormatDefUse (CallSiteObj) + "}"
+        
+        PyTrace (EventId, Msg)
+        print ("$$$ Python---> %lx %s" %(EventId, Msg))
         return
 
     def Propogate (self, LiveObj):
@@ -179,16 +209,7 @@ class Inspector:
                     self.CurCtx.InsertLexicon (LiveObj.Def)
                 break
         return
-
-    def Real2FormalParas (self, LiveObj):
-        Index = 0
-        Uses  = LiveObj.Uses
-        for use in Uses:
-            if Index in self.CurCtx.TaintInpara:
-                self.IsTaint = True
-                self.CurCtx.InsertLexicon (use)
-            Index += 1
-        return
+        
 
     def Ret2Callsite (self, LiveObj):
         Ret = LiveObj.Uses[0]
@@ -215,7 +236,6 @@ class Inspector:
         
         if Event == "call" and LiveObj.Callee != None:
             self.PushCtx ()
-            self.Real2FormalParas (LiveObj)
             return EVENT_FENTRY
         
         if LiveObj.Ret == LiveObject.RET_VALUE:
