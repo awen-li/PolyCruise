@@ -10,8 +10,38 @@
 #include <dlfcn.h>
 #include "Db.h"
 
+#define DATA_DIR ("/tmp/difg/")
 
 static List PluginList;
+
+static inline VOID LoadSinks (List *SinkList, char* CfgName)
+{
+    char PgnSinks[256];
+    snprintf (PgnSinks, sizeof(PgnSinks), "%s%s", DATA_DIR, CfgName);
+
+    
+    FILE *Pf = fopen (PgnSinks, "r");
+    if (Pf == NULL)
+    {
+        printf ("@@@@@@@@ PgnSinks[%s] not exist!!!", CfgName);
+        return ;
+    }
+
+    while (!feof (Pf))
+    {
+        fscanf (Pf, "%s", PgnSinks);
+
+        unsigned Length = strlen (PgnSinks) + 1;
+        char *Sink = (char *)malloc (Length);
+        assert (Sink  != NULL);
+        strncpy (Sink, PgnSinks, Length);
+
+        ListInsert(SinkList, Sink);
+    }
+    fclose (Pf);
+
+    return;
+}
 
 static DWORD GetFiled (char* Ini, char** Field, char** Value)
 {
@@ -79,6 +109,10 @@ static inline VOID GetPluginCfg (char *Buffer, Plugin *Pgn)
         {
             snprintf ((char *)Pgn->Module, sizeof (Pgn->Module), "%s", Value);
         }
+        else if (strstr (Field, "sink"))
+        {
+            LoadSinks (&Pgn->SinkList, Value);
+        }
         else if (strstr (Field, "active"))
         {
             Pgn->Active = atoi (Value);
@@ -94,7 +128,7 @@ static inline VOID GetPluginCfg (char *Buffer, Plugin *Pgn)
 static inline VOID GetPluginEntry (Plugin *Pgn)
 {
     char Buffer[1024];
-    snprintf (Buffer, sizeof(Buffer), "/tmp/difg/%s", Pgn->Module);
+    snprintf (Buffer, sizeof(Buffer), "%s%s", DATA_DIR, Pgn->Module);
     VOID *PluginSo = dlopen(Buffer, RTLD_LAZY);
     if(dlerror())
     {  
@@ -146,10 +180,13 @@ List* InstallPlugins ()
         GetPluginEntry (Pgn);
 
         Pgn->DataHandle = DataHandle++;
+        Pgn->InitStatus = FALSE;
         ListInsert (&PluginList, Pgn);
         printf ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
                  Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Entry, Pgn->PluginEntry, Pgn->Active);
     }
+
+    fclose (Pf);
 
     return &PluginList;
 }

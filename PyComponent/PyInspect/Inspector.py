@@ -194,9 +194,10 @@ class Inspector:
         return
 
     def Propogate (self, LiveObj):
-        self.IsSource = self.Crtn.IsCriterion (self.CurCtx.Func, LiveObj.Def)
-        if self.IsSource:
+        IsSource = self.Crtn.IsCriterion (self.CurCtx.Func, LiveObj.Def)
+        if IsSource:
             self.IsTaint = True
+            self.IsSource = True
             self.CurCtx.InsertLexicon (LiveObj.Def)
             return
         
@@ -229,6 +230,7 @@ class Inspector:
                 if IsCrn != False:
                     self.CurCtx.InsertLexicon (LiveObj.Def)
                     self.IsTaint = True
+                    self.IsSource = True
                     print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
             
                 self.Propogate (LiveObj)

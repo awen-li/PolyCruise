@@ -948,6 +948,7 @@ private:
                         }
                     }
 
+                    EventId = Fd->GetEventID (InstID);
                     AddTrack (EventId, InstrumentSite, &Pf);
                 }
             }

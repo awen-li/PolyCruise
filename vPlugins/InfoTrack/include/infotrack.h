@@ -10,11 +10,14 @@
 #define _INFOTACK_H_
 #include "MacroDef.h"
 #include "DifGraph.h"
-
 #include <Db.h>
 
-#define SINK_HANDLE (DB_TYPE_DIF_PLUGIN_BEGIN)
 
+typedef struct tag_ItCtx
+{
+    List LastVisit;
+    List Sinks;
+}ItCtx;
 
 
 #endif 

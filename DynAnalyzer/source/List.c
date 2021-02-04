@@ -93,7 +93,8 @@ VOID ListRemove (List *L, LNode *N)
             free (N);
         }         
     }
-    
+
+    L->NodeNum--;
     return;
 }
 

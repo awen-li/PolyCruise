@@ -81,6 +81,30 @@ static inline List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId)
 }
 
 
+static inline VOID AddSource (DWORD Handle, ULONG Event, Node *CurNode)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = Handle;
+    Req.dwKeyLen   = sizeof (Event);
+    Req.pKeyCtx = (BYTE *)(&Event);
+
+    Ack.dwDataId = 0;
+    (VOID)QueryDataByKey (&Req, &Ack);
+    if (Ack.dwDataId != 0)
+    {
+        return;
+    }
+    
+    DWORD Ret = CreateDataByKey (&Req, &Ack);
+    assert (Ret == R_SUCCESS);
+
+    *((Node **)(Ack.pDataAddr)) = CurNode;
+    printf ("===> Add source [%u]%lx -> %p \r\n", Ack.dwDataId, Event, CurNode);
+    return;
+  
+}
 
 static inline List* CreateFDifG (DWORD Handle, ULONG FID, DWORD ThreadId)
 {
@@ -296,17 +320,40 @@ static inline VOID AddCallEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     //printf ("[%u]LastDifN: %#lx , FDifG = %p/%#x, \r\n", LastNd->Id, LastDifN->EventId, FDifG, Eid2DifgKey (LastDifN->EventId));
     assert (FDifG != NULL && FDifG->Header != NULL);
 
-    Node *LastCallNode = (Node *)(FDifG->Tail->Data);
-    Edge* E = AddDifEdge (DifGraph ,LastCallNode, CurNd);
+    Node *FuncNode = (Node *)(FDifG->Header->Data);
+    Edge* E = AddDifEdge (DifGraph ,FuncNode, CurNd);
     SetEdgeType (E, EDGE_CG);
 
-    if (LastCallNode == LastNd)
-    {
-        SetEdgeType (E, EDGE_CF);      
-    }
 
     return;
 }
+
+static inline Node* GetReferNode (Variable *FmlVal, List *FDifG)
+{
+    LNode *N = FDifG->Header->Nxt;
+    while (N != NULL)
+    {
+        Node *GNode = (Node *)(N->Data);
+        DifNode *DNode = GN_2_DIFN(GNode);
+        List *UseList = &DNode->EMsg.Use; 
+        LNode *UseNode = UseList->Header;
+        while (UseNode != NULL)
+        {
+            Variable *Uval = (Variable *) (UseNode->Data);
+            if (strcmp (Uval->Name, FmlVal->Name) == 0)
+            {
+                return GNode;
+            }
+    
+            UseNode = UseNode->Nxt;
+        }
+
+        N = N->Nxt;
+    }
+
+    return NULL;
+}
+
 
 static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 {
@@ -319,14 +366,60 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     Edge* E = AddDifEdge (DifGraph, CurNd, FEntryNode);
     SetEdgeType (E, EDGE_CF);
 
-    LNode *LSecNode = FDifG->Header->Nxt;
-    if (LSecNode != NULL)
+    DifNode* CallNode = GN_2_DIFN (CurNd);
+    DWORD EdgeNum = 0;
+    
+    /* definition */
+    List *FmlList = &CallNode->EMsg.Def;
+    LNode *FmlNode = FmlList->Header;
+    while (FmlNode != NULL)
     {
-        assert (LSecNode->Data != NULL);
-        E = AddDifEdge (DifGraph, CurNd, (Node *)LSecNode->Data);
-        SetEdgeType (E, EDGE_DIF);
+        Variable *Val = (Variable *) (FmlNode->Data);
+        if (Val->Type != VT_FPARA)
+        {
+            FmlNode = FmlNode->Nxt;
+            continue;            
+        }
+        
+        Node *RefNode = GetReferNode (Val, FDifG);
+        if (RefNode != NULL)
+        {
+            E = AddDifEdge (DifGraph, CurNd, RefNode);
+            SetEdgeType (E, EDGE_DIF);
+            EdgeNum++;
+        }
+        
+        FmlNode = FmlNode->Nxt;
     }
 
+    /* use */
+    FmlList = &CallNode->EMsg.Use;
+    FmlNode = FmlList->Header;
+    while (FmlNode != NULL)
+    {
+        Variable *Val = (Variable *) (FmlNode->Data);      
+        Node *RefNode = GetReferNode (Val, FDifG);
+        if (RefNode != NULL)
+        {
+            E = AddDifEdge (DifGraph, CurNd, RefNode);
+            SetEdgeType (E, EDGE_DIF);
+            EdgeNum++;
+        }
+        
+        FmlNode = FmlNode->Nxt;
+    }
+
+    if (EdgeNum == 0)
+    {
+        LNode *CalleeNode = FDifG->Header->Nxt;
+        if (CalleeNode != NULL)
+        {
+            assert (CalleeNode->Data != NULL);
+            E = AddDifEdge (DifGraph, CurNd, (Node *)CalleeNode->Data);
+            SetEdgeType (E, EDGE_DIF);
+        }
+    }
+    
     return;
 }
 
@@ -353,7 +446,7 @@ static inline ULONG GetBaseAddr (Variable *Use)
         DbReq Req;
         DbAck Ack;
     
-        Req.dwDataType = DifA.AMHandle;
+        Req.dwDataType = DifA.AddrMapHandle;
         Req.dwKeyLen   = sizeof (ULONG);        
         Req.pKeyCtx    = (BYTE*)(&Gep);      
         DWORD Ret = QueryDataByKey (&Req, &Ack);
@@ -373,9 +466,9 @@ static inline VOID UpdataAddrMaping (Variable *Def, Variable *Use)
     DbAck Ack;
 
     ULONG Base = GetBaseAddr (Use);
-    printf ("\t--> Base %lX\r\n", Base);
+    DEBUG ("\t--> Base %lX\r\n", Base);
 
-    Req.dwDataType = DifA.AMHandle;
+    Req.dwDataType = DifA.AddrMapHandle;
     Req.dwKeyLen   = sizeof (ULONG);
 
     ULONG Gep = strtol(Def->Name, NULL, 16);
@@ -388,7 +481,7 @@ static inline VOID UpdataAddrMaping (Variable *Def, Variable *Use)
     //*NewBase = strtol(Use->Name, NULL, 16);
     *NewBase = Base; /* field insensitive */
 
-    printf ("Maping: %lX  to %lX\r\n", Gep, *NewBase);
+    DEBUG ("Maping: %lX  to %lX\r\n", Gep, *NewBase);
     
     return;
 }
@@ -507,7 +600,7 @@ static inline Variable* IsDefGlv (EventMsg *EM)
         {
             if (IsShareVariable (V))
             {
-                printf ("===> def share variable\r\n");
+                DEBUG ("===> def share variable\r\n");
                 return V;
             }
         }
@@ -533,7 +626,7 @@ static inline Variable* IsUseGlv (EventMsg *EM)
         {
             if (IsShareVariable (V))
             {
-                printf ("===> use share variable\r\n");
+                DEBUG ("===> use share variable\r\n");
                 return V;
             }
         }
@@ -705,7 +798,6 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
 
         // add ret edge
         DifNode* LastDifN = GN_2_DIFN (LastGNode);
-        //ViewEMsg (&LastDifN->EMsg);
         if (Eid2DifgKey (LastDifN->EventId) != Eid2DifgKey (DifN->EventId) &&
             R_EID2ETY (DifN->EventId) == EVENT_CALL)
         {
@@ -738,9 +830,14 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     DifN->EventId = Event;
     DEBUG ("[DIF][T:%X][%lx]%u: %s \r\n", ThreadId, DifN->EventId, N->Id, Msg);
 
+    if (R_EID2SSD (Event))
+    {
+        AddSource (DA->Sources, Event, N);
+    }
+
     DecodeEventMsg (&DifN->EMsg, Event, Msg);
     EventMsg *EM = &DifN->EMsg; 
-    ViewEMsg (EM);
+    //ViewEMsg (EM);
 
     /* update Glv database */
     Variable *Glv = IsDefGlv (EM);
@@ -785,7 +882,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     
     /* invoke plugins */
     ListVisit (DA->PluginList, (ProcData)InvokePlugins);
-    
+
     return;
 }
 
@@ -797,13 +894,14 @@ VOID InitDif (List* PluginList)
 
     DA->IsFieldSensitive = TRUE;
 
-    DA->NodeHandle = DB_TYPE_DIF_NODE;
-    DA->EdgeHandle = DB_TYPE_DIF_EDGE;
-    DA->FDifHandle = DB_TYPE_DIF_FUNC;
-    DA->ThrHandle  = DB_TYPE_DIF_THR;
-    DA->GlvHandle  = DB_TYPE_DIF_GLV;
-    DA->ShareHandle= DB_TYPE_DIF_SHARE;
-    DA->AMHandle   = DB_TYPE_DIF_ADDRMAPING;
+    DA->NodeHandle    = DB_TYPE_DIF_NODE;
+    DA->EdgeHandle    = DB_TYPE_DIF_EDGE;
+    DA->FDifHandle    = DB_TYPE_DIF_FUNC;
+    DA->ThrHandle     = DB_TYPE_DIF_THR;
+    DA->GlvHandle     = DB_TYPE_DIF_GLV;
+    DA->ShareHandle   = DB_TYPE_DIF_SHARE;
+    DA->AddrMapHandle = DB_TYPE_DIF_ADDRMAPING;
+    DA->Sources       = DB_TYPE_DIF_SOURCES;
     
     Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
     assert (Ret != R_FAIL);
@@ -823,7 +921,10 @@ VOID InitDif (List* PluginList)
     Ret = DbCreateTable(DA->ShareHandle, sizeof (DWORD), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
-    Ret = DbCreateTable(DA->AMHandle, sizeof (ULONG), sizeof (ULONG));
+    Ret = DbCreateTable(DA->AddrMapHandle, sizeof (ULONG), sizeof (ULONG));
+    assert (Ret != R_FAIL);
+
+    Ret = DbCreateTable(DA->Sources, sizeof (Node*), sizeof (ULONG));
     assert (Ret != R_FAIL);
 
     InitPlugins ();

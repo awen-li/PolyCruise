@@ -18,7 +18,7 @@ TARGET = libinfotrack.so
 all: $(TARGET)
 
 $(TARGET): $(OBJ_FILES)
-	$(LD) -fPIC -shared -o $@ $^
+	$(LD) -fPIC -shared $(PLUGIN_LINK) -o $@ $^
 	
 $(OBJ_PATH)/%.o: $(SOURCE_PATH)/%.c
 	@if [ ! -d $(OBJ_PATH) ];then mkdir $(OBJ_PATH); fi

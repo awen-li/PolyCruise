@@ -67,6 +67,7 @@ echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
 export INCLUDE=$SDI_PATH/DynAnalyzer/include
+export PLUGIN_LINK=-lDynAnalyze
 vPlugins=$SDI_PATH/vPlugins
 cd $vPlugins
 cp plugins.ini $DATA_DIR/

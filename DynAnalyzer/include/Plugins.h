@@ -19,7 +19,9 @@ typedef struct tag_Plugin
     CHAR Module[64];
     DWORD Active;
     DWORD DataHandle;
-    
+    DWORD InitStatus;
+
+    List SinkList;
     _PLUGIN_ENTRY_ PluginEntry; 
 }Plugin;
 
