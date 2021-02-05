@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<criterions code_directory="." entry_script="Demo.py">
+<criterions code_directory="." entry_script="None">
 
 <!-- function: function name for the criteria defition (string), 
      return: consider the call-site of the function as source (True, False),
