@@ -6,12 +6,12 @@ SOURCE_PATH = source
 HEADER_PATH = include
 OBJ_PATH    = obj
 
-CFLAGS      = -D__DEBUG__ -fPIC -O3 -I$(HEADER_PATH) -I$(INCLUDE)
+CFLAGS      = -D__DEBUG__ -fPIC -g -I$(HEADER_PATH) -I$(INCLUDE)
 
 SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 OBJ_FILES    = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
 
-TARGET = libinfotrack.so
+TARGET = libdecfi.so
 
 .PHONY:all clean
 

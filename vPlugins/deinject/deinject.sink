@@ -1,0 +1,8 @@
+printf
+fprintf
+write
+fwrite
+send
+__printf_chk
+print
+
