@@ -273,7 +273,7 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
         DWORD ListChange = FALSE;     
         DWORD NodeNum = LastVisit->NodeNum;
         LNode *Last = LastVisit->Header;
-        DEBUG ("\t\t.......... [%u] Header = %p \r\n", LastVisit->NodeNum, LastVisit->Header);
+        DEBUG (">>>.......... [%u] Header = %p \r\n", LastVisit->NodeNum, LastVisit->Header);
         Node *RetNode = NULL;
         while (NodeNum > 0)
         {
@@ -313,18 +313,19 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
                 {
                     DstNode->VisitBits = SET_VISIT (DstNode->VisitBits, Plg->DataHandle);
                 }
-                
+
+                DifNode *DstN = GN_2_DIFN (DstNode);
                 if (Plg->IsSink (&Plg->SinkList, DstNode))
                 {
+                    DEBUG ("@@@@@@@@@@@@@@@@@@@Reach sink,  EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(&Ctx->Sinks, DstNode);       
                 }
                 else
                 {
-                    DifNode *DstN = GN_2_DIFN (DstNode);
-                    DEBUG ("DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
-                    ViewEMsg (&DstN->EMsg);
+                    DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(LastVisit, DstNode);
                 }
+                ViewEMsg (&DstN->EMsg);
 
                 ListChange = TRUE;
                 LE = LE->Nxt;
@@ -336,7 +337,6 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
 
         if (ListChange == FALSE)
         {
-            DEBUG ("$$$$$$$$$$$$$$ LIST not change, break now......\r\n");
             break;
         }
     }

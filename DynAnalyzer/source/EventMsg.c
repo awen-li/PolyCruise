@@ -188,7 +188,7 @@ static inline VOID DeCallEvent (EventMsg *EM, char *Msg)
 
 static inline VOID DeBREvent (EventMsg *EM, char *Msg)
 {
-
+    DeEvent (EM, Msg);
     return;    
 }
 

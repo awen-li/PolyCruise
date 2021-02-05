@@ -11,7 +11,7 @@ CFLAGS      = -D__DEBUG__ -fPIC -g -I$(HEADER_PATH) -I$(INCLUDE)
 SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 OBJ_FILES    = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
 
-TARGET = libinfotrack.so
+TARGET = libdeinject.so
 
 .PHONY:all clean
 

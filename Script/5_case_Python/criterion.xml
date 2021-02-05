@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<criterions code_directory="." entry_script="Demo.py">
+
+<!-- function: function name for the criteria defition (string), 
+     return: consider the call-site of the function as source (True, False),
+     local: consider the definition of a local variable as source (string or None)
+-->  
+<criterion> <function>os.getenv</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>module.getenv</function> <return>True</return> <local>None</local> </criterion>
+</criterions>

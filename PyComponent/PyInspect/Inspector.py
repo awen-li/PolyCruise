@@ -244,11 +244,11 @@ class Inspector:
                 self.Propogate (LiveObj)
             return EVENT_CALL
         
-        if Event == "call" and LiveObj.Callee != None:
+        elif Event == "call" and LiveObj.Callee != None:
             self.PushCtx ()
             return EVENT_FENTRY
         
-        if LiveObj.Ret == LiveObject.RET_VALUE:
+        elif LiveObj.Ret == LiveObject.RET_VALUE:
             Ret = None
             if len (LiveObj.Uses) != 0:
                 Taint, Ret = self.Ret2Callsite (LiveObj)
@@ -257,6 +257,9 @@ class Inspector:
             return EVENT_RET
 
         self.Propogate (LiveObj)
+        if LiveObj.Br == True:
+            return EVENT_BR
+        
         return EVENT_NR
 
     def FormatDefUse (self, LiveObj):

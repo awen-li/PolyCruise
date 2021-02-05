@@ -669,6 +669,10 @@ private:
                 }
             }
         }
+        else if (LI.IsBR())
+        {
+            Fd->SetEventType (InstId, EVENT_BR);
+        }
         else
         {
             Fd->SetEventType (InstId, EVENT_NR);

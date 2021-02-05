@@ -16,7 +16,11 @@ class LiveObject ():
         self.Ret = LiveObject.RET_NONE
         self.LineNo = 0
         self.Class = None
+        self.Br = False
 
+    def SetBr (self, Br):
+        self.Br = Br
+        
     def SetDef (self, Def):
         self.Def = Def
 

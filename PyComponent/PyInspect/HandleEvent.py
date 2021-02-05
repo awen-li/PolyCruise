@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import ast
 from ast import *
 from .PyEvent import *
 
@@ -133,7 +134,12 @@ class LineEvent (PyEvent):
         pass
       
     def LE_if(self, Statement):
-        pass
+        Test = Statement.test
+        if isinstance(Test, Name):
+            self.LiveObj.SetUse (Test.id)
+            self.LiveObj.SetBr (True)
+        else:
+            assert (0), "!!!!!!!!! unsupport tyep in IF."
         
     def LE_for(self, Statement):
         Def = Statement.target.elts[1].id
@@ -144,10 +150,10 @@ class LineEvent (PyEvent):
 
         
     def LE_while(self, Statement): 
-        print ("LE_if")
+        print ("LE_while")
         
     def LE_with(self, Statement):
-        print ("LE_if")
+        print ("LE_with")
         
     def LE_excepthandler(self, Statement):
         print ("LE_excepthandler")

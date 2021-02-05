@@ -65,7 +65,7 @@ static inline VOID InitPluginCtx (Plugin *Plg)
     return;
 }
 
-void InfoTrack (DWORD SrcHandle, Plugin *Plg)
+void DetectInject (DWORD SrcHandle, Plugin *Plg)
 {
     DbReq Req;
     DbAck Ack;

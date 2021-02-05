@@ -8,50 +8,17 @@
 #include <Plugins.h>
 #include <header.h>
 
-VOID PrintSink (char *Data)
-{
-    printf ("infotrack -- sink: %s\r\n", Data);
-    return;
-}
-
-
 static inline DWORD IsSink (List *SinkList, Node *DstNode)
 {
     DifNode *DN = GN_2_DIFN (DstNode);
-    if (R_EID2ETY(DN->EventId) !=  EVENT_CALL)
+    if (R_EID2ETY(DN->EventId) ==  EVENT_BR)
     {
-        return FALSE;        
+        return TRUE;        
     }
-
-    EventMsg *EM   = &DN->EMsg;
-    LNode *ValNode = EM->Def.Header;
-    while (ValNode != NULL)
+    else
     {
-        Variable *Val = (Variable *)ValNode->Data;
-        if (Val->Type != VT_FUNCTION)
-        {
-            ValNode = ValNode->Nxt;
-            continue;
-        }
-
-        LNode *SinkNode = SinkList->Header;
-        while (SinkNode != NULL)
-        {
-            char *Function = (char *)SinkNode->Data;
-            if (strcmp (Function, Val->Name) == 0)
-            {
-                DEBUG ("@@@@@@@@@@@@ Reach sink: ");
-                ViewEMsg (&DN->EMsg);
-                return TRUE;
-            }
-
-            SinkNode = SinkNode->Nxt;
-        }
-
-        ValNode = ValNode->Nxt;
+        return FALSE;
     }
-
-    return FALSE;
 }
 
 static inline VOID InitPluginCtx (Plugin *Plg)
@@ -65,16 +32,15 @@ static inline VOID InitPluginCtx (Plugin *Plg)
     return;
 }
 
-void InfoTrack (DWORD SrcHandle, Plugin *Plg)
+void DetectCfi (DWORD SrcHandle, Plugin *Plg)
 {
     DbReq Req;
     DbAck Ack;
 
-    printf ("Entry InfoTrack\r\n");
+    printf ("Entry DetectCfi\r\n");
     if (Plg->InitStatus == FALSE)
     {
         InitPluginCtx (Plg);
-        ListVisit(&Plg->SinkList, (ProcData)PrintSink);
     }
 
     /* Visit all sources, and get context of source: (incremental) */

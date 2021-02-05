@@ -29,6 +29,34 @@ void *EventProcess (void* Arg)
     return NULL;
 }
 
+static DWORD GetPhyMemUse ()
+{
+    char FileName[256];
+    pid_t pid = getpid();
+
+    sprintf (FileName, "/proc/%u/status", pid);
+    FILE *F = fopen (FileName, "r");
+    assert (F != NULL);
+
+    char Buf[256] = {0};
+    while (!feof(F))
+    {
+        assert (fgets (Buf, sizeof(Buf), F) != NULL);
+        if (strstr(Buf, "VmRSS"))
+        {
+            break;
+        }
+    }
+    fclose(F);
+
+    DWORD MemSize = 0;
+    char ItemName[128];
+    sscanf (Buf, "%s %u", ItemName, &MemSize);
+
+    return MemSize;
+}
+
+
 
 void TRC_init ()
 {
@@ -49,6 +77,7 @@ void TRC_init ()
 
 void TRC_exit ()
 {
+    DEBUG ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
     while (QueueSize ())
     {
         sleep (1);
