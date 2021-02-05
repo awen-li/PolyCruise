@@ -6,7 +6,8 @@ SOURCE_PATH  = source
 INCLUDE_PATH = include
 OBJ_PATH     = obj
 
-CFLAGS      = -D__DEBUG__ -fPIC -O3 -I$(INCLUDE_PATH)
+CFLAGS      = -D__DEBUG__ -fPIC -g -I$(INCLUDE_PATH)
+LD_CFLAGS   = -fPIC -shared -lpthread -ldl 
 
 SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 OBJ_FILES     = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
@@ -18,7 +19,7 @@ TARGET = libDynAnalyze.so
 all: $(TARGET)
 
 $(TARGET): $(OBJ_FILES)
-	$(LD) -fPIC -shared -o $@ $^
+	$(LD) -o $@ $^ $(LD_CFLAGS)
 	
 $(OBJ_PATH)/%.o: $(SOURCE_PATH)/%.c
 	@if [ ! -d $(OBJ_PATH) ];then mkdir $(OBJ_PATH); fi

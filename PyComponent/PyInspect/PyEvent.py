@@ -48,6 +48,9 @@ class PyEvent(metaclass=abc.ABCMeta):
         pass
 
     def Self2Obj (self, SelfName):
+        Obj = self.Frame.f_locals.get(SelfName)
+        if Obj == None:
+            return SelfName
         return self.Frame.f_locals[SelfName].__class__.__name__
 
     def GetLiveObject(self, ValName):

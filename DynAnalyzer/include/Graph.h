@@ -26,6 +26,7 @@
 typedef struct tag_Node 
 {
     DWORD Id;
+    DWORD VisitBits;
     List InEdge;
     List OutEdge;
 }Node;

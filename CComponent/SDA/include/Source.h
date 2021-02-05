@@ -53,12 +53,16 @@ public:
         m_Ms = Ms;
 
         Function* ScF = GetScFunc (ScFName);
-        assert ((ScF != NULL) && "Source Caller should exists!");
-
-        Compute (ScF, ApiName, TaintBit);
+        if (ScF != NULL)
+        {
+            Compute (ScF, ApiName, TaintBit);
+        }
+        else
+        {
+            ComputeAll (ApiName, TaintBit);
+        }
+        
         m_ScCaller = ScF;
-
-        assert (m_Criterion.size() != 0);
     }
 
 public:
@@ -90,6 +94,11 @@ public:
         }
     }
 
+    inline bool Check ()
+    {
+        return (bool)(m_Criterion.size() != 0);
+    }
+
 private:
     inline Function* GetScFunc (string ScFName)
     {
@@ -110,6 +119,20 @@ private:
         return NULL;
     }
     
+    inline void ComputeAll (string ApiName, unsigned TaintBit)
+    {
+        Function* ScF;
+        for (auto ItF = m_Ms->func_begin(), End = m_Ms->func_end(); ItF != End; ++ItF)
+        {
+            Function *ScF = *ItF;  
+            if (ScF->isIntrinsic())
+            {
+                continue;
+            }
+
+            Compute (ScF, ApiName, TaintBit);
+        }
+    }
     
     inline void Compute (Function* ScF, string ApiName, unsigned TaintBit)
     {
@@ -136,7 +159,7 @@ private:
             {
                 m_Criterion.insert (LI.GetDef ());
                 m_SInsts.insert (Inst);
-                errs()<<" "<<BitNo;
+                errs()<<"Ret "<<BitNo;
             }
 
             BitNo++;
@@ -145,7 +168,7 @@ private:
                 Value *U = *It;
                 if (IS_TAINTED (TaintBit, BitNo))
                 {
-                    errs()<<" "<<BitNo;
+                    errs()<<" Para:"<<BitNo;
                     m_Criterion.insert(U);
                     m_SInsts.insert (Inst);
                 }

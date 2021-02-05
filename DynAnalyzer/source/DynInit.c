@@ -36,15 +36,13 @@ void TRC_init ()
     pthread_t Tid;
 
     InitQueue (4096);
-    DEBUG ("Queue init success!\r\n");
 
     InitDif ();
-    DEBUG ("InitDif success!\r\n");
    
     Ret = pthread_create(&Tid, NULL, EventProcess, NULL);
     assert (Ret == 0);
 
-    DEBUG ("TRC_init success!\r\n");
+    DEBUG ("@@@@@ DIFA engine init success!\r\n");
     return;
 }
 
@@ -57,12 +55,12 @@ void TRC_exit ()
     }
 
     sleep (3);
-    DEBUG ("TRC_deinit exit!\r\n");
 
     WiteGraph ("DIFG");
     DelQueue ();
     DeInitDif ();
 
+    DEBUG ("@@@@@ DIFA engine exits!\r\n");
     return;
 }
 

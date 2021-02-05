@@ -29,16 +29,16 @@ static inline VOID DeinitPlugins ()
 }
 
 
-VOID InvokePlugins (Plugin *Pgn)
+VOID InvokePlugins (Plugin *Plg)
 {
     DifAgent *DA = &DifA;
     
-    if (Pgn->Active == 0)
+    if (Plg->Active == 0)
     {
         return;
     }
 
-    Pgn->PluginEntry (DA, Pgn);
+    Plg->PluginEntry (DA->Sources, Plg);
     return;
 }
 
@@ -370,8 +370,8 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     DWORD EdgeNum = 0;
     
     /* definition */
-    List *FmlList = &CallNode->EMsg.Def;
-    LNode *FmlNode = FmlList->Header;
+    List *DefList = &CallNode->EMsg.Def;
+    LNode *FmlNode = DefList->Header;
     while (FmlNode != NULL)
     {
         Variable *Val = (Variable *) (FmlNode->Data);
@@ -393,8 +393,8 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     }
 
     /* use */
-    FmlList = &CallNode->EMsg.Use;
-    FmlNode = FmlList->Header;
+    List *UseList = &CallNode->EMsg.Use;
+    FmlNode = UseList->Header;
     while (FmlNode != NULL)
     {
         Variable *Val = (Variable *) (FmlNode->Data);      
@@ -409,7 +409,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
         FmlNode = FmlNode->Nxt;
     }
 
-    if (EdgeNum == 0)
+    if (EdgeNum == 0 && UseList->Header != NULL)
     {
         LNode *CalleeNode = FDifG->Header->Nxt;
         if (CalleeNode != NULL)
@@ -745,7 +745,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     if (FDifG == NULL)
     {
         FDifG = CreateFDifG (DifA.FDifHandle, FID, DifGraph->ThreadId);
-        //printf ("\t [%u]CreateFDifG: %#x-%p\r\n", N->Id, FID, FDifG);
+        DEBUG (">>>>> [%u]CreateFDifG: %#x-%p\r\n", N->Id, FID, FDifG);
         
         if (LastGNode != NULL)
         {

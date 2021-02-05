@@ -120,8 +120,11 @@ VOID ListDel (List *L, DelData Del)
 
         free (N);
         N = Nxt;
+        L->NodeNum--;
     }
 
+    L->Header = NULL;
+    L->Tail   = NULL;
     return;
 }
 

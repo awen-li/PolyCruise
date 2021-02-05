@@ -33,9 +33,15 @@ static cl::opt<std::string>
 InputFilename("file", cl::desc("<input bitcode file>"), cl::init("-"), cl::value_desc("filename"));
 
 static cl::opt<std::string>
+InputCriterion("criterion", cl::desc("<definition of criterion in xml >"), cl::init("-"), cl::value_desc("criterion"));
+
+
+static cl::opt<std::string>
 PreProcess("pre", cl::desc("<preprocess before analysis >"), cl::init("0"), cl::value_desc("switch"));
 
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
+VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS);
+
 
 VOID GetModulePath (vector<string> &ModulePathVec)
 {   
@@ -97,36 +103,23 @@ VOID RunPasses (vector<string> &ModulePathVec)
     Sf.AddStFields ("struct.bz_stream", 8);
     Sf.AddStFields ("struct.EState", 0);
 
-    int Type = 0;
-    switch (Type)
+    set <Function*> Entry;
+    GetLibEntry (&ModuleMng, &Entry);
+
+    set <Source *> SS;
+    if (InputCriterion != "")
     {
-        case 0:
-        {
-            set <Function*> Entry;
-            GetLibEntry (&ModuleMng, &Entry);
-            
-            Sda sda (&ModuleMng, NULL, &Sf);
-
-            for (auto It = Entry.begin (); It != Entry.end (); It++)
-            {
-                sda.AddEntry (*It);
-            }
-
-            sda.Compute ();
-            break;
-        }
-        case 1:
-        {
-            set <Source *> SS;
-            Source S (&ModuleMng, "compress", "fread", TAINT_ARG0);
-            SS.insert (&S);
-            
-            Sda sda (&ModuleMng, &SS, &Sf);
-            sda.Compute ();
-            break;
-        }
+        std::string Criterion = InputCriterion;
+        LoadCriterion ((char*)Criterion.c_str(), &ModuleMng, &SS);
     }
     
+    Sda sda (&ModuleMng, &SS, &Sf);
+    for (auto It = Entry.begin (); It != Entry.end (); It++)
+    {
+        sda.AddEntry (*It);
+    }
+
+    sda.Compute ();
     printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());
 
     return;
@@ -150,7 +143,7 @@ int main(int argc, char ** argv)
 { 
     vector<string> ModulePathVec;
     Stat st;
-    
+
     PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
     initializeCore(Registry);

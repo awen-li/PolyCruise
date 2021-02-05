@@ -13,11 +13,5 @@
 #include <Db.h>
 
 
-typedef struct tag_ItCtx
-{
-    List LastVisit;
-    List Sinks;
-}ItCtx;
-
 
 #endif 

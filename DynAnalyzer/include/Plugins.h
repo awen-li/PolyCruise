@@ -9,8 +9,16 @@
 #ifndef _PLUGINS_H_
 #define _PLUGINS_H_
 #include <List.h>
+#include <Graph.h>
 
-typedef VOID (*_PLUGIN_ENTRY_) (VOID *DifA, VOID* PlgCtx);
+typedef VOID  (*_PLUGIN_ENTRY_) (DWORD SrcHandle, VOID *Plg);
+typedef DWORD (*_IS_SINK_) (List *SinkList, Node *DstNode);
+
+typedef struct tag_DynCtx
+{
+    List LastVisit;
+    List Sinks;
+}DynCtx;
 
 typedef struct tag_Plugin
 {
@@ -22,13 +30,14 @@ typedef struct tag_Plugin
     DWORD InitStatus;
 
     List SinkList;
-    _PLUGIN_ENTRY_ PluginEntry; 
+    _PLUGIN_ENTRY_ PluginEntry;
+    _IS_SINK_ IsSink;
 }Plugin;
-
 
 
 List* InstallPlugins ();
 VOID UnInstallPlugins ();
+VOID VisitDifg (DWORD SrcHandle, Plugin *Plg);
 
 
 

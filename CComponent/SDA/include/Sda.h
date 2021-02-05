@@ -938,6 +938,7 @@ private:
             {
                 errs ()<<"Add Source: "<<*Inst<<"\r\n";
                 m_InstSet.insert (Inst);
+                LocalLexSet->insert (Inst);
                 Fd->InsertInst (Inst, InstID, SOURCE_TY);
                 continue;
             }

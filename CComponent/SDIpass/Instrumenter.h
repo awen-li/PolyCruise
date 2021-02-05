@@ -657,6 +657,7 @@ private:
             }
             else
             {
+                Pf->AppendFormat (",");
                 Def = LI.GetDef ();
                 if (Def != NULL)
                 {

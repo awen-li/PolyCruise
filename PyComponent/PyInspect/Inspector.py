@@ -162,7 +162,7 @@ class Inspector:
 
         for para in TaintedFormal:
             self.CurCtx.InsertLexicon (para)
-            self.IsTaint = True
+        self.IsTaint = True
         return   
     
     def PopCtx (self):
@@ -174,8 +174,8 @@ class Inspector:
         #trace the call-site
         CallSiteObj = self.CurCtx.CalleeLo
         TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
-        if len (TaintedFormal) == 0:
-            return
+        #if len (TaintedFormal) == 0:
+        #    return
                 
         FCallerDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, 0)
@@ -187,7 +187,15 @@ class Inspector:
                 Msg += ","          
             Msg += use + ":U"      
             ParaNum += 1
-        Msg += ")," + self.FormatDefUse (CallSiteObj) + "}"
+        Msg += ")," 
+
+        if len (TaintedFormal) != 0: 
+            Msg += self.FormatDefUse (CallSiteObj)
+        else:
+            if CallSiteObj.Def != None:
+                Msg += CallSiteObj.Def + ":U="
+        
+        Msg += "}"
         
         PyTrace (EventId, Msg)
         print ("$$$ Python---> %lx %s" %(EventId, Msg))
