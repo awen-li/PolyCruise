@@ -37,7 +37,7 @@ void DetectCfi (DWORD SrcHandle, Plugin *Plg)
     DbReq Req;
     DbAck Ack;
 
-    printf ("Entry DetectCfi\r\n");
+    DEBUG ("Entry DetectCfi\r\n");
     if (Plg->InitStatus == FALSE)
     {
         InitPluginCtx (Plg);

@@ -544,8 +544,9 @@ private:
             CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
             {
+                Function *CallFunc = LI.GetCallee ();
                 unsigned OutArg = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
-                if (OutArg == 0)
+                if (CallFunc->isDeclaration ()) //if (OutArg == 0)
                 {
                     OutArg = Cst->m_OutTaintBits;
                 }
@@ -553,8 +554,7 @@ private:
                 printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
                         Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);
 
-                /* In parameters, get formal parameters */
-                Function *CallFunc = LI.GetCallee ();
+                /* In parameters, get formal parameters */ 
                 if (CallFunc != NULL && !CallFunc->isDeclaration () && Cst->m_InTaintBits != 0)
                 {
                     Pf->AppendFormat ("(");
@@ -623,6 +623,7 @@ private:
 
                 /* Output parameters */
                 unsigned No = 1;
+                unsigned DefNo = 0;
                 bool ArgFlg = false;
                 while (OutArg != 0)
                 { 
@@ -631,27 +632,26 @@ private:
                         printf ("OutArg = %x, No = %u \r\n", OutArg, No);
                         Def = LI.GetUse (No-1);
                         assert (Def != NULL);
+
+                        if (DefNo > 0)
+                        {
+                            Pf->AppendFormat(",");
+                        }
                             
                         if (AddVarFormat (Pf, Def))
                         {
-                            Pf->AddArg (Def); 
+                            Pf->AddArg (Def);
                         }
-
+                        
                         ArgFlg = true;
+                        DefNo++;
                     }
 
                     OutArg = OutArg << 1;
                     No++;
-                    if (ArgFlg)
+                    if (ArgFlg && OutArg == 0)
                     {
-                        if (OutArg != 0)
-                        {
-                            Pf->AppendFormat(",");
-                        }
-                        else
-                        {
-                            Pf->AppendFormat("=");
-                        }
+                        Pf->AppendFormat("=");
                     }
                 }   
             }
@@ -696,7 +696,7 @@ private:
                 continue;
             }
 
-            if (DefSets->find (Val) == DefSets->end ())
+            if (!LI.IsCall () && DefSets->find (Val) == DefSets->end ())
             {
                 continue;
             }

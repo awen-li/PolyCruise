@@ -25,30 +25,35 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
 
     EventMsg *EM   = &DN->EMsg;
     LNode *ValNode = EM->Def.Header;
+    Variable *FuncVal;
     while (ValNode != NULL)
     {
-        Variable *Val = (Variable *)ValNode->Data;
-        if (Val->Type != VT_FUNCTION)
+        FuncVal = (Variable *)ValNode->Data;
+        if (FuncVal->Type == VT_FUNCTION)
         {
-            ValNode = ValNode->Nxt;
-            continue;
-        }
-
-        LNode *SinkNode = SinkList->Header;
-        while (SinkNode != NULL)
-        {
-            char *Function = (char *)SinkNode->Data;
-            if (strcmp (Function, Val->Name) == 0)
-            {
-                DEBUG ("@@@@@@@@@@@@ Reach sink: ");
-                ViewEMsg (&DN->EMsg);
-                return TRUE;
-            }
-
-            SinkNode = SinkNode->Nxt;
+            break;
         }
 
         ValNode = ValNode->Nxt;
+    }
+
+    if (ValNode == NULL)
+    {
+        return FALSE;
+    }
+
+    LNode *SinkNode = SinkList->Header;
+    while (SinkNode != NULL)
+    {
+        char *Function = (char *)SinkNode->Data;
+        if (strcmp (Function, FuncVal->Name) == 0)
+        {
+            DEBUG ("@@@@@@@@@@@@ Reach sink: ");
+            ViewEMsg (&DN->EMsg);
+            return TRUE;
+        }
+
+        SinkNode = SinkNode->Nxt;
     }
 
     return FALSE;
