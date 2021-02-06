@@ -1,0 +1,40 @@
+id,Star,Languages,ApiUrl,CloneUrl,Description
+1049095,12586,"['python', 'c', 'shell']",https://api.github.com/repos/kivy/kivy,https://github.com/kivy/kivy.git,"Open source UI framework written in Python, running on Windows, Linux, macOS, Android and iOS"
+86245815,3028,"['c', 'python', 'objective-c']",https://api.github.com/repos/pygame/pygame,https://github.com/pygame/pygame.git,"pygame (the library) is a Free and Open Source python programming language library for making multimedia applications like games built on top of the excellent SDL library. C, Python, Native, OpenGL."
+20101515,6988,"['python', 'c', 'makefile']",https://api.github.com/repos/giampaolo/psutil,https://github.com/giampaolo/psutil.git,Cross-platform lib for process and system monitoring in Python
+2183193,9326,"['python', 'c', 'shell']",https://api.github.com/repos/Theano/Theano,https://github.com/Theano/Theano.git,"Theano is a Python library that allows you to define, optimize, and evaluate mathematical expressions involving multi-dimensional arrays efficiently. It can use GPUs and perform efficient symbolic differentiation."
+23736914,3605,"['python', 'c', 'makefile']",https://api.github.com/repos/espressif/esptool,https://github.com/espressif/esptool.git,Espressif SoC serial bootloader utility
+179728393,5356,"['python', 'c', 'shell']",https://api.github.com/repos/microsoft/nlp-recipes,https://github.com/microsoft/nlp-recipes.git,Natural Language Processing Best Practices & Examples
+23736914,3603,"['python', 'c', 'makefile']",https://api.github.com/repos/espressif/esptool,https://github.com/espressif/esptool.git,Espressif SoC serial bootloader utility
+179728393,5356,"['python', 'c', 'shell']",https://api.github.com/repos/microsoft/nlp-recipes,https://github.com/microsoft/nlp-recipes.git,Natural Language Processing Best Practices & Examples
+99269272,5996,"['python', 'c', 'cuda']",https://api.github.com/repos/jwyang/faster-rcnn.pytorch,https://github.com/jwyang/faster-rcnn.pytorch.git,A faster pytorch implementation of faster r-cnn
+20035587,4046,"['python', 'c', 'c++']",https://api.github.com/repos/DEAP/deap,https://github.com/DEAP/deap.git,Distributed Evolutionary Algorithms in Python
+10289171,3438,"['python', 'c']",https://api.github.com/repos/zzzeek/sqlalchemy,https://github.com/zzzeek/sqlalchemy.git,THIS IS NOT THE OFFICIAL REPO - PLEASE SUBMIT PRs ETC AT: http://github.com/sqlalchemy/sqlalchemy
+108051,3206,"['python', 'c', 'shell']",https://api.github.com/repos/mongodb/mongo-python-driver,https://github.com/mongodb/mongo-python-driver.git,PyMongo - the Python driver for MongoDB
+23512354,3497,"['python', 'c', 'makefile']",https://api.github.com/repos/rkern/line_profiler,https://github.com/rkern/line_profiler.git,(OLD REPO) Line-by-line profiling for Python - Current repo ->
+2541704,2914,"['c', 'python', 'c++']",https://api.github.com/repos/unbit/uwsgi,https://github.com/unbit/uwsgi.git,uWSGI application server container
+19452228,3229,"['python', 'c', 'dockerfile']",https://api.github.com/repos/orakaro/rainbowstream,https://github.com/orakaro/rainbowstream.git,A smart and nice Twitter client on terminal written in Python.
+5171600,8122,"['python', 'c', 'html']",https://api.github.com/repos/python-pillow/Pillow,https://github.com/python-pillow/Pillow.git,The friendly PIL fork (Python Imaging Library)
+25875083,2327,"['python', 'c', 'assembly']",https://api.github.com/repos/cea-sec/miasm,https://github.com/cea-sec/miasm.git,Reverse engineering framework in Python
+19114225,4250,"['python', 'c', 'html']",https://api.github.com/repos/volatilityfoundation/volatility,https://github.com/volatilityfoundation/volatility.git,An advanced memory forensics framework
+138831170,4053,"['python', 'javascript', 'c']",https://api.github.com/repos/facebookresearch/mmf,https://github.com/facebookresearch/mmf.git,A modular framework for vision & language multimodal research from Facebook AI Research (FAIR)
+185398995,3623,"['python', 'c', 'c++']",https://api.github.com/repos/STVIR/pysot,https://github.com/STVIR/pysot.git,"SenseTime Research platform for single object tracking, implementing algorithms like SiamRPN and SiamMask."
+1488139,8155,"['python', 'c', 'makefile']",https://api.github.com/repos/thumbor/thumbor,https://github.com/thumbor/thumbor.git,thumbor is an open-source photo thumbnail service by globo.com
+159271175,3218,"['python', 'c']",https://api.github.com/repos/sqlalchemy/sqlalchemy,https://github.com/sqlalchemy/sqlalchemy.git,The Database Toolkit for Python
+1017451,4548,"['python', 'c', 'batchfile']",https://api.github.com/repos/gorakhargosh/watchdog,https://github.com/gorakhargosh/watchdog.git,Python library and shell utilities to monitor filesystem events.
+19784232,3103,"['python', 'meson', 'c']",https://api.github.com/repos/mesonbuild/meson,https://github.com/mesonbuild/meson.git,The Meson Build System
+91356408,9582,"['python', 'c', 'jsonnet']",https://api.github.com/repos/allenai/allennlp,https://github.com/allenai/allennlp.git,"An open-source NLP research library, built on PyTorch."
+10934235,5302,"['python', 'shell', 'c']",https://api.github.com/repos/snare/voltron,https://github.com/snare/voltron.git,A hacky debugger UI for hackers
+51521617,2576,"['python', 'c', 'html']",https://api.github.com/repos/Fewbytes/rubber-docker,https://github.com/Fewbytes/rubber-docker.git,A workshop on Linux containers: Rebuild Docker from Scratch
+151541,2573,"['python', 'html', 'c']",https://api.github.com/repos/biopython/biopython,https://github.com/biopython/biopython.git,Official git repository for Biopython (originally converted from CVS)
+9626741,3731,"['python', 'c', 'c++']",https://api.github.com/repos/Nuitka/Nuitka,https://github.com/Nuitka/Nuitka.git,"Nuitka is a Python compiler written in Python.  It's fully compatible with Python 2.6, 2.7, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, and 3.9.  You feed it your Python app, it does a lot of clever things, and spits out an executable or extension module. "
+72039072,8189,"['c', 'python', 'shell']",https://api.github.com/repos/squeaky-pl/japronto,https://github.com/squeaky-pl/japronto.git, Screaming-fast Python 3.5+ HTTP toolkit integrated with pipelining HTTP server based on uvloop and picohttpparser.
+40563188,4767,"['python', 'c', 'shell']",https://api.github.com/repos/Yelp/dumb-init,https://github.com/Yelp/dumb-init.git,A minimal init system for Linux containers
+9113587,3146,"['python', 'c', 'html']",https://api.github.com/repos/aaugustin/websockets,https://github.com/aaugustin/websockets.git,Library for building WebSocket servers and clients in Python
+396389,2025,"['c', 'python', 'c++']",https://api.github.com/repos/aubio/aubio,https://github.com/aubio/aubio.git,a library for audio and music analysis
+228700143,3497,"['python', 'c++', 'c']",https://api.github.com/repos/emeryberger/scalene,https://github.com/emeryberger/scalene.git,"Scalene: a high-performance, high-precision CPU and memory profiler for Python"
+3991627,2646,"['python', 'javascript', 'c']",https://api.github.com/repos/douban/dpark,https://github.com/douban/dpark.git,"Python clone of Spark,  a MapReduce alike framework in Python"
+23616394,2998,"['python', 'c']",https://api.github.com/repos/what-studio/profiling,https://github.com/what-studio/profiling.git,Was an interactive continuous Python profiler.
+868127,2086,"['python', 'c', 'makefile']",https://api.github.com/repos/seb-m/pyinotify,https://github.com/seb-m/pyinotify.git,Monitoring filesystems events with inotify on Linux.
+8357227,2575,"['python', 'c', 'shell']",https://api.github.com/repos/biolab/orange3,https://github.com/biolab/orange3.git,🍊 :bar_chart: :bulb: Orange: Interactive data analysis
+18099749,2061,"['python', 'c', 'shell']",https://api.github.com/repos/ianmiell/shutit,https://github.com/ianmiell/shutit.git,Automation framework for programmers

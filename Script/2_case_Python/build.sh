@@ -3,6 +3,8 @@ export CASE_PATH=`pwd`
 
 
 # 2. translate the python code
+rm -rf /tmp/difg/LdaBin*
+
 echo "@@@@@@@@@ Python component.........."
 CASE=`basename $CASE_PATH`
 cd ..

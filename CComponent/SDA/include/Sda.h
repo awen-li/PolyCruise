@@ -1098,20 +1098,58 @@ private:
 
     inline void Dump ()
     {
+        #define VERSION (1)
+        #define LDA_BIN     ("/tmp/difg/LdaBin.bin")
+        #define LDA_BIN_TMP ("/tmp/difg/LdaBin.tmp.bin")
+        #define LDA_BIN_TXT ("/tmp/difg/LdaBin.txt")
+        
         printf ("\r\n");
         printf ("************************************************************************\r\n");
         printf ("Start dump tainted instructions ...... \r\n");
         printf ("************************************************************************\r\n");
-        FILE *Bf = fopen ("/tmp/difg/LdaBin.bin", "wb");
-        FILE *BfTxt = fopen ("/tmp/difg/LdaBin.txt", "wb");
-        assert (Bf != NULL);
-        assert (BfTxt != NULL);
 
-        LdaBin Lb;
-        Lb.Version = 1;
-        Lb.FuncNum = m_Func2Fsda.size();
-        fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
-        fwrite (&Lb, sizeof(Lb), 1, Bf);
+        FILE *Bf;
+        FILE *BfTxt;
+        if (access (LDA_BIN, R_OK|W_OK) == 0)
+        {
+            rename (LDA_BIN, LDA_BIN_TMP);
+            FILE *OldBf  = fopen (LDA_BIN_TMP, "r");
+            assert (OldBf != NULL);
+
+            LdaBin Lb;
+            size_t N = fread (&Lb, sizeof (LdaBin), 1, OldBf);
+            assert (N == 1 && Lb.Version == VERSION);
+            Lb.FuncNum += m_Func2Fsda.size();
+
+            Bf = fopen (LDA_BIN, "wb");
+            assert (Bf != NULL);
+            fwrite (&Lb, sizeof(Lb), 1, Bf);
+            while (!feof (OldBf))
+            {
+                char BUF [1024] = {0};
+                unsigned Bytes = fread (BUF, 1, sizeof (BUF), OldBf);
+                //printf ("Readbytes: %u \r\n", Bytes);
+                fwrite (BUF, Bytes, 1, Bf);
+            }
+            fclose (OldBf);
+
+            BfTxt = fopen (LDA_BIN_TXT, "a+");
+            assert (BfTxt != NULL);
+            fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
+        }
+        else
+        {
+            LdaBin Lb;
+            Lb.Version = VERSION;
+            Lb.FuncNum = m_Func2Fsda.size();
+            
+            Bf = fopen (LDA_BIN, "wb");
+            BfTxt = fopen (LDA_BIN_TXT, "w");
+            assert (BfTxt != NULL && Bf != NULL);
+
+            fprintf (BfTxt, "FldaNum = %u \r\n", Lb.FuncNum);
+            fwrite (&Lb, sizeof(Lb), 1, Bf);
+        }
 
         unsigned TotalInstNum = 0;
         unsigned TaintInstNum = 0;

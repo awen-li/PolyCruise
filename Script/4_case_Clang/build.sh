@@ -2,6 +2,8 @@
 export CASE_PATH=`pwd`
 
 # 1. install C module of the case
+rm -rf /tmp/difg/LdaBin*
+
 echo "@@@@@@@@@ C component.........."
 cd $CASE_PATH/C
 make -f makefile-sda clean && make -f makefile-sda
