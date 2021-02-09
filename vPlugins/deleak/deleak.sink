@@ -1,8 +1,23 @@
 printf
+fputs
+fputc
+putc
+putchar
+_IO_putc
 fprintf
+vfprintf
 write
 fwrite
+fcntl
 send
 __printf_chk
+syslog
 print
+setenv
+log_msg
+log_oom
+verbose
+schedlog
+
+
 

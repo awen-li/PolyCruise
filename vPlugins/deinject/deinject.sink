@@ -5,4 +5,5 @@ execv
 execvp
 execvpe
 system
+popen
 
