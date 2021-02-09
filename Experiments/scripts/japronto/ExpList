@@ -1,4 +1,4 @@
-setup.py __init__.py build.py 
+setup.py build.py 
 setup-lda.py
 setup-instm.py
 test_route.py

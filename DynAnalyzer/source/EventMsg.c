@@ -289,7 +289,7 @@ static inline void ViewVar (VOID *Data)
 
 void ViewEMsg (EventMsg *EM)
 {
-    printf ("[Definition]:");
+    printf ("<ViewEMsg> --- [Definition]:");
     ListVisit (&EM->Def, ViewVar);
 
     printf (" -- [Use]:");

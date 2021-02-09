@@ -22,7 +22,7 @@ void TRC_trace0 (ULONG EventId, const char* Msg)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    //printf ("[TRC_trace0][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    DEBUG ("[TRC_trace0][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
 
     return;   
 }
@@ -48,7 +48,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    //printf ("[TRC_trace][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    DEBUG ("[TRC_trace][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
 
     return;   
 }

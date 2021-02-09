@@ -80,6 +80,7 @@ void TRC_exit ()
     DEBUG ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
     while (QueueSize ())
     {
+        DEBUG ("......\twait for event process...\r\n");
         sleep (1);
     }
 

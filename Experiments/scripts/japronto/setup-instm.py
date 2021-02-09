@@ -10,13 +10,8 @@ from setuptools import setup, find_packages
 import build
 
 
-with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
-        __file__)), 'src', 'japronto', '__init__.py'), 'r', 'latin1') as fp:
-    try:
-        version = re.findall(r"^__version__ = '([^']+)'\r?$",
-                             fp.read(), re.M)[0]
-    except IndexError:
-        raise RuntimeError('Unable to determine version.')
+version = '0.1.2'
+
 
 
 os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"

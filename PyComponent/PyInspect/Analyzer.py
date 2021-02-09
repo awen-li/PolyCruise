@@ -34,7 +34,7 @@ class Analyzer ():
         self.FuncDef   = {}
         self.ClassDef  = {}
         self.InitClsFuncSet ()
-        print ("Load AST info:", self.AstInfo)
+        #print ("Load AST info:", self.AstInfo)
 
     def GetFuncParas (self, Stmt):
         #print (ast.dump (Stmt))
@@ -58,6 +58,8 @@ class Analyzer ():
         Cls = ClassDef (Stmt.name, Cid)
         Body = Stmt.body
         for Fdef in Body:
+            if not isinstance (Fdef, FunctionDef):
+                continue
             Cls.AddFunc (Fdef.name) 
             Def = self.ParseFuncDef (Fdef, Stmt.name)
             self.FuncDef[Def.Name] = Def 

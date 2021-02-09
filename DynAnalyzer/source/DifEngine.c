@@ -655,10 +655,9 @@ static inline VOID UpdateGlv (Node *GlvNode, Variable *Glv)
     {
         Ret = CreateDataByKey (&Req, &Ack);
         assert ((Ret == R_SUCCESS));
-
-        NodePtr  = (Node **)(Ack.pDataAddr);
     }
 
+    NodePtr  = (Node **)(Ack.pDataAddr);
     *NodePtr = GlvNode;
     return;
 }
@@ -764,6 +763,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     }
     else
     {
+        DEBUG ("[DIF]FDifG exists, start to compute dependence \r\n");
         LNode *LN = FDifG->Tail;
         Node *TempN = (Node *)LN->Data;
 
@@ -847,6 +847,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     }
 
     DWORD EventType = R_EID2ETY (Event);
+    DEBUG ("[DIF]EventType = %u \r\n", EventType);
     switch (EventType)
     {
         case EVENT_THRC:
