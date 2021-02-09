@@ -19,8 +19,8 @@ with codecs.open(os.path.join(os.path.abspath(os.path.dirname(
         raise RuntimeError('Unable to determine version.')
 
 
-os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmLDIpass.so"
-os.environ["CXX"] = "clang -emit-llvm -Xclang -load -Xclang llvmLDIpass.so"
+os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
+os.environ["CXX"] = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
 os.environ["LDSHARED"] = "clang -flto -pthread -shared -lDynAnalyze"
 
     

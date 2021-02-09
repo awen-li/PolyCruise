@@ -305,16 +305,16 @@ public:
             }
             
             
-            errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
+            //errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
-            printf ("IN TaintBits = %x\r\n", TaintBits);
+            //printf ("IN TaintBits = %x\r\n", TaintBits);
             
             /* update entry tainted bits */
             TaintBits = ComputeFlda (m_CurEntry, TaintBits);
             m_EntryTaintBits [m_CurEntry] = TaintBits; 
 
             UpdateEntryExeNum (m_CurEntry);
-            printf ("OUT TaintBits = %x\r\n", TaintBits);
+            //printf ("OUT TaintBits = %x\r\n", TaintBits);
         }
 
         Dump ();
@@ -445,26 +445,26 @@ private:
                     continue;
                 }
         
-                errs ()<<*Inst<<"\r\n";
+                //errs ()<<*Inst<<"\r\n";
 
                 /* relate the actual and formal parameter, treat them as global variables */
                 Function *Entry = (Function *)Inst->getOperand (2);
                 Value *InPara = Inst->getOperand (3);
                 m_GlvAlias[InPara] = InPara;
-                errs()<<"add actual para => "<<InPara<<"\r\n";
+                //errs()<<"add actual para => "<<InPara<<"\r\n";
 
                 /* get formal para */
                 for (auto fItr = Entry->arg_begin(); fItr != Entry->arg_end() ; ++fItr) 
                 {
                     Argument *Formal = &*fItr;
                     m_GlvAlias[Formal] = InPara;
-                    errs()<<"add formal para => "<<Formal<<" mapping to "<<InPara<<"\r\n";
+                    //errs()<<"add formal para => "<<Formal<<" mapping to "<<InPara<<"\r\n";
                 }
         
             }
         }
 
-        errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
+        //errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
     }
 
     inline void AddGlvUseEntry (Value *Glv)
@@ -493,7 +493,7 @@ private:
 
             if (m_EntryFQ.InQueue (Entry))
             {
-                errs ()<<"===> Add Entry: "<<Entry->getName()<<" Use Glv: "<<Glv->getName ()<<"\r\n";
+                //errs ()<<"===> Add Entry: "<<Entry->getName()<<" Use Glv: "<<Glv->getName ()<<"\r\n";
             }
         }
 
@@ -723,15 +723,15 @@ private:
             if (FTaintBits == TAINT_UNKNOWN)
             {
                 FTaintBits = DefaultTaints (LI, Callee, Cst->m_InTaintBits);
-                printf ("[CALL Library] %s -> IN:%#x, TaintBits unknown, GetDefault: %#x\r\n", 
-                        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+                //printf ("[CALL Library] %s -> IN:%#x, TaintBits unknown, GetDefault: %#x\r\n", 
+                //        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
             }
             else
             {
                 Cst->m_InTaintBits &= ~FTaintBits;
                 FTaintBits |= Cst->m_InTaintBits; 
-                printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
-                        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+                //printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
+                //        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
             }
         }
         else
@@ -790,8 +790,8 @@ private:
             }
         }
 
-        errs()<<"ProcEntry ===> Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()
-              <<" TaintBits = "<<m_EntryTaintBits[Entry]<<"\r\n";   
+        //errs()<<"ProcEntry ===> Type = "<<*Ef->getType ()<<", Name = "<<Ef->getName ()
+        //      <<" TaintBits = "<<m_EntryTaintBits[Entry]<<"\r\n";   
 
         return;
     }
@@ -823,7 +823,7 @@ private:
             for (auto Fit = Fset->begin(), End = Fset->end(); Fit != End; Fit++)
             {
                 Callee = *Fit;
-                errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
+                //errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
                 ExeFunction (LI, Callee, Cst, LexSet);
                 Cst->m_Callees.insert(Callee);
             }
@@ -936,7 +936,7 @@ private:
 
             if (IsSourceInst (Inst))
             {
-                errs ()<<"Add Source: "<<*Inst<<"\r\n";
+                //errs ()<<"Add Source: "<<*Inst<<"\r\n";
                 m_InstSet.insert (Inst);
                 LocalLexSet->insert (Inst);
                 Fd->InsertInst (Inst, InstID, SOURCE_TY);
@@ -1168,8 +1168,8 @@ private:
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
             fprintf (BfTxt, "Function[%u, %s]: TaintInstNum:%u \r\n", 
                      Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
-            printf ("Function[%u, %s]: TaintInstNum:%u \r\n", 
-                     Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
+            //printf ("Function[%u, %s]: TaintInstNum:%u \r\n", 
+            //         Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
 
             unsigned long *IID = new unsigned long [Fdb.TaintInstNum];
             assert (IID != NULL);

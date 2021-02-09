@@ -363,7 +363,7 @@ private:
             assert (N == 1);
             FSda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
 
-            printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
+            //printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
             {
                 unsigned long Id = 0;
@@ -539,6 +539,10 @@ private:
             {
                 Pf->AppendFormat (Callee);
             }
+            else
+            {
+                Pf->AppendFormat ("PtsCall");
+            }
             
             Fd->SetEventType (InstId, EVENT_CALL);
             CSTaint *Cst = Fd->GetCsTaint (InstId);
@@ -546,13 +550,13 @@ private:
             {
                 Function *CallFunc = LI.GetCallee ();
                 unsigned OutArg = (~Cst->m_InTaintBits) & Cst->m_OutTaintBits;
-                if (CallFunc->isDeclaration ()) //if (OutArg == 0)
+                if (CallFunc == NULL || CallFunc->isDeclaration ()) //if (OutArg == 0)
                 {
                     OutArg = Cst->m_OutTaintBits;
                 }
 
-                printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
-                        Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);
+                //printf ("[in:out] = [%x, %x], OutArg = %x \r\n", 
+                //        Cst->m_InTaintBits, Cst->m_OutTaintBits, OutArg);
 
                 /* In parameters, get formal parameters */ 
                 if (CallFunc != NULL && !CallFunc->isDeclaration () && Cst->m_InTaintBits != 0)
@@ -613,7 +617,7 @@ private:
                         Pf->AppendFormat (",");
                     }
 
-                    printf ("Ret tainted, Now OutArg = %x \r\n", OutArg);
+                    //printf ("Ret tainted, Now OutArg = %x \r\n", OutArg);
                 }
                 else
                 {
@@ -629,7 +633,7 @@ private:
                 { 
                     if (OutArg & (1<<31))
                     {
-                        printf ("OutArg = %x, No = %u \r\n", OutArg, No);
+                        //printf ("OutArg = %x, No = %u \r\n", OutArg, No);
                         Def = LI.GetUse (No-1);
                         assert (Def != NULL);
 
@@ -714,7 +718,7 @@ private:
         }
         Pf->AppendFormat ("}");
 
-        errs()<<"\tTrg: "<<Pf->m_Format<<", ArgNum="<<Pf->m_ArgNum<<"\r\n";
+        //errs()<<"\tTrg: "<<Pf->m_Format<<", ArgNum="<<Pf->m_ArgNum<<"\r\n";
   
         return;
     }
@@ -723,7 +727,7 @@ private:
     { 
         IRBuilder<> Builder(Inst);
 
-        errs()<<"\t InstrumentCite: "<<*Inst<<"\r\n";
+        //errs()<<"\t InstrumentCite: "<<*Inst<<"\r\n";
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
@@ -916,7 +920,7 @@ private:
             }
 
             m_Value2Id.clear ();
-            errs()<<"Process Function: "<<Func->getName ()<<"\r\n";
+            //errs()<<"Process Function: "<<Func->getName ()<<"\r\n";
 
             VisitInst (Func, Fd);
 
@@ -934,7 +938,7 @@ private:
                 {
                     continue;
                 }
-                errs ()<<EventId<<"["<<InstID<<"] "<<*CurInst<<"\r\n";
+                //errs ()<<EventId<<"["<<InstID<<"] "<<*CurInst<<"\r\n";
 
                 Pf.Reset ();
                 GetInstrPara (Fd, InstID, CurInst, &Pf, &DefSets);
@@ -1023,7 +1027,7 @@ private:
                 
         BasicBlock *entryBlock = &mainFunc->front();
         CallInst::Create(m_InitFunc, "", entryBlock->getFirstNonPHI());
-        errs()<<"@@@@@ Instrument Init Function...\r\n";
+        //errs()<<"@@@@@ Instrument Init Function...\r\n";
 
         GetTermInstofFunction(mainFunc);
         for (auto it = m_ExitInsts.begin(); it != m_ExitInsts.end(); ++it) 

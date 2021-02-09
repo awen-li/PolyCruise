@@ -282,19 +282,19 @@ void DelEventMsg (EventMsg *EM)
 static inline void ViewVar (VOID *Data)
 {
     Variable *V = (Variable *)Data;
-    DEBUG ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
+    printf ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
 
     return;
 }
 
 void ViewEMsg (EventMsg *EM)
 {
-    DEBUG ("[Definition]:");
+    printf ("[Definition]:");
     ListVisit (&EM->Def, ViewVar);
 
-    DEBUG (" -- [Use]:");
+    printf (" -- [Use]:");
     ListVisit (&EM->Use, ViewVar);
-    DEBUG ("\r\n\r\n");
+    printf ("\r\n\r\n");
 
     return;    
 }

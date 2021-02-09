@@ -6,5 +6,13 @@
      local: consider the definition of a local variable as source (string or None)
 -->  
 <criterion> <function>module.getenv</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>os.getenv</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>fgetc</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>_IO_getc</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>fread</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>fgets</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>fscanf</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>getchar</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>receive</function> <return>True</return> <local>None</local> </criterion>
 
 </criterions>

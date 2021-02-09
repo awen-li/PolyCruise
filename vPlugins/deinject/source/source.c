@@ -10,7 +10,7 @@
 
 VOID PrintSink (char *Data)
 {
-    printf ("infotrack -- sink: %s\r\n", Data);
+    DEBUG ("infotrack -- sink: %s\r\n", Data);
     return;
 }
 
@@ -48,8 +48,6 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
         char *Function = (char *)SinkNode->Data;
         if (strcmp (Function, FuncVal->Name) == 0)
         {
-            DEBUG ("@@@@@@@@@@@@ Reach sink: ");
-            ViewEMsg (&DN->EMsg);
             return TRUE;
         }
 
@@ -75,7 +73,7 @@ void DetectInject (DWORD SrcHandle, Plugin *Plg)
     DbReq Req;
     DbAck Ack;
 
-    printf ("Entry InfoTrack\r\n");
+    DEBUG ("Entry DetectInject\r\n");
     if (Plg->InitStatus == FALSE)
     {
         InitPluginCtx (Plg);

@@ -64,7 +64,7 @@ public:
             FuncType += "." + to_string (GetTypeId (val->getType ()));
         }
 
-        errs()<<*(CI->GetInst())<<" ---> Type = "<<FuncType<<"\r\n";
+        //errs()<<*(CI->GetInst())<<" ---> Type = "<<FuncType<<"\r\n";
         auto Fit = m_Type2Funcs.find (FuncType);
         if (Fit != m_Type2Funcs.end ())
         {
@@ -134,10 +134,10 @@ private:
             m_Func2Typs[Func]  = FuncType;
             m_Type2Funcs[FuncType].insert (Func);
 
-            errs()<<Func->getName ()<<" -> "<<FuncType<<"\r\n";  
+            //errs()<<Func->getName ()<<" -> "<<FuncType<<"\r\n";  
         }
 
-        Show ();
+        //Show ();
         
         return;
     }

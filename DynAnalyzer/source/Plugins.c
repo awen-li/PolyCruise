@@ -280,7 +280,7 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
             DEBUG ("SRCnode -> FunctionID = %x \r\n", GetFuncId (N));
-            ViewEMsg (&SrcN->EMsg);
+            //ViewEMsg (&SrcN->EMsg);
 
             
             List *OutEdge = &N->OutEdge;
@@ -317,7 +317,9 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
                 DifNode *DstN = GN_2_DIFN (DstNode);
                 if (Plg->IsSink (&Plg->SinkList, DstNode))
                 {
-                    DEBUG ("@@@@@@@@@@@@@@@@@@@Reach sink,  EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
+                    printf ("\r\n@@@@@@@@@@@@@@@@@@@[%s]Reach sink,  EventId = %u (%p) ", 
+                            Plg->Name, R_EID2ETY(DstN->EventId), DstN);
+                    ViewEMsg (&DstN->EMsg);
                     ListInsert(&Ctx->Sinks, DstNode);       
                 }
                 else
@@ -325,7 +327,6 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(LastVisit, DstNode);
                 }
-                ViewEMsg (&DstN->EMsg);
 
                 ListChange = TRUE;
                 LE = LE->Nxt;

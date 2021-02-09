@@ -10,7 +10,7 @@
 
 VOID PrintSink (char *Data)
 {
-    printf ("infotrack -- sink: %s\r\n", Data);
+    DEBUG ("infotrack -- sink: %s\r\n", Data);
     return;
 }
 
@@ -40,8 +40,6 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
             char *Function = (char *)SinkNode->Data;
             if (strcmp (Function, Val->Name) == 0)
             {
-                DEBUG ("@@@@@@@@@@@@ Reach sink: ");
-                ViewEMsg (&DN->EMsg);
                 return TRUE;
             }
 
