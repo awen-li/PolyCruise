@@ -937,7 +937,7 @@ class ASTVisitor(NodeTransformer):
         self._add_to_codelist(assign)
         self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
         assign = Assign(targets=[self._new_tmp_name(Store())],
-                        value=Call(func=Attribute(value=Name(id='__builtin__',
+                        value=Call(func=Attribute(value=Name(id='__builtins__',
                                                              ctx=Load()),
                                                   attr='set',
                                                   ctx=Load()),
@@ -1215,14 +1215,7 @@ class ASTVisitor(NodeTransformer):
                             generators=node.generators)
         listname = self.visit(listcomp)
         assign = Assign(targets=[self._new_tmp_name(Store())],
-                        value=Call(func=Attribute(value=Name(id='__builtin__',
-                                                             ctx=Load()),
-                                                  attr='iter',
-                                                  ctx=Load()),
-                                   args=[listname],
-                                   keywords=[],
-                                   starargs=None,
-                                   kwargs=None),
+                        value=listname,
                         lineno=self._new_lineno(),
                         col_offset=self._col_offset)
         fix_missing_locations(assign)
