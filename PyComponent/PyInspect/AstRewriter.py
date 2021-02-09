@@ -65,7 +65,7 @@ class ASTVisitor(NodeTransformer):
         return Name(id='v'+str(self._new_nameno()), ctx=ctx)
 
     def _new_spec_tmp_name(self, base, ctx):
-        return Name(id=('$'+str(base)), ctx=ctx)
+        return Name(id=('_'+str(base)), ctx=ctx)
 
     def _add_to_codelist(self, s):
         self._codelist.append(s)
@@ -105,6 +105,7 @@ class ASTVisitor(NodeTransformer):
         method = 'visit_' + node.__class__.__name__.lower()
         visitor = getattr(self, method, self.generic_visit)
         #print (method, node.__class__.__name__.lower())
+        #print (ast.dump (node), "\r\nwen----------------------------------------\r\n")
         return visitor(node)
 
     def visit_module(self, node):
@@ -351,6 +352,40 @@ class ASTVisitor(NodeTransformer):
         fix_missing_locations(expr_)
         self._add_to_codelist(expr_)
         self._add_to_lineno2ids(self._lineno, self._get_ids(expr_))
+
+
+    def visit_asyncfunctiondef (self, node, expand=False):
+        funcdef = AsyncFunctionDef(name=self.visit_identifier(node.name),
+                                   args=self.visit(node.args),
+                                   body=None,
+                                   decorator_list=[self.visit(deco) for deco in node.decorator_list],
+                                   lineno=self._new_lineno(),
+                                   col_offset=self._col_offset)
+        fix_missing_locations(funcdef)
+        self._add_to_codelist(funcdef)
+        self._add_to_lineno2ids(self._lineno, (node.name,))
+        if not (expand or self._nestedexpand):
+            funcdef.body = node.body
+            self._lineno += (node.body[-1].lineno - node.lineno + 5)
+        else:
+            ori_code = self._codelist
+            self._codelist = []
+            self._col_offset += 4
+            # case having doc-string
+            if get_docstring(node):
+                doc = Expr(value=Str(s=node.body[0].value.s),
+                           lineno=self._new_lineno(),
+                           col_offset=self._col_offset)
+                fix_missing_locations(doc)
+                self._add_to_codelist(doc)
+                body = node.body[1:]
+            else:
+                body = node.body
+            for s in body:
+                self.visit(s)
+            funcdef.body = self._codelist
+            self._codelist = ori_code
+            self._col_offset -= 4
 
     def visit_functiondef(self, node, expand=False):
         funcdef = FunctionDef(name=self.visit_identifier(node.name),
@@ -817,7 +852,7 @@ class ASTVisitor(NodeTransformer):
                       lineno=self._new_lineno(),
                       col_offset=self._col_offset)
         fix_missing_locations(bytes)
-        self._add_to_codelist(bytes)
+        #self._add_to_codelist(bytes)
         return bytes
         #raise NotImplementedError('bytes')
 
@@ -1260,3 +1295,6 @@ class ASTVisitor(NodeTransformer):
                          vararg=self.visit(node.vararg),
                          kwarg=self.visit(node.kwarg),
                          defaults=[self.visit(default) for default in node.defaults])
+
+    def visit_await(self, node):
+        return Await(value=self.visit(node.value))

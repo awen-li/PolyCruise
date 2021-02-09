@@ -1,5 +1,4 @@
 
-export CASE_PATH=`cd ../../japronto && pwd`
 
 SdaAnalysis ()
 {
@@ -13,15 +12,33 @@ SdaAnalysis ()
 	done
 }
 
-# 1. install C module of the case
-cp ../../criterion.xml $CASE_PATH/
-cp ./setup-*.py $CASE_PATH/
+# 1. build and translate python modules
+cd ../../
+CASE_PATH=Temp/japronto
+SCRIPTS=scripts/japronto
+
+python -m pyinspect -c -E $SCRIPTS/ExpList -d japronto
+
+# 2. build and instrument C modules
+pwd
+
+cp criterion.xml $CASE_PATH/
+cp $SCRIPTS/setup-*.py $CASE_PATH/
 cd $CASE_PATH
 rm -rf build
 python setup-lda.py build
 SdaAnalysis
+
+# 3. build again and install the instrumented software
 rm -rf build
-python setup-instm.py build
-cd $CASE_PATH
+python setup-instm.py install
+
+
+# 4. run the cases
+
+
+
+
+
 
 
