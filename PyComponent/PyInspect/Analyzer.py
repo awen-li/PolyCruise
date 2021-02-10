@@ -77,10 +77,11 @@ class Analyzer ():
                 elif Type == "ClassDef":
                     self.ClassDef[Stmt.name] = self.ParseClsDef (Stmt)
 
-        for name, Fdef in self.FuncDef.items ():
-            print ("Func: ", Fdef.Id, " ", Fdef.Name, " ", Fdef.Paras)
-        for name, Cdef in self.ClassDef.items ():
-            print ("Class: ", Cdef.Id, " ", Cdef.Name, " ", Cdef.Funcs)
+        if False:
+            for name, Fdef in self.FuncDef.items ():
+                print ("Func: ", Fdef.Id, " ", Fdef.Name, " ", Fdef.Paras)
+            for name, Cdef in self.ClassDef.items ():
+                print ("Class: ", Cdef.Id, " ", Cdef.Name, " ", Cdef.Funcs)
         return
 
     def GetFuncDef (self, FuncName):
@@ -95,11 +96,11 @@ class Analyzer ():
             PyList = FList.read().splitlines()
             if '' in PyList:
                 PyList.remove('')
-            print (PyList)
+            #print (PyList)
             for FName in PyList:
                 Name = str(FName).replace(sep, '#')
                 PklFile = SrcDir + '/cachepkl/' + Name + '.pkl'
-                print('load the pickled module {%s}' %PklFile)
+                #print('load the pickled module {%s}' %PklFile)
                 with open(PklFile, 'rb') as Pkl:
                     #print (Pkl)
                     Mod = pickle.load(Pkl)

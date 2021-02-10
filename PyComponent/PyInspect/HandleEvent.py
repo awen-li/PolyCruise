@@ -80,14 +80,27 @@ class LineEvent (PyEvent):
             pass
         elif isinstance(Value, Compare):
             self.LiveObj.SetUse (Value.left.id)
-            self.LiveObj.SetUse (Value.comparators[0].id)
+            Cmp = Value.comparators[0]
+            if not isinstance(Cmp, NameConstant):
+                self.LiveObj.SetUse (Cmp.id)
         elif isinstance(Value, Attribute):
             Use = Value.value.id
             if hasattr (Value, "attr") == True:
                 RealUse = self.Self2Obj (Use)
                 Use = RealUse + "." + Value.attr
             self.LiveObj.SetUse (Use)
+        elif isinstance(Value, Dict):
+            dValue = Value.values
+            if len (dValue) != 0:
+                self.LiveObj.SetUse (dValue[0].id)
+        elif isinstance(Value, NameConstant):
+            pass
+        elif isinstance(Value, UnaryOp):
+            pass
+        elif isinstance(Value, Subscript):
+            self.LiveObj.SetUse (Value.value.id)
         else:
+            print (ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
 
         return
