@@ -1286,6 +1286,8 @@ class ASTVisitor(NodeTransformer):
     def visit_arguments(self, node):
         return arguments(args=[self.visit(arg) for arg in node.args],
                          vararg=self.visit(node.vararg),
+                         kwonlyargs=[self.visit(arg) for arg in node.kwonlyargs],
+                         kw_defaults=[self.visit(arg) for arg in node.kw_defaults],
                          kwarg=self.visit(node.kwarg),
                          defaults=[self.visit(default) for default in node.defaults])
 
