@@ -142,6 +142,9 @@ class LineEvent (PyEvent):
         
     def LE_functiondef(self, Statement):
         pass
+
+    def LE_asyncfunctiondef(self, Statement):
+        pass
         
     def LE_classdef(self, Statement):
         pass

@@ -75,7 +75,7 @@ class PyEvent(metaclass=abc.ABCMeta):
         raise ValueError('cannot find the value of {name}'
                          ' in frame of {frame}'.format(name=ValName, frame=Frame.f_code.co_name))
 
-    def Default(self):
+    def Default(self, Arg):
         raise NotImplementedError(self.errorinfo('not implement this kind of '
                                                  'method: {}'.format(dump(self.Statement))))
         

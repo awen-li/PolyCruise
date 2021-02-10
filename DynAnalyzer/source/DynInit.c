@@ -11,10 +11,11 @@
 #include "Event.h"
 #include "GraphViz.h"
 
+
 void *EventProcess (void* Arg)
 {
     while (1)
-    {
+    {        
         QNode *QN = FrontQueue ();
         if (QN == NULL || QN->Flag == FALSE)
         {
@@ -77,20 +78,19 @@ void TRC_init ()
 
 void TRC_exit ()
 {
-    DEBUG ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
+    printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
     while (QueueSize ())
     {
-        DEBUG ("......\twait for event process...\r\n");
+        printf ("......\twait for event process...\r\n");
         sleep (1);
     }
 
-    sleep (3);
-
+    sleep (5);
     WiteGraph ("DIFG");
-    DelQueue ();
+    //DelQueue ();
     DeInitDif ();
 
-    DEBUG ("@@@@@ DIFA engine exits!\r\n");
+    printf ("@@@@@ DIFA engine exits!\r\n");
     return;
 }
 

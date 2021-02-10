@@ -939,16 +939,14 @@ VOID DeInitDif ()
     DifAgent *DA = &DifA;
 
     DWORD GraphNum = GetGraphNum ();
-    DEBUG ("GraphNum: %u \r\n", GraphNum);
 
     DWORD GraphId = 1;
     while (GraphId <= GraphNum)
     {
         Graph *G = GetGraphById (GraphId);
-        DEBUG ("[G%u]ThreadId: %x \r\n", GraphId, G->ThreadId);
+        //printf ("[G%u]ThreadId: %x \r\n", GraphId, G->ThreadId);
 
         ListVisit (&G->NodeList, (ProcData)DelDifNode);
-        
         DelGraph (G);
 
         GraphId++;

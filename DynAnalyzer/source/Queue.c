@@ -109,6 +109,10 @@ QNode* InQueue ()
 QNode* FrontQueue ()
 {
     Queue* Q = g_Queue;
+    if (Q == NULL)
+    {
+        return NULL;
+    }
     
     if (Q->Hindex == Q->Tindex)
     {
@@ -123,6 +127,10 @@ QNode* FrontQueue ()
 void OutQueue ()
 {
     Queue* Q = g_Queue;
+    if (Q == NULL)
+    {
+        return;
+    }
     
     Q->Hindex++;
     if (Q->Hindex >= Q->NodeNum)
@@ -137,6 +145,10 @@ void OutQueue ()
 DWORD QueueSize ()
 {
     Queue* Q = g_Queue;
+    if (Q == NULL)
+    {
+        return 0;
+    }
 
     return (Q->Tindex - Q->Hindex);
 }
@@ -145,21 +157,24 @@ VOID DelQueue ()
 {
     if(g_SharedId == 0)
     {
-        free (g_Queue);
-        g_Queue = NULL;
+        if (g_Queue != NULL)
+        {
+            free (g_Queue);
+            g_Queue = NULL;
+        }
     }
     else
     {
         if(shmdt(g_Queue) == -1)
-    	{
-    		fprintf(stderr, "shmdt failed\n");
-    		return;
-    	}
+        {
+            printf("shmdt failed\n");
+            return;
+        }
 
-    	if(shmctl(g_SharedId, IPC_RMID, 0) == -1)
-    	{
-    		fprintf(stderr, "shmctl(IPC_RMID) failed\n");
-    	}
+        if(shmctl(g_SharedId, IPC_RMID, 0) == -1)
+        {
+            printf("shmctl(IPC_RMID) failed\n");
+        }
     }
 
     return;
