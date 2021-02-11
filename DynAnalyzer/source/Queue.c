@@ -209,7 +209,6 @@ DWORD QueueGetExit ()
     Exit = Q->Exit;
     process_unlock(&Q->InLock);
 
-    DEBUG ("QueueGetExit: %u \r\n", Exit);
     return Exit;
 }
 

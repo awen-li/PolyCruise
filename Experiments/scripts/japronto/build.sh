@@ -8,7 +8,7 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
-		sda -file $bc -criterion ../criterion.xml
+		sda -file $bc -criterion ../../criterion.xml
 	done
 }
 

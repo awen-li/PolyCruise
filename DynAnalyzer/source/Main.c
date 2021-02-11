@@ -15,7 +15,7 @@ void DynExit ();
 void Exit(int signum)
 {
     printf ("Receive signal %u \r\n", signum);
-    DelQueue();
+    QueueSetExit();
 }
 
 

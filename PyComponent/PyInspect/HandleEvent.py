@@ -20,6 +20,8 @@ class CallEvent (PyEvent):
 
     def GetDefUse (self):
         Statement = self.Statement
+        if not isinstance (Statement, FunctionDef):
+            return
         Callee = Statement.name
         Args   = Statement.args.args
 
@@ -59,9 +61,12 @@ class LineEvent (PyEvent):
                #print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", RealDef)
                Def = RealDef + "." + Target.attr             
             self.LiveObj.SetDef (Def)
+        elif isinstance(Target, Subscript):
+            Def = Target.value.id
+            self.LiveObj.SetDef (Def)
         else:
-            print ("!!! LE_assign, unsupport type: ", type (Target))
-            exit (0)
+            print (ast.dump (Statement))
+            assert (0), "!!! LE_assign, unsupport type assignment."
 
         Value = Statement.value
         if isinstance(Value, Name):
@@ -99,8 +104,14 @@ class LineEvent (PyEvent):
             pass
         elif isinstance(Value, Subscript):
             self.LiveObj.SetUse (Value.value.id)
+        elif isinstance(Value, Tuple):
+            Elemts = Value.elts
+            for elm in Elemts:
+                if not isinstance (elm, Name):
+                    continue
+                self.LiveObj.SetUse (elm.id)
         else:
-            print (ast.dump (Statement))
+            print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
 
         return
@@ -129,6 +140,11 @@ class LineEvent (PyEvent):
         
         Args = Callee.args
         for arg in Args:
+            if isinstance(arg, NameConstant):
+                continue
+            if isinstance (arg, Starred):
+                arg = arg.value
+            print (ast.dump (Statement))
             self.LiveObj.SetUse (arg.id)
         return
         

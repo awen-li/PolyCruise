@@ -8,7 +8,7 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
-		sda -file $bc -criterion ../criterion.xml
+		sda -file $bc -criterion ../../criterion.xml
 	done
 }
 
@@ -48,7 +48,7 @@ python setup-instm.py install
 
 
 # 4. run the cases
-#python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
+python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
 
 
 

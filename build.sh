@@ -65,7 +65,7 @@ PYTHON_PATH=/usr/lib/python$PyVersion/
 cp $SDI_PATH/Script/pyinspect.py $PYTHON_PATH
 
  
-#6. install pyinspect tool
+#7. install plugins
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
