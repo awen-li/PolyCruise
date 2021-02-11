@@ -20,7 +20,7 @@ DelShareMem ()
 	fi	
 }
 
-target=japronto
+target=pygame
 
 DelShareMem
 difaEngine &
@@ -45,11 +45,10 @@ SdaAnalysis
 # 3. build again and install the instrumented software
 rm -rf build
 python setup-instm.py install
-cp misc integration_tests/ -rf
 
 
 # 4. run the cases
-python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
+#python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
 
 
 
