@@ -22,7 +22,7 @@ void TRC_trace0 (ULONG EventId, const char* Msg)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    DEBUG ("[TRC_trace0][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    DEBUG ("[TRC_trace0][T:%u]%lx:[%u]%s\r\n", Node->ThreadId, EventId, (unsigned)strlen(Node->QBuf), Node->QBuf);
 
     return;   
 }
@@ -48,7 +48,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    DEBUG ("[TRC_trace][T:%x]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    DEBUG ("[TRC_trace][T:%u]%lx:[%u]%s\r\n", Node->ThreadId, EventId, (unsigned)strlen(Node->QBuf), Node->QBuf);
 
     return;   
 }
@@ -70,12 +70,21 @@ void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId,  char *ThrPara)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
-    //printf ("[TRC_thread][T:%X]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
+    DEBUG ("[TRC_thread][T:%X]%lx:%s\r\n", Node->ThreadId, EventId, Node->QBuf);
 
     return;   
 }
 
 
+void TRC_init ()
+{
+    return;
+}
+
+void TRC_exit ()
+{
+    QueueSetExit ();
+}
 
 
 

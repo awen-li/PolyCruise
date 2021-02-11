@@ -37,6 +37,9 @@ echo "@@@@@@@@@@@@@@@ build DynAnalyzer @@@@@@@@@@@@@@@"
 cd $SDI_PATH/DynAnalyzer
 make -f makefile.so clean && make -f makefile.so
 cp libDynA* /usr/lib/
+make clean && make
+killall difaEngine
+cp difaEngine /usr/bin/
 
 #4. buld PyComponent:PyTrace
 echo ""

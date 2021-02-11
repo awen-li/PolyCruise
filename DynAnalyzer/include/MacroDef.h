@@ -25,6 +25,7 @@
 #define TRUE                      (1)
 #define FALSE                     (0)
 
+#define SHARE_KEY                 (0xC3B3C5D0)
 
 #define ALIGN_8(x)                (((x)%8)?(((x)&~7) + 8):(x))
 
@@ -41,7 +42,13 @@
 #define mutex_lock_t           pthread_mutex_t
 #define mutex_lock_init(x)     pthread_mutex_init(x, NULL)
 #define mutex_lock(x)          pthread_mutex_lock(x);
-#define mutex_unlock(x)        pthread_mutex_unlock(x); 
+#define mutex_unlock(x)        pthread_mutex_unlock(x);
+
+#define process_lock_t             pthread_rwlock_t
+#define process_lock_init(x, attr) pthread_rwlock_init (x, attr) 
+#define process_lock(x)            pthread_rwlock_rdlock (x) 
+#define process_unlock(x)          pthread_rwlock_unlock (x)
+
 
 
 #define PLUGIN_INI             ("/tmp/difg/plugins.ini")

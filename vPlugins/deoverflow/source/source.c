@@ -54,6 +54,8 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
 
 static inline VOID InitPluginCtx (Plugin *Plg)
 {
+    InitDb(Plg->DbAddr);
+    
     /* source -> a List of Node (path) */
     DWORD Ret = DbCreateTable(Plg->DataHandle, sizeof (DynCtx), sizeof (Node*));
     assert (Ret != R_FAIL);
@@ -68,7 +70,7 @@ void DetectOverflow (DWORD SrcHandle, Plugin *Plg)
     DbReq Req;
     DbAck Ack;
 
-    printf ("Entry InfoTrack\r\n");
+    DEBUG ("Entry InfoTrack\r\n");
     if (Plg->InitStatus == FALSE)
     {
         InitPluginCtx (Plg);

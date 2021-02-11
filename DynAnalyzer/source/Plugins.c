@@ -181,6 +181,7 @@ List* InstallPlugins ()
 
         Pgn->DataHandle = DataHandle++;
         Pgn->InitStatus = FALSE;
+        Pgn->DbAddr     = GetDbAddr();
         ListInsert (&PluginList, Pgn);
         printf ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
                  Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Entry, Pgn->PluginEntry, Pgn->Active);
@@ -280,8 +281,6 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
             DEBUG ("SRCnode -> FunctionID = %x \r\n", GetFuncId (N));
-            //ViewEMsg (&SrcN->EMsg);
-
             
             List *OutEdge = &N->OutEdge;
             LNode *LE = OutEdge->Header;
@@ -317,9 +316,8 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
                 DifNode *DstN = GN_2_DIFN (DstNode);
                 if (Plg->IsSink (&Plg->SinkList, DstNode))
                 {
-                    printf ("\r\n@@@@@@@@@@@@@@@@@@@[%s]Reach sink,  EventId = %u (%p) ", 
+                    printf ("\r\n@@@@@@@@@@@@@@@@@@@[%s]Reach sink,  EventId = %u (%p) \r\n", 
                             Plg->Name, R_EID2ETY(DstN->EventId), DstN);
-                    ViewEMsg (&DstN->EMsg);
                     ListInsert(&Ctx->Sinks, DstNode);       
                 }
                 else
@@ -354,6 +352,7 @@ VOID VisitDifg (DWORD SrcHandle, Plugin *Plg)
     /* Visit all sources, and get context of source: (incremental) */
     DWORD SrcNum = QueryDataNum (SrcHandle);
     Req.dwDataType = SrcHandle;
+    DEBUG ("Source num: %u \r\n", SrcNum);
     while (SrcNum > 0)
     {
         Req.dwDataId = SrcNum;

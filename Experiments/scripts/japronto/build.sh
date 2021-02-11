@@ -12,6 +12,17 @@ SdaAnalysis ()
 	done
 }
 
+DelShareMem ()
+{
+	ShareId=`ipcs -m | grep 0xc3b3c5d0 | awk '{print $2}'`
+	if [ -n "$ShareId" ]; then
+		ipcrm -m $ShareId
+	fi	
+}
+
+DelShareMem
+difaEngine &
+
 # 1. build and translate python modules
 cd ../../
 CASE_PATH=Temp/japronto
@@ -36,7 +47,7 @@ cp misc integration_tests/ -rf
 
 
 # 4. run the cases
-python -m pyinspect -C ../../criterion.xml -t integration_tests/test_drain.py 
+python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
 
 
 

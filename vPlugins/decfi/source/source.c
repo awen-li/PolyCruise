@@ -23,6 +23,8 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
 
 static inline VOID InitPluginCtx (Plugin *Plg)
 {
+    InitDb(Plg->DbAddr);
+    
     /* source -> a List of Node (path) */
     DWORD Ret = DbCreateTable(Plg->DataHandle, sizeof (DynCtx), sizeof (Node*));
     assert (Ret != R_FAIL);

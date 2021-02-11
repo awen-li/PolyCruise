@@ -57,9 +57,7 @@ static DWORD GetPhyMemUse ()
     return MemSize;
 }
 
-
-
-void TRC_init ()
+void DynInit ()
 {
     DWORD Ret;
     pthread_t Tid;
@@ -76,18 +74,26 @@ void TRC_init ()
 }
 
 
-void TRC_exit ()
+void DynExit ()
 {
-    printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
-    while (QueueSize ())
+    DWORD Exit;
+    while (!(Exit = QueueGetExit()))
     {
-        printf ("......\twait for event process...\r\n");
-        sleep (1);
+        printf ("......\tWait for exit[%u]...\r\n", Exit);
+        sleep (5);
     }
 
+    DWORD Qsize;
+    while ((Qsize = QueueSize ()) != 0)
+    {
+        printf ("......\tWait for event process[%u]...\r\n", Qsize);
+        sleep (1);    
+    }
+
+    printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
     sleep (5);
     WiteGraph ("DIFG");
-    //DelQueue ();
+    DelQueue ();
     DeInitDif ();
 
     printf ("@@@@@ DIFA engine exits!\r\n");

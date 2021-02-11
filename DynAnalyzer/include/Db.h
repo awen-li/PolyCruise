@@ -58,6 +58,8 @@ DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen);
 DWORD QueryDataNum (DWORD dwDataType);
 
 VOID DelDb ();
+VOID InitDb (VOID *Addr);
+VOID* GetDbAddr ();
 
 
 #endif

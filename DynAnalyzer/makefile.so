@@ -6,11 +6,12 @@ SOURCE_PATH  = source
 INCLUDE_PATH = include
 OBJ_PATH     = obj
 
-#CFLAGS     = -D__DEBUG__ -fPIC -g -I$(INCLUDE_PATH)
-CFLAGS      = -fPIC -g -I$(INCLUDE_PATH)
-LD_CFLAGS   = -fPIC -shared -lpthread -ldl 
+CFLAGS     = -fPIC -g -I$(INCLUDE_PATH)
+#CFLAGS    = -fPIC -g -I$(INCLUDE_PATH) -D__DEBUG__ 
+LD_CFLAGS  = -fPIC -shared -lpthread -ldl 
 
-SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
+$SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
+SOURCE_FILES  = source/Queue.c source/DynTrace.c source/DbCore.c source/Plugins.c source/List.c
 OBJ_FILES     = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
 
 TARGET = libDynAnalyze.so

@@ -29,6 +29,7 @@ typedef struct tag_Plugin
     DWORD DataHandle;
     DWORD InitStatus;
 
+    VOID* DbAddr;
     List SinkList;
     _PLUGIN_ENTRY_ PluginEntry;
     _IS_SINK_ IsSink;

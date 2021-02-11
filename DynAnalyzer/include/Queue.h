@@ -23,12 +23,12 @@ typedef struct tag_QNode
 
 typedef struct tag_Queue
 {
-    QNode *NodeList;
     DWORD NodeNum;
     DWORD Hindex;
     DWORD Tindex;
+    DWORD Exit;
 
-    mutex_lock_t InLock;  
+    process_lock_t InLock;  
 }Queue;
 
 
@@ -38,5 +38,9 @@ QNode* FrontQueue ();
 void OutQueue ();
 DWORD QueueSize ();
 VOID DelQueue ();
+VOID QueueSetExit ();
+DWORD QueueGetExit ();
+
+
 
 #endif 

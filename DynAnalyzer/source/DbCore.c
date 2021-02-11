@@ -9,7 +9,9 @@
 #include "DbTable.h"
 
 
-static DbTableManage g_tTableManage = {0};
+static DbTableManage *g_tTableManage = NULL;
+
+
 
 static inline VOID* db_Malloc(ULONG ulMemSize)
 {
@@ -51,7 +53,7 @@ static inline DbTable* db_Type2Table(DWORD dwDataType)
 		return NULL;
 	}
 
-    DbTableManage *DbManage = &g_tTableManage;
+    DbTableManage *DbManage = g_tTableManage;
 
 	return (DbManage->TableList + dwDataType);
 }
@@ -691,7 +693,8 @@ DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen)
 	DWORD dwAvgThrCap;
 	ULONG ulMemSize;
 	DbTable* ptCurTable;
-    DbTableManage *DbManage = &g_tTableManage;
+
+    DbTableManage *DbManage = g_tTableManage;
 
 	ptCurTable = DbManage->TableList + dwDataType;		
 
@@ -718,11 +721,31 @@ DWORD DbCreateTable(DWORD dwDataType, DWORD dwDataLen, DWORD dwKeyLen)
 	return R_SUCCESS;
 }
 
+VOID InitDb (VOID *Addr)
+{
+    if (Addr == NULL)
+    {
+        g_tTableManage = (DbTableManage *)malloc (sizeof (DbTableManage));
+        assert (g_tTableManage != NULL);
+    }
+    else
+    {
+        g_tTableManage = (DbTableManage *)Addr;
+    }
+    
+    return;
+}
+
+VOID* GetDbAddr ()
+{
+    return g_tTableManage;
+}
+
 VOID DelDb ()
 {
     DbTable* ptTable;
     DWORD dwType = DB_TYPE_BEGIN;
-    DbTableManage *DbManage = &g_tTableManage;		
+    DbTableManage *DbManage = g_tTableManage;		
 
     while (dwType < DB_TYPE_END)
     {
@@ -739,17 +762,19 @@ VOID DelDb ()
 DWORD QueryDataNum (DWORD dwDataType)
 {
     DbTable* ptDataTable;
-	
-	if(0 == dwDataType || dwDataType >= DB_TYPE_END)
-	{
-		return 0;
-	}
-	
-	ptDataTable = db_Type2Table(dwDataType);
-	if(NULL == ptDataTable)
-	{
-		return 0;
-	}
+
+    if(0 == dwDataType || dwDataType >= DB_TYPE_END)
+    {
+        DEBUG ("Error datatype[%u]\r\n", dwDataType);
+        return 0;
+    }
+
+    ptDataTable = db_Type2Table(dwDataType);
+    if(NULL == ptDataTable)
+    {
+        DEBUG ("ptDataTable == NULL[%u]\r\n", dwDataType);
+        return 0;
+    }
 
     return ptDataTable->tBusyDataTable.dwCurNodeNum;
 }

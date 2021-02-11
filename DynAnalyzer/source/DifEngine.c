@@ -38,6 +38,7 @@ VOID InvokePlugins (Plugin *Plg)
         return;
     }
 
+    DEBUG("@@@ InvokePlugins: %s \r\n", Plg->Name);
     Plg->PluginEntry (DA->Sources, Plg);
     return;
 }
@@ -101,7 +102,7 @@ static inline VOID AddSource (DWORD Handle, ULONG Event, Node *CurNode)
     assert (Ret == R_SUCCESS);
 
     *((Node **)(Ack.pDataAddr)) = CurNode;
-    printf ("===> Add source [%u]%lx -> %p \r\n", Ack.dwDataId, Event, CurNode);
+    printf ("===> Add source [%u:%u]%lx -> %p \r\n", Handle, Ack.dwDataId, Event, CurNode);
     return;
   
 }
@@ -822,6 +823,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
 
     if (IsEventExist (DifGraph, Event, ThreadId))
     {
+        DEBUG ("[DIF][T:%lx]: %s exists....\r\n", Event, Msg);
         return;
     }
     
@@ -863,8 +865,11 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
         case EVENT_GEP:
         {
             /* address mapping -> base address */
-            UpdataAddrMaping ((Variable*)EM->Def.Header->Data,
-                              (Variable*)EM->Use.Header->Data);
+            if (EM->Def.Header && EM->Use.Header)
+            {
+                UpdataAddrMaping ((Variable*)EM->Def.Header->Data,
+                                  (Variable*)EM->Use.Header->Data);
+            }
             break;
         }
         case EVENT_STORE:
@@ -903,6 +908,8 @@ VOID InitDif (List* PluginList)
     DA->ShareHandle   = DB_TYPE_DIF_SHARE;
     DA->AddrMapHandle = DB_TYPE_DIF_ADDRMAPING;
     DA->Sources       = DB_TYPE_DIF_SOURCES;
+
+    InitDb(NULL);
     
     Ret = DbCreateTable(DA->NodeHandle, sizeof (Node)+sizeof (DifNode), sizeof (EventKey));
     assert (Ret != R_FAIL);

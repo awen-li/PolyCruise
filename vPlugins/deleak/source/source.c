@@ -54,6 +54,8 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
 
 static inline VOID InitPluginCtx (Plugin *Plg)
 {
+    InitDb(Plg->DbAddr);
+    
     /* source -> a List of Node (path) */
     DWORD Ret = DbCreateTable(Plg->DataHandle, sizeof (DynCtx), sizeof (Node*));
     assert (Ret != R_FAIL);
@@ -68,7 +70,7 @@ void DetectLeak (DWORD SrcHandle, Plugin *Plg)
     DbReq Req;
     DbAck Ack;
 
-    DEBUG ("Entry DetectLeak\r\n");
+    DEBUG ("[%u]Entry DetectLeak\r\n", SrcHandle);
     if (Plg->InitStatus == FALSE)
     {
         InitPluginCtx (Plg);

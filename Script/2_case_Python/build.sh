@@ -1,6 +1,16 @@
 
 export CASE_PATH=`pwd`
 
+DelShareMem ()
+{
+	ShareId=`ipcs -m | grep 0xc3b3c5d0 | awk '{print $2}'`
+	if [ -n "$ShareId" ]; then
+		ipcrm -m $ShareId
+	fi	
+}
+
+DelShareMem
+difaEngine &
 
 # 2. translate the python code
 rm -rf /tmp/difg/LdaBin*

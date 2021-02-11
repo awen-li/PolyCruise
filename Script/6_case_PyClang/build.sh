@@ -1,6 +1,17 @@
 
 export CASE_PATH=`pwd`
 
+DelShareMem ()
+{
+	ShareId=`ipcs -m | grep 0xc3b3c5d0 | awk '{print $2}'`
+	if [ -n "$ShareId" ]; then
+		ipcrm -m $ShareId
+	fi	
+}
+
+DelShareMem
+difaEngine &
+
 # 1. install C module of the case
 rm -rf /tmp/difg/LdaBin*
 

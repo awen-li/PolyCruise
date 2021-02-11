@@ -8,10 +8,11 @@
 #include <sys/shm.h>
 #include "Queue.h"
 
-#define SHARE_KEY (0xC3B3C5D0)
 
 static Queue *g_Queue = NULL;
 static int g_SharedId = 0;
+
+#define Q_2_NODELIST(Q) (QNode *)(Q + 1)
 
 static inline key_t GetKey ()
 {
@@ -38,10 +39,17 @@ static inline void* GetQueueMemory (DWORD IsShared, DWORD Size)
         {
             SharedId = shmget(ShareKey, Size, 0666|IPC_CREAT);
             assert (SharedId != -1);
-        }
 
-        MemAddr = shmat(SharedId, 0, 0);
-        assert (MemAddr != (void*)-1);
+            MemAddr = shmat(SharedId, 0, 0);
+            assert (MemAddr != (void*)-1);
+
+            memset (MemAddr, 0, Size);
+        }
+        else
+        {
+            MemAddr = shmat(SharedId, 0, 0);
+            assert (MemAddr != (void*)-1);
+        }
 
         g_SharedId = SharedId;
     }
@@ -49,9 +57,10 @@ static inline void* GetQueueMemory (DWORD IsShared, DWORD Size)
     {
         MemAddr = malloc (Size);
         assert (MemAddr != NULL);
-    }
 
-    memset (MemAddr, 0, Size);
+        memset (MemAddr, 0, Size);
+    }
+    
     return MemAddr;
 }
 
@@ -59,6 +68,7 @@ void InitQueue (unsigned QueueNum)
 {
     Queue* Q;
 
+    printf ("@@@@@ start InitQueue\r\n");
     if (g_Queue != NULL)
     {
         printf ("@@@@@ Warning: Repeat comimg into InitQueue: %p-%u\r\n", g_Queue, g_SharedId);
@@ -66,15 +76,20 @@ void InitQueue (unsigned QueueNum)
     }
  
     DWORD Size = sizeof (Queue) + QueueNum * sizeof (QNode);
-    Q = (Queue *)GetQueueMemory (FALSE, Size);
-    Q->NodeList = (QNode *)(Q+1);
-    Q->Hindex  = 0;
-    Q->Tindex  = 0;
-    Q->NodeNum = QueueNum;
-    mutex_lock_init(&Q->InLock);
+    Q = (Queue *)GetQueueMemory (TRUE, Size);
+    if (Q->NodeNum == 0)
+    {
+        Q->NodeNum  = QueueNum;
+        Q->Exit     = FALSE;
 
-    printf ("@@@@@ Queue Memory:%p \r\n", Q);
+        pthread_rwlockattr_t LockAttr;
+        pthread_rwlockattr_setpshared(&LockAttr, PTHREAD_PROCESS_SHARED);
+        process_lock_init(&Q->InLock, &LockAttr);
+    }
+
     g_Queue = Q;
+
+    DEBUG ("InitQueue:[%p] [%u] %u\r\n", Q, Q->Hindex, Q->Tindex);
     return;
 }
 
@@ -83,17 +98,16 @@ QNode* InQueue ()
 {
     if (g_Queue == NULL)
     {
-        printf ("@@@@@@@@@ InQueue, entry InitQueue!!!!\r\n");
         InitQueue (4096);
     }
     
     Queue* Q = g_Queue;
     QNode* Node = NULL;
 
-    mutex_lock(&Q->InLock);
-    if ((Q->Tindex+1)%Q->NodeNum != Q->Hindex)
+    process_lock(&Q->InLock);
+    if ((Q->Tindex+1) != Q->Hindex)
     {
-        Node = Q->NodeList + Q->Tindex++;
+        Node = Q_2_NODELIST(Q) + Q->Tindex++;
         Node->Flag = FALSE;
 
         if (Q->Tindex >= Q->NodeNum)
@@ -101,7 +115,8 @@ QNode* InQueue ()
             Q->Tindex = 0;
         }
     }
-    mutex_unlock(&Q->InLock);
+    DEBUG ("InQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
+    process_unlock(&Q->InLock);
     
     return Node;
 }
@@ -113,13 +128,17 @@ QNode* FrontQueue ()
     {
         return NULL;
     }
-    
-    if (Q->Hindex == Q->Tindex)
-    {
-        return NULL;
-    }
 
-    return (Q->NodeList + Q->Hindex);
+    QNode* Node = NULL;
+    process_lock(&Q->InLock);
+    if (Q->Hindex != Q->Tindex)
+    {
+        Node = (Q_2_NODELIST(Q) + Q->Hindex);
+    }
+    DEBUG ("FrontQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex,Q->Tindex, Q->NodeNum);
+    process_unlock(&Q->InLock);
+   
+    return Node;
 }
 
 
@@ -131,12 +150,16 @@ void OutQueue ()
     {
         return;
     }
+
+    process_lock(&Q->InLock);
+    DEBUG ("OutQueue:[%p] [%u, %u]/%u\r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
     
     Q->Hindex++;
     if (Q->Hindex >= Q->NodeNum)
     {
         Q->Hindex = 0;
     }
+    process_unlock(&Q->InLock);
 
     return;
 }
@@ -150,7 +173,44 @@ DWORD QueueSize ()
         return 0;
     }
 
-    return (Q->Tindex - Q->Hindex);
+    process_lock(&Q->InLock);
+    DWORD Size = ((Q->Tindex + Q->NodeNum) - Q->Hindex)% Q->NodeNum;
+    process_unlock(&Q->InLock);
+
+    return Size;
+}
+
+VOID QueueSetExit ()
+{
+    Queue* Q = g_Queue;
+    if (Q == NULL)
+    {
+        return;
+    }
+
+    process_lock(&Q->InLock);
+    Q->Exit = TRUE;
+    process_unlock(&Q->InLock);
+    DEBUG ("QueueSetExit: %u \r\n", Q->Exit);
+
+    return;
+}
+
+DWORD QueueGetExit ()
+{
+    Queue* Q = g_Queue;
+    if (Q == NULL)
+    {
+        return 0;
+    }
+
+    DWORD Exit = FALSE;
+    process_lock(&Q->InLock);
+    Exit = Q->Exit;
+    process_unlock(&Q->InLock);
+
+    DEBUG ("QueueGetExit: %u \r\n", Exit);
+    return Exit;
 }
 
 VOID DelQueue ()
