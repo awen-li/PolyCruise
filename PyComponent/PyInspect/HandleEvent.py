@@ -159,11 +159,17 @@ class LineEvent (PyEvent):
         
         Args = Callee.args
         for arg in Args:
-            if isinstance(arg, NameConstant):
+            if isinstance(arg, NameConstant) or isinstance(arg, Bytes):
                 continue
-            if isinstance (arg, Starred):
+            if isinstance (arg, Name):
+                self.LiveObj.SetUse (arg.id)
+            elif isinstance (arg, Starred):
                 arg = arg.value
-            self.LiveObj.SetUse (arg.id)
+                self.LiveObj.SetUse (arg.id)
+            else:
+                print ("!!!!!!!!! unsupport type in CALL. => ", type(arg), "   -ast-> ", ast.dump (Statement))
+                assert (0), "!!!!!!!!! unsupport tyep in CALL."
+            
         return
         
 
@@ -205,7 +211,7 @@ class LineEvent (PyEvent):
         pass
         
     def LE_with(self, Statement):
-        print ("while. => ", ast.dump (Statement))
+        #print ("LE_with. => ", ast.dump (Statement))
         pass
         
     def LE_excepthandler(self, Statement):
