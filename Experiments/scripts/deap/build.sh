@@ -20,10 +20,10 @@ DelShareMem ()
 	fi	
 }
 
-target=pygame
+target=deap
 
 DelShareMem
-difaEngine &
+#difaEngine &
 
 # 1. build and translate python modules
 cd ../../
@@ -46,7 +46,7 @@ python setup-instm.py install
 
 
 # 4. run the cases
-python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
+#python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
 
 
 

@@ -33,8 +33,6 @@ SCRIPTS=scripts/$target
 python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
 # 2. build and instrument C modules
-pwd
-
 cp criterion.xml $CASE_PATH/
 cp $SCRIPTS/setup-*.py $CASE_PATH/
 cd $CASE_PATH

@@ -455,6 +455,8 @@ private:
         
         switch (VType)
         {
+            case Type::FloatTyID:
+            case Type::DoubleTyID:
             case Type::IntegerTyID:
             {
                 string Name;
@@ -486,8 +488,6 @@ private:
             }
             case Type::VoidTyID:
             case Type::HalfTyID:
-            case Type::FloatTyID:
-            case Type::DoubleTyID:
             case Type::X86_FP80TyID:
             case Type::FP128TyID:
             case Type::PPC_FP128TyID:
