@@ -2,7 +2,8 @@
 
 import sys
 import abc
-from ast import Name
+import ast
+from ast import *
 
 class LiveObject ():
     RET_CALLER = 2
@@ -52,10 +53,12 @@ class PyEvent(metaclass=abc.ABCMeta):
         pass
 
     def Self2Obj (self, SelfName):
-        Obj = self.Frame.f_locals.get(SelfName)
+        Obj = self.GetLiveObject(SelfName)
         if Obj == None:
             return SelfName
-        return self.Frame.f_locals[SelfName].__class__.__name__
+        Type = type (Obj)
+        #print ("=====> ", Type, "class: ", type (Obj).__name__)
+        return Type.__name__
 
     def GetLiveObject(self, ValName):
         if isinstance(ValName, Name):
@@ -70,12 +73,14 @@ class PyEvent(metaclass=abc.ABCMeta):
             Builtins = Frame.f_globals['__builtins__']
             if isinstance(Builtins, dict) and (ValName in Builtins):
                 return Builtins[ValName]
-            elif isinstance(Builtins, ModuleType) and hasattr(Builtins, ValName):
+            elif isinstance(Builtins, Module) and hasattr(Builtins, ValName):
                 return getattr(Frame.f_globals['__builtins__'], ValName)
-        raise ValueError('cannot find the value of {name}'
-                         ' in frame of {frame}'.format(name=ValName, frame=Frame.f_code.co_name))
+        return None
+        #raise ValueError('cannot find the value of {name}'
+        #                 ' in frame of {frame}'.format(name=ValName, frame=Frame.f_code.co_name))
 
     def Default(self, Arg):
+        print (ast.dump (self.Statement))
         raise NotImplementedError(self.errorinfo('not implement this kind of '
                                                  'method: {}'.format(dump(self.Statement))))
         

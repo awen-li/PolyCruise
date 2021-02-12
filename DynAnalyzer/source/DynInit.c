@@ -19,7 +19,7 @@ void *EventProcess (void* Arg)
         QNode *QN = FrontQueue ();
         if (QN == NULL || QN->Flag == FALSE)
         {
-            sleep (1);
+            sleep (2);
             continue;
         }
         

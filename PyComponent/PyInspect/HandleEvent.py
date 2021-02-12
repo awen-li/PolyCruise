@@ -48,9 +48,9 @@ class LineEvent (PyEvent):
         LeMethod   = getattr(self, MethodName, self.Default)
         LeMethod(Statement)
         return
-   
-    def LE_assign(self, Statement):
-        Target = Statement.targets[0]
+
+
+    def SetDef (self, Target, Statement):
         if isinstance(Target, Name):
             Def = Target.id
             self.LiveObj.SetDef (Def)
@@ -67,8 +67,9 @@ class LineEvent (PyEvent):
         else:
             print (ast.dump (Statement))
             assert (0), "!!! LE_assign, unsupport type assignment."
+        return
 
-        Value = Statement.value
+    def SetUse (self, Value, Statement):
         if isinstance(Value, Name):
             self.LiveObj.SetUse (Value.id)
         elif isinstance(Value, Call):
@@ -113,8 +114,26 @@ class LineEvent (PyEvent):
         else:
             print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
-
         return
+   
+    def LE_assign(self, Statement):
+        Target = Statement.targets[0]
+        self.SetDef (Target, Statement)
+        
+        Value = Statement.value
+        self.SetUse (Value, Statement);
+        return
+
+    
+    def LE_augassign(self, Statement):
+        Target = Statement.target
+        self.SetDef (Target, Statement)
+        self.LiveObj.SetUse (self.LiveObj.Def)
+        
+        Value = Statement.value
+        self.SetUse (Value, Statement);
+        return
+
 
     def LE_expr(self, Statement):
         if not isinstance(Statement.value, Call):
@@ -144,7 +163,6 @@ class LineEvent (PyEvent):
                 continue
             if isinstance (arg, Starred):
                 arg = arg.value
-            print (ast.dump (Statement))
             self.LiveObj.SetUse (arg.id)
         return
         
@@ -171,6 +189,7 @@ class LineEvent (PyEvent):
             self.LiveObj.SetUse (Test.id)
             self.LiveObj.SetBr (True)
         else:
+            print ("!!!!!!!!! unknown type in IF. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unsupport tyep in IF."
         
     def LE_for(self, Statement):
@@ -182,54 +201,57 @@ class LineEvent (PyEvent):
 
         
     def LE_while(self, Statement): 
-        print ("LE_while")
+        #print ("while. => ", ast.dump (Statement))
+        pass
         
     def LE_with(self, Statement):
-        print ("LE_with")
+        print ("while. => ", ast.dump (Statement))
+        pass
         
     def LE_excepthandler(self, Statement):
-        print ("LE_excepthandler")
+        pass
 
     def LE_import(self, Statement):
-        print ("LE_import")
+        pass
         
     def LE_importfrom(self, Statement):
-        print ("LE_importfrom")
+        pass
         
     def LE_assert(self, Statement):
-        print ("LE_assert")
+        pass
         
     def LE_global(self, Statement):
-        print ("LE_global")
+        print ("global. => ", ast.dump (Statement))
+        pass
         
     def LE_delete(self, Statement):
-        print ("LE_delete")
+        pass
         
     def LE_nonlocal(self, Statement):
-        print ("LE_nonlocal")
+        pass
         
     def LE_tryfinally(self, Statement):
-        print ("LE_tryfinally")
+        pass
         
     def LE_tryexcept(self, Statement):
-        print ("LE_tryexcept")
+        pass
         
     def LE_raise(self, Statement):   
-        print ("LE_raise")
+        pass
         
     def LE_print(self, Statement):    
-        print ("LE_print")
+        pass
         
     def LE_exec(self, Statement):    
-        print ("LE_exec")
+        pass
         
     def LE_pass(self, Statement):    
-        print ("LE_pass")
+        pass
         
     def LE_break(self, Statement):   
-        print ("LE_break")
+        pass
         
     def LE_continue(self, Statement): 
-        print ("LE_continue")
+        pass
         
     
