@@ -72,11 +72,33 @@ class Crawler():
             writer.writerow(Row)
         return
 
+    def IsCPython (self, LangsDict):
+        Langs = list(LangsDict.keys ())[0:3]
+        if 'C' not in Langs or 'Python' not in Langs:
+            return False
+
+        Size = 0
+        for lg in Langs:
+            Size += LangsDict[lg]
+
+        Cp  = LangsDict['C']*100/Size
+        Pyp = LangsDict['Python']*100/Size
+        print (LangsDict, end=", => ")
+        print ("C percent = %u, Python percent = %u" %(Cp, Pyp))
+
+        if Cp < 30:
+            return False
+
+        if Pyp < 30:
+            return False
+
+        return True
+
     def CrawlerProject (self):
         PageNum = 10  
         Star    = 15000
-        Delta   = 300
-        while Star > 2000:
+        Delta   = 100
+        while Star > 100:
             Bstar = Star - Delta
             Estar = Star
             Star  = Star - Delta
@@ -90,17 +112,15 @@ class Crawler():
                 RepoList = Result['items']
                 for Repo in RepoList:
                     LangsDict = self.GetRepoLangs (Repo['languages_url'])
-                    Langs = list(LangsDict.keys ())[0:3]
-                    Langs = [lang.lower() for lang in Langs]
-                    #print (LangsDict, " -> ", Langs)
-                    if 'c' not in Langs or 'python' not in Langs:
+                    if self.IsCPython (LangsDict) == False:
                         continue
                     
-                    print ("\t[%u][%u]%s --> %s" %(len(self.RepoList), Repo['id'], str(Langs), Repo['clone_url']))
+                    print ("\t[%u][%u] --> %s" %(len(self.RepoList), Repo['id'], Repo['clone_url']))
+                    Langs = list(LangsDict.keys ())[0:3]
                     RepoData = Repository (Repo['id'], Repo['stargazers_count'], Langs, Repo['url'], Repo['clone_url'], Repo['description'])
                     self.RepoList[Repo['id']] = RepoData
                     self.Appendix (RepoData)
-        #self.Save()
+        self.Save()
 
     def Clone (self):
         BaseDir = os.getcwd () + "/Repository/"

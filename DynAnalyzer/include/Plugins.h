@@ -11,34 +11,29 @@
 #include <List.h>
 #include <Graph.h>
 
-typedef VOID  (*_PLUGIN_ENTRY_) (DWORD SrcHandle, VOID *Plg);
-typedef DWORD (*_IS_SINK_) (List *SinkList, Node *DstNode);
-
-typedef struct tag_DynCtx
-{
-    List LastVisit;
-    List Sinks;
-}DynCtx;
+typedef VOID  (*_PLUGIN_INIT_) (VOID *Plg);
+typedef DWORD (*_DETECT_) (VOID *Plg, VOID *DstNode);
 
 typedef struct tag_Plugin
 {
     CHAR Name[64];
-    CHAR Entry[64];
+    CHAR Init[64];
     CHAR Module[64];
     DWORD Active;
     DWORD DataHandle;
-    DWORD InitStatus;
 
     VOID* DbAddr;
     List SinkList;
-    _PLUGIN_ENTRY_ PluginEntry;
-    _IS_SINK_ IsSink;
+    _PLUGIN_INIT_ PluginInit;
+    _DETECT_ Detect;
+
+    List DynSinks;
 }Plugin;
 
 
 List* InstallPlugins ();
 VOID UnInstallPlugins ();
-VOID VisitDifg (DWORD SrcHandle, Plugin *Plg);
+VOID VisitDifg (DWORD SrcHandle, List* PluginList);
 
 
 

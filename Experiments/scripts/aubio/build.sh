@@ -20,7 +20,7 @@ DelShareMem ()
 	fi	
 }
 
-target=deap
+target=aubio
 
 DelShareMem
 #difaEngine &
@@ -37,16 +37,19 @@ cp criterion.xml $CASE_PATH/
 cp $SCRIPTS/setup-*.py $CASE_PATH/
 cd $CASE_PATH
 rm -rf build
+make
 python setup-lda.py build
 SdaAnalysis
 
 # 3. build again and install the instrumented software
 rm -rf build
+make
 python setup-instm.py install
+cp misc integration_tests/ -rf
 
 
 # 4. run the cases
-#python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
+python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
 
 
 

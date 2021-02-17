@@ -29,21 +29,6 @@ static inline VOID DeinitPlugins ()
 }
 
 
-VOID InvokePlugins (Plugin *Plg)
-{
-    DifAgent *DA = &DifA;
-    
-    if (Plg->Active == 0)
-    {
-        return;
-    }
-
-    DEBUG("@@@ InvokePlugins: %s \r\n", Plg->Name);
-    Plg->PluginEntry (DA->Sources, Plg);
-    return;
-}
-
-
 static inline DWORD IsFieldSensitive ()
 {
     DifAgent *DA = &DifA;
@@ -887,7 +872,10 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     InsertNode2Graph (DifGraph, N);
     
     /* invoke plugins */
-    ListVisit (DA->PluginList, (ProcData)InvokePlugins);
+    if (DA->PluginList != NULL)
+    {
+        VisitDifg (DA->Sources, DA->PluginList);
+    }
 
     return;
 }

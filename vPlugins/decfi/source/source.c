@@ -8,11 +8,11 @@
 #include <Plugins.h>
 #include <header.h>
 
-static inline DWORD IsSink (List *SinkList, Node *DstNode)
+static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
 {
-    DifNode *DN = GN_2_DIFN (DstNode);
-    if (R_EID2ETY(DN->EventId) ==  EVENT_BR)
+    if (R_EID2ETY(DstNode->EventId) ==  EVENT_BR)
     {
+        ListInsert(&Plg->DynSinks, DstNode);
         return TRUE;        
     }
     else
@@ -21,32 +21,11 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
     }
 }
 
-static inline VOID InitPluginCtx (Plugin *Plg)
+void InitCfi (Plugin *Plg)
 {
     InitDb(Plg->DbAddr);
-    
-    /* source -> a List of Node (path) */
-    DWORD Ret = DbCreateTable(Plg->DataHandle, sizeof (DynCtx), sizeof (Node*));
-    assert (Ret != R_FAIL);
 
-    Plg->IsSink = (_IS_SINK_)IsSink;
-    Plg->InitStatus = TRUE;
-    return;
-}
-
-void DetectCfi (DWORD SrcHandle, Plugin *Plg)
-{
-    DbReq Req;
-    DbAck Ack;
-
-    DEBUG ("Entry DetectCfi\r\n");
-    if (Plg->InitStatus == FALSE)
-    {
-        InitPluginCtx (Plg);
-    }
-
-    /* Visit all sources, and get context of source: (incremental) */
-    VisitDifg (SrcHandle, Plg);
+    Plg->Detect = (_DETECT_)Detect;
     
     return;
 }

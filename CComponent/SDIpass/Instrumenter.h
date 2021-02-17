@@ -486,6 +486,10 @@ private:
                 
                 return true;
             }
+            case Type::VectorTyID:
+            {
+                break;
+            }
             case Type::VoidTyID:
             case Type::HalfTyID:
             case Type::X86_FP80TyID:
@@ -498,7 +502,6 @@ private:
             case Type::FunctionTyID:
             case Type::StructTyID:
             case Type::ArrayTyID:
-            case Type::VectorTyID:
             default:
             {
                 printf ("Type=>%u, Not support\r\n", VType);

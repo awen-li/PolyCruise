@@ -13,6 +13,7 @@
 #define DATA_DIR ("/tmp/difg/")
 
 static List PluginList;
+static List VisitCache;
 
 static inline VOID LoadSinks (List *SinkList, char* CfgName)
 {
@@ -101,9 +102,9 @@ static inline VOID GetPluginCfg (char *Buffer, Plugin *Pgn)
         {
             snprintf ((char *)Pgn->Name, sizeof (Pgn->Name), "%s", Value);
         }
-        if (strstr (Field, "entry"))
+        if (strstr (Field, "init"))
         {
-            snprintf ((char *)Pgn->Entry, sizeof (Pgn->Entry), "%s", Value);
+            snprintf ((char *)Pgn->Init, sizeof (Pgn->Init), "%s", Value);
         }
         else if (strstr (Field, "module"))
         {
@@ -125,7 +126,7 @@ static inline VOID GetPluginCfg (char *Buffer, Plugin *Pgn)
 }
 
 
-static inline VOID GetPluginEntry (Plugin *Pgn)
+static inline VOID GetPluginInit (Plugin *Pgn)
 {
     char Buffer[1024];
     snprintf (Buffer, sizeof(Buffer), "%s%s", DATA_DIR, Pgn->Module);
@@ -136,10 +137,10 @@ static inline VOID GetPluginEntry (Plugin *Pgn)
         return;   
     }
             
-    Pgn->PluginEntry = (_PLUGIN_ENTRY_)dlsym(PluginSo, (const char *)Pgn->Entry);
+    Pgn->PluginInit = (_PLUGIN_INIT_)dlsym(PluginSo, (const char *)Pgn->Init);
     if (dlerror())
     {
-        printf ("Plugin[%s]: load entry %s[%s] fail!\r\n", Pgn->Name, Pgn->Entry, Pgn->Module);  
+        printf ("Plugin[%s]: load entry %s[%s] fail!\r\n", Pgn->Name, Pgn->Init, Pgn->Module);  
         return;  
     }
     
@@ -177,14 +178,14 @@ List* InstallPlugins ()
         GetPluginCfg (Buffer, Pgn);
 
         /* load library */
-        GetPluginEntry (Pgn);
+        GetPluginInit (Pgn);
 
         Pgn->DataHandle = DataHandle++;
-        Pgn->InitStatus = FALSE;
         Pgn->DbAddr     = GetDbAddr();
+        Pgn->PluginInit (Pgn);
         ListInsert (&PluginList, Pgn);
         printf ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
-                 Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Entry, Pgn->PluginEntry, Pgn->Active);
+                 Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Init, Pgn->PluginInit, Pgn->Active);
     }
 
     fclose (Pf);
@@ -223,30 +224,37 @@ static inline DWORD GET_VISIT (DWORD Visit, DWORD Type)
     return Visit;
 }
 
-
-static inline DynCtx* GetSrcContext (DWORD Handle, Node *Source)
+static inline void PrintVar (VOID *Data)
 {
-    DbReq Req;
-    DbAck Ack;
+    Variable *V = (Variable *)Data;
+    printf ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
 
-    Req.dwDataType = Handle;
-    Req.dwKeyLen   = sizeof (Node *);
-    Req.pKeyCtx    = (BYTE *)(&Source);
+    return;
+}
 
-    Ack.dwDataId = 0;
-    (VOID)QueryDataByKey (&Req, &Ack);
-    if (Ack.dwDataId == 0)
+static void PrintEMsg (unsigned long EventId, EventMsg *EM)
+{
+    printf ("[%lx]<ViewEMsg> --- [Definition]:", EventId);
+    ListVisit (&EM->Def, PrintVar);
+
+    printf (" -- [Use]:");
+    ListVisit (&EM->Use, PrintVar);
+    printf ("\r\n\r\n");
+
+    return;    
+}
+
+
+
+static inline List* GetLastVisit (Node *Source)
+{
+    if (VisitCache.Header == NULL)
     {
-        DWORD Ret = CreateDataByKey (&Req, &Ack);
-        assert (Ret == R_SUCCESS); 
-
-        DynCtx *Ctx = (DynCtx *)(Ack.pDataAddr);
-        List *LastVisit = &Ctx->LastVisit;
-        ListInsert(LastVisit, Source);
-        DEBUG("@@@@@@@ INSERT source: [%u]%p\r\n", LastVisit->NodeNum, LastVisit->Header->Data);
+        ListInsert(&VisitCache, Source);
+        DEBUG("@@@@@@@ INSERT source: [%u]%p\r\n", VisitCache.NodeNum, VisitCache.Header->Data);
     }
 
-    return (DynCtx *)(Ack.pDataAddr);
+    return &VisitCache;
 }
 
 
@@ -261,13 +269,39 @@ static inline DWORD GetFuncId (Node *N)
     return (Fid | (Lang<<28));
 }
 
-
-static inline VOID ProcSource (Plugin *Plg, Node *Source)
+static inline DWORD InvokePlugins (List* PluginList, DifNode *DstNode)
 {
-    DynCtx *Ctx = GetSrcContext (Plg->DataHandle, Source);
-    assert (Ctx != NULL);
+    DWORD SINK = FALSE;
+    Plugin *Plg;
 
-    List *LastVisit = &Ctx->LastVisit;
+    LNode *Header = PluginList->Header;
+    while (Header != NULL)
+    {
+        Plg = (Plugin *)Header->Data;
+        assert (Plg != NULL);
+
+        if (Plg->Active)
+        {
+            DWORD IsSink = Plg->Detect (Plg, DstNode);
+            if (IsSink == TRUE)
+            {
+                printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u (%p) \r\n", 
+                        Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), DstNode);
+            }
+
+            SINK |= IsSink;
+        }  
+        
+        Header = Header->Nxt;
+    }
+
+    return SINK;
+}
+
+
+static inline VOID ProcSource (Node *Source, List* PluginList)
+{
+    List *LastVisit = GetLastVisit (Source);
 
     while (1)
     {
@@ -280,7 +314,7 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
         {
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
-            DEBUG ("SRCnode -> FunctionID = %x \r\n", GetFuncId (N));
+            DEBUG ("[%lx]SRCnode -> FunctionID = %x \r\n", SrcN->EventId, GetFuncId (N));
             
             List *OutEdge = &N->OutEdge;
             LNode *LE = OutEdge->Header;
@@ -303,24 +337,19 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
                     continue;
                 }
                 
-                if (GET_VISIT(DstNode->VisitBits, Plg->DataHandle))
+                if (GET_VISIT(DstNode->VisitBits, DB_TYPE_DIF_PLUGIN_BEGIN))
                 {
                     LE = LE->Nxt;
                     continue;   
                 }
                 else
                 {
-                    DstNode->VisitBits = SET_VISIT (DstNode->VisitBits, Plg->DataHandle);
+                    DstNode->VisitBits = SET_VISIT (DstNode->VisitBits, DB_TYPE_DIF_PLUGIN_BEGIN);
                 }
 
                 DifNode *DstN = GN_2_DIFN (DstNode);
-                if (Plg->IsSink (&Plg->SinkList, DstNode))
-                {
-                    printf ("\r\n@@@@@@@@@@@@@@@@@@@[%s]Reach sink,  EventId = %u (%p) \r\n", 
-                            Plg->Name, R_EID2ETY(DstN->EventId), DstN);
-                    ListInsert(&Ctx->Sinks, DstNode);       
-                }
-                else
+                PrintEMsg(DstN->EventId, &DstN->EMsg);
+                if (InvokePlugins (PluginList, DstN) == FALSE)
                 {
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(LastVisit, DstNode);
@@ -344,7 +373,7 @@ static inline VOID ProcSource (Plugin *Plg, Node *Source)
 }
 
 
-VOID VisitDifg (DWORD SrcHandle, Plugin *Plg)
+VOID VisitDifg (DWORD SrcHandle, List* PluginList)
 {
     DbReq Req;
     DbAck Ack;
@@ -360,7 +389,7 @@ VOID VisitDifg (DWORD SrcHandle, Plugin *Plg)
         assert (Ret != R_FAIL);
         
         Node *Source = *((Node **)(Ack.pDataAddr));
-        ProcSource (Plg, Source);
+        ProcSource (Source, PluginList);
 
         SrcNum--;
     }

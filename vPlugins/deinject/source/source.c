@@ -10,20 +10,19 @@
 
 VOID PrintSink (char *Data)
 {
-    DEBUG ("infotrack -- sink: %s\r\n", Data);
+    DEBUG ("Inject -- sink: %s\r\n", Data);
     return;
 }
 
 
-static inline DWORD IsSink (List *SinkList, Node *DstNode)
+static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
 {
-    DifNode *DN = GN_2_DIFN (DstNode);
-    if (R_EID2ETY(DN->EventId) !=  EVENT_CALL)
+    if (R_EID2ETY(DstNode->EventId) !=  EVENT_CALL)
     {
         return FALSE;        
     }
 
-    EventMsg *EM   = &DN->EMsg;
+    EventMsg *EM   = &DstNode->EMsg;
     LNode *ValNode = EM->Def.Header;
     Variable *FuncVal;
     while (ValNode != NULL)
@@ -42,6 +41,7 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
         return FALSE;
     }
 
+    List *SinkList  = &Plg->SinkList;
     LNode *SinkNode = SinkList->Header;
     while (SinkNode != NULL)
     {
@@ -57,33 +57,15 @@ static inline DWORD IsSink (List *SinkList, Node *DstNode)
     return FALSE;
 }
 
-static inline VOID InitPluginCtx (Plugin *Plg)
+
+
+void InitInject (Plugin *Plg)
 {
     InitDb(Plg->DbAddr);
-    
-    /* source -> a List of Node (path) */
-    DWORD Ret = DbCreateTable(Plg->DataHandle, sizeof (DynCtx), sizeof (Node*));
-    assert (Ret != R_FAIL);
+    ListVisit(&Plg->SinkList, (ProcData)PrintSink);
 
-    Plg->IsSink = (_IS_SINK_)IsSink;
-    Plg->InitStatus = TRUE;
-    return;
-}
-
-void DetectInject (DWORD SrcHandle, Plugin *Plg)
-{
-    DbReq Req;
-    DbAck Ack;
-
-    DEBUG ("Entry DetectInject\r\n");
-    if (Plg->InitStatus == FALSE)
-    {
-        InitPluginCtx (Plg);
-        ListVisit(&Plg->SinkList, (ProcData)PrintSink);
-    }
-
-    /* Visit all sources, and get context of source: (incremental) */
-    VisitDifg (SrcHandle, Plg);
+    Plg->Detect = (_DETECT_)Detect;
     
     return;
 }
+
