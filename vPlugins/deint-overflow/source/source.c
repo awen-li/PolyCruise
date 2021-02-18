@@ -14,38 +14,54 @@ VOID PrintSink (char *Data)
     return;
 }
 
+static inline DWORD IsIntDD (LNode *DefNode, Variable *Val)
+{
+    while (DefNode != NULL)
+    {
+        Variable *DV = (Variable *)DefNode->Data;
+        if (DV ->Type != VT_INTEGER)
+        {
+            DefNode = DefNode->Nxt;
+            continue;
+        }
+
+        if (strcmp (DV->Name, Val->Name) == 0)
+        {
+            return TRUE;
+        }
+
+        DefNode = DefNode->Nxt;
+    }
+
+    return FALSE;
+}
+
 
 static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
     DWORD EventType = R_EID2ETY(DstNode->EventId);
+    DEBUG ("[IntOverflow]EventType = %u \r\n", R_EID2ETY(DstNode->EventId));
+    
     if (EventType !=  EVENT_ADD &&
         EventType !=  EVENT_MUL)
     {
         return FALSE;        
     }
 
-    EventMsg *EM   = &DstNode->EMsg;
-    LNode *ValNode = EM->Def.Header;
+    LNode *ValNode = DstNode->EMsg.Use.Header;
+    LNode *DefNode = SrcNode->EMsg.Def.Header;
     while (ValNode != NULL)
     {
         Variable *Val = (Variable *)ValNode->Data;
-        if (Val->Type != VT_FUNCTION)
+        if (Val->Type != VT_INTEGER)
         {
             ValNode = ValNode->Nxt;
             continue;
         }
 
-        List *SinkList  = &Plg->SinkList;
-        LNode *SinkNode = SinkList->Header;
-        while (SinkNode != NULL)
+        if (IsIntDD (DefNode, Val))
         {
-            char *Function = (char *)SinkNode->Data;
-            if (strcmp (Function, Val->Name) == 0)
-            {
-                return TRUE;
-            }
-
-            SinkNode = SinkNode->Nxt;
+            return TRUE;
         }
 
         ValNode = ValNode->Nxt;

@@ -39,7 +39,7 @@ static inline DWORD IsDD (LNode *DefNode, Variable *Val)
 
 static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
-    printf ("[DivZero]EventType = %u \r\n", R_EID2ETY(DstNode->EventId));
+    DEBUG ("[DivZero]EventType = %u \r\n", R_EID2ETY(DstNode->EventId));
     if (R_EID2ETY(DstNode->EventId) !=  EVENT_DIV)
     {
         return FALSE;        

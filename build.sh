@@ -69,16 +69,14 @@ cp $SDI_PATH/Script/pyinspect.py $PYTHON_PATH
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
-export INCLUDE=$SDI_PATH/DynAnalyzer/include
-export PLUGIN_LINK=-lDynAnalyze
 vPlugins=$SDI_PATH/vPlugins
 cd $vPlugins
+make clean && make
 cp plugins.ini $DATA_DIR/
 plugins=$(ls -l | awk '/^d/ {print $NF}')
 for pdir in $plugins; 
 do
 	cd $vPlugins/$pdir
-	make clean && make
 	cp $vPlugins/$pdir/*.so $DATA_DIR/
 	cp $vPlugins/$pdir/*.sink $DATA_DIR/
 done
