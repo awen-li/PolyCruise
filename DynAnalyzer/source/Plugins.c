@@ -234,12 +234,13 @@ static inline void PrintVar (VOID *Data)
 
 static void PrintEMsg (unsigned long EventId, EventMsg *EM)
 {
+    printf ("\r\n==========================================================\r\n");
     printf ("[%lx]<ViewEMsg> --- [Definition]:", EventId);
     ListVisit (&EM->Def, PrintVar);
 
     printf (" -- [Use]:");
     ListVisit (&EM->Use, PrintVar);
-    printf ("\r\n\r\n");
+    printf ("\r\n");
 
     return;    
 }

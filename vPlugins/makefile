@@ -1,13 +1,13 @@
 #############################################################################
 # Author: Wen Li
-# Date  : 3/31/2020
+# Date  : 1/31/2021
 # Description: makefile for entry of module of project
 ##############################################################################
 
 export CC = clang
 export LD = clang
 
-export CFLAGS  = -D__DEBUG__ -fPIC -g
+export CFLAGS  = -fPIC -g
 export LDFLAGS = -fPIC -shared -lDynAnalyze
 
 export INCLUDE = $(SDI_PATH)/DynAnalyzer/include

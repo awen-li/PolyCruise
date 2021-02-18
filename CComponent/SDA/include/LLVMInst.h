@@ -120,6 +120,25 @@ public:
         return isa<IntrinsicInst>(m_Inst);
     }
 
+    inline bool IsInstrinsicDbgInst() 
+    {
+        if (llvm::isa<llvm::DbgInfoIntrinsic>(m_Inst))
+        {
+            return true;
+        }
+        
+        if (m_CallFunc != NULL)
+        {
+            string FuncName = m_CallFunc->getName().data ();
+            if (FuncName.find ("llvm.lifetime") != FuncName.npos)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     inline bool IsConst (Value *V)
     {
         return (isa<Constant>(V) && !dyn_cast<GlobalValue>(V));
@@ -194,10 +213,6 @@ private:
             case Instruction::Invoke: 
             {
                 Function* Func = GetCallee (m_Inst);
-                if (Func != NULL && Func->isIntrinsic ())
-                {
-                    return;
-                }
                 
                 OpNum--;
                 m_CallFunc = Func;

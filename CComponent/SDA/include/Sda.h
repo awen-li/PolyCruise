@@ -866,7 +866,7 @@ private:
             Instruction *Inst = &*ItI;
 
             LLVMInst LI (Inst);          
-            if (LI.IsIntrinsic() || LI.IsUnReachable())
+            if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable())
             {
                 continue;
             }
@@ -915,8 +915,8 @@ private:
             Instruction *Inst = &*ItI;
 
             LLVMInst LI (Inst);          
-            if (LI.IsIntrinsic() || LI.IsUnReachable())
-            {
+            if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable())
+            {    
                 continue;
             }
 

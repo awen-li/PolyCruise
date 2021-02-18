@@ -3,6 +3,17 @@ strncpy
 strcat
 memcpy
 memmove
+memset
 sprintf
+llvm.memcpy.i32
+llvm.memcpy.p0i8.p0i8.i32
+llvm.memcpy.i64
+llvm.memcpy.p0i8.p0i8.i64
+llvm.memmove.i32
+llvm.memmove.p0i8.p0i8.i32
+llvm.memmove.i64
+llvm.memmove.p0i8.p0i8.i64
+llvm.memset.p0i8.i64
+llvm.memset.p0i8.i32 
 
 

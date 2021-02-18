@@ -57,7 +57,7 @@ vector<LibTaintBits> ExternalLib::m_FTaintBits =
     {"llvm.memmove.p0i8.p0i8.i32", TAINT_ARG1, TAINT_ARG0}, 
     {"llvm.memmove.i64", TAINT_ARG1, TAINT_ARG0},  
     {"llvm.memmove.p0i8.p0i8.i64", TAINT_ARG1, TAINT_ARG0},  
-    {"memccpy", TAINT_ARG1, TAINT_ARG0},  
+    {"memcpy", TAINT_ARG1, TAINT_ARG0},  
     {"memmove", TAINT_ARG1, TAINT_ARG0}, 
     {"bcopy", TAINT_ARG0, TAINT_ARG1}, 
     {"stpcpy", TAINT_ARG1, TAINT_ARG0},  
