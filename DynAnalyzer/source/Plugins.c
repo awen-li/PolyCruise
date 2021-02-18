@@ -269,7 +269,7 @@ static inline DWORD GetFuncId (Node *N)
     return (Fid | (Lang<<28));
 }
 
-static inline DWORD InvokePlugins (List* PluginList, DifNode *DstNode)
+static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *DstNode)
 {
     DWORD SINK = FALSE;
     Plugin *Plg;
@@ -282,7 +282,8 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *DstNode)
 
         if (Plg->Active)
         {
-            DWORD IsSink = Plg->Detect (Plg, DstNode);
+            DEBUG ("=> ENTRY plugin: %s\r\n", Plg->Name);
+            DWORD IsSink = Plg->Detect (Plg, SrcNode, DstNode);
             if (IsSink == TRUE)
             {
                 printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u (%p) \r\n", 
@@ -314,7 +315,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
         {
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
-            DEBUG ("[%lx]SRCnode -> FunctionID = %x \r\n", SrcN->EventId, GetFuncId (N));
+            //DEBUG ("[%lx]SRCnode -> FunctionID = %x \r\n", SrcN->EventId, GetFuncId (N));
             
             List *OutEdge = &N->OutEdge;
             LNode *LE = OutEdge->Header;
@@ -349,7 +350,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
 
                 DifNode *DstN = GN_2_DIFN (DstNode);
                 PrintEMsg(DstN->EventId, &DstN->EMsg);
-                if (InvokePlugins (PluginList, DstN) == FALSE)
+                if (InvokePlugins (PluginList, SrcN, DstN) == FALSE)
                 {
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(LastVisit, DstNode);

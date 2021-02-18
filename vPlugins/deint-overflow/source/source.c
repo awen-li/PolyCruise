@@ -1,7 +1,7 @@
 /***********************************************************
  * Author: Wen Li
  * Date  : 7/24/2020
- * Describe: Plugin: detect information leakage
+ * Describe: Plugin: detect buffer overflow
  * History:
    <1> 7/24/2020 , create
 ************************************************************/
@@ -10,14 +10,16 @@
 
 VOID PrintSink (char *Data)
 {
-    printf ("Leak -- sink: %s\r\n", Data);
+    DEBUG ("Overflow -- sink: %s\r\n", Data);
     return;
 }
 
 
 static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
-    if (R_EID2ETY(DstNode->EventId) !=  EVENT_CALL)
+    DWORD EventType = R_EID2ETY(DstNode->EventId);
+    if (EventType !=  EVENT_ADD &&
+        EventType !=  EVENT_MUL)
     {
         return FALSE;        
     }
@@ -52,7 +54,7 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
     return FALSE;
 }
 
-void InitLeak (Plugin *Plg)
+void InitIntOverflow (Plugin *Plg)
 {
     InitDb(Plg->DbAddr);
     ListVisit(&Plg->SinkList, (ProcData)PrintSink);

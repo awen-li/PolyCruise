@@ -64,7 +64,7 @@ static inline char* GetIntValue (List *ValueList)
 }
 
 
-static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
+static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
     if (R_EID2ETY(DstNode->EventId) !=  EVENT_CALL)
     {
@@ -93,13 +93,13 @@ static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
                 {
                     List *StrlenList = GetStrlenList (Plg->DataHandle, DstNode);
                     ListInsert(StrlenList, DstNode);
-                    printf ("=====>[Incmp] Insert strlen... \r\n");
+                    DEBUG ("=====>[Incmp] Insert strlen... \r\n");
                     return FALSE;
                 }
                 else
                 {
                     List *StrlenList = GetStrlenList (Plg->DataHandle, DstNode);
-                    printf ("=====>[Incmp] get strlenList[%u]... \r\n", StrlenList->NodeNum);
+                    DEBUG ("=====>[Incmp] get strlenList[%u]... \r\n", StrlenList->NodeNum);
                     if (StrlenList != NULL)
                     {
                         LNode *Header = StrlenList->Header;
@@ -109,7 +109,7 @@ static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
                             char *DefInt = GetIntValue(&Nd->EMsg.Def);
                             char *UseInt = GetIntValue(&DstNode->EMsg.Use);
 
-                            printf ("=====>[Incmp] DefInt = %s, UseInt = %s \r\n", DefInt, UseInt);
+                            DEBUG ("=====>[Incmp] DefInt = %s, UseInt = %s \r\n", DefInt, UseInt);
 
                             if (DefInt != NULL &&
                                 UseInt != NULL &&

@@ -59,7 +59,9 @@
 #define EVENT_THRC        (6UL)
 #define EVENT_GEP         (7UL)
 #define EVENT_STORE       (8UL)
-
+#define EVENT_ADD         (9UL)
+#define EVENT_DIV         (10UL)
+#define EVENT_MUL         (11UL)
 
 
 

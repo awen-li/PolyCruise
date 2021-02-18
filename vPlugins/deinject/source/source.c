@@ -15,7 +15,7 @@ VOID PrintSink (char *Data)
 }
 
 
-static inline DWORD Detect (Plugin *Plg, DifNode *DstNode)
+static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
     if (R_EID2ETY(DstNode->EventId) !=  EVENT_CALL)
     {

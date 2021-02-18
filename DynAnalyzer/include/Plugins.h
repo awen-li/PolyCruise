@@ -12,7 +12,7 @@
 #include <Graph.h>
 
 typedef VOID  (*_PLUGIN_INIT_) (VOID *Plg);
-typedef DWORD (*_DETECT_) (VOID *Plg, VOID *DstNode);
+typedef DWORD (*_DETECT_) (VOID *Plg, VOID *SrcNode, VOID *DstNode);
 
 typedef struct tag_Plugin
 {

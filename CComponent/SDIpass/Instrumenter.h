@@ -512,13 +512,57 @@ private:
         return false;        
         
     }
-   
+
+
+    inline unsigned SetEventType (FSda *Fd, unsigned InstId, LLVMInst *LI)
+    {
+        unsigned EventType = EVENT_NR;
+        
+        if (LI->IsGep ())
+        {
+            EventType = EVENT_GEP;            
+        }
+        else if (LI->IsAdd ())
+        {
+            EventType = EVENT_ADD;            
+        }
+        else if (LI->IsMul())
+        {
+            EventType = EVENT_MUL;            
+        }
+        else if (LI->IsDiv())
+        {
+            EventType = EVENT_DIV;            
+        }
+        else if (LI->IsRet ())
+        {
+            EventType = EVENT_RET;  
+        }
+        else if (LI->IsCall ())
+        {
+            EventType = EVENT_CALL;
+        }
+        else if (LI->IsBR())
+        {
+            EventType = EVENT_BR;  
+        }
+        else
+        {
+            EventType = EVENT_NR;
+        }
+
+        Fd->SetEventType (InstId, EventType);
+        return EventType;    
+    }
+
 
     inline void GetInstrPara (FSda *Fd, unsigned InstId, Instruction* Inst, ParaFt *Pf, set <Value*> *DefSets)
     { 
         Value *Def = NULL;
 
         LLVMInst LI (Inst);
+
+        unsigned EventType = SetEventType (Fd, InstId, &LI);
 
         /*
         def:value=use:value,use:value.....
@@ -527,15 +571,7 @@ private:
         */
         
         Pf->AppendFormat ("{");
-        if (LI.IsGep ())
-        {
-            Fd->SetEventType (InstId, EVENT_GEP);
-        }
-        if (LI.IsRet ())
-        {
-            Fd->SetEventType (InstId, EVENT_RET);
-        }
-        else if (LI.IsCall ())
+        if (EventType == EVENT_CALL)
         {
             string Callee = LI.GetCallName ();
             if (Callee != "")
@@ -547,7 +583,6 @@ private:
                 Pf->AppendFormat ("PtsCall");
             }
             
-            Fd->SetEventType (InstId, EVENT_CALL);
             CSTaint *Cst = Fd->GetCsTaint (InstId);
             if (Cst != NULL)
             {
@@ -676,14 +711,8 @@ private:
                 }
             }
         }
-        else if (LI.IsBR())
-        {
-            Fd->SetEventType (InstId, EVENT_BR);
-        }
         else
         {
-            Fd->SetEventType (InstId, EVENT_NR);
-            
             Def = LI.GetDef ();
             if (Def != NULL)
             {
@@ -703,10 +732,10 @@ private:
                 continue;
             }
 
-            if (!LI.IsCall () && DefSets->find (Val) == DefSets->end ())
-            {
-                continue;
-            }
+            //if (EventType != EVENT_CALL && DefSets->find (Val) == DefSets->end ())
+            //{
+            //    continue;
+            //}
 
             //errs()<<"visit use:" <<Val->getName ()<<"\r\n";
             if (AddVarFormat (Pf, Val))

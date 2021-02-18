@@ -241,6 +241,36 @@ static inline Edge* AddDifEdge (Graph *DifGraph, Node *S, Node *D)
     }
 }
 
+static inline DWORD IsNodeFm (DifNode *CurNode, DifNode *FmNode)
+{
+    LNode *FmUse = FmNode->EMsg.Use.Header;
+    while (FmUse != NULL)
+    {
+        Variable *DV = (Variable *)FmUse->Data;
+        assert (DV != NULL);
+    
+        LNode *Use = CurNode->EMsg.Use.Header;
+        while (Use != NULL)
+        {
+            Variable *UV = (Variable *)Use->Data;
+            assert (UV != NULL);
+
+            DEBUG ("===> fm: %s, use: %s \r\n", UV->Name, DV->Name);
+            if (strcmp (UV->Name, DV->Name) == 0)
+            {
+                return TRUE;
+            }
+                
+            Use = Use->Nxt;
+        }
+    
+        FmUse = FmUse->Nxt;
+            
+    }
+        
+    return FALSE;
+}
+
 
 static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
 {
@@ -758,19 +788,37 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
         SetEdgeType (E, EDGE_CF);            
 
 
-        // add dif edge
+        // add dif edge for local variables
         UseMap Um = {{0}, 0};
-        while (LN != NULL)
+        DWORD DDfound = FALSE;
+        while (LN != FDifG->Header)
         {
             TempN = (Node *)LN->Data;
             if (IsNodeDD (DifN, GN_2_DIFN (TempN), &Um))
             {
+                DDfound = TRUE;
                 Edge* E = AddDifEdge (DifGraph, TempN, N);
                 SetEdgeType (E, EDGE_DIF);
                 if (Um.MapNum == DifN->EMsg.Use.NodeNum)
                 {
                     break;
                 }
+            }
+
+            LN = LN->Pre;
+        }
+
+        // add dif edge for formal parameters
+        LN = FDifG->Header->Nxt;
+        while (DDfound == FALSE && LN != NULL)
+        {
+            DEBUG ("===> Add dif edge for formal parameters \r\n");
+            TempN = (Node *)LN->Data;
+            if (IsNodeFm (DifN, GN_2_DIFN (TempN)))
+            {
+                Edge* E = AddDifEdge (DifGraph, TempN, N);
+                SetEdgeType (E, EDGE_DIF);
+                break;
             }
 
             LN = LN->Pre;

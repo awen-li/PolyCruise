@@ -75,6 +75,29 @@ public:
         return false;
     }
 
+    inline bool IsAdd ()
+    {
+        /* ADD + SUB */
+        return (m_InstOp == Instruction::Add ||
+                m_InstOp == Instruction::FAdd ||
+                m_InstOp == Instruction::Sub ||
+                m_InstOp == Instruction::FSub);
+    }
+
+    inline bool IsMul ()
+    {
+        return (m_InstOp == Instruction::Mul ||
+                m_InstOp == Instruction::FMul);
+    }
+
+    
+    inline bool IsDiv ()
+    {
+        return (m_InstOp == Instruction::UDiv ||
+                m_InstOp == Instruction::SDiv ||
+                m_InstOp == Instruction::FDiv);
+    }
+
     inline bool IsPHI ()
     {
         return (m_InstOp == Instruction::PHI);
