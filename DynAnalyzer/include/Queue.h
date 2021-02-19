@@ -11,7 +11,7 @@
 #include "MacroDef.h"
 
 
-#define  BUF_SIZE  (128)
+#define  BUF_SIZE  (256)
 
 typedef struct tag_QNode
 {

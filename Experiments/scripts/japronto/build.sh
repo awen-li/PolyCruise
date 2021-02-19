@@ -22,9 +22,6 @@ DelShareMem ()
 
 target=japronto
 
-DelShareMem
-difaEngine &
-
 # 1. build and translate python modules
 cd ../../
 CASE_PATH=Temp/$target
@@ -45,12 +42,21 @@ rm -rf build
 python setup-instm.py install
 cp misc integration_tests/ -rf
 
-
 # 4. run the cases
-python -m pyinspect -C ../../criterion.xml -t integration_tests/drain.py 
-
-
-
-
-
-
+TestCase=(integration_tests/drain.py  examples/1_hello/hello.py examples/2_async/async.py examples/3_router/router.py examples/4_request/request.py)
+CaseNum=${#TestCase[*]}
+Index=1
+for Case in ${TestCase[@]}
+do
+	echo "[$Index/$CaseNum]======================= Execute the case $Case ======================="
+	DelShareMem
+	difaEngine &
+	
+	python -m pyinspect -C ../../criterion.xml -t $Case &
+	sleep 10m
+	let Index++
+	
+	killall python     2> /dev/null
+	killall difaEngine 2> /dev/null
+	sleep 15
+done

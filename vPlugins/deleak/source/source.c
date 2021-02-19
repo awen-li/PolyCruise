@@ -10,7 +10,7 @@
 
 VOID PrintSink (char *Data)
 {
-    printf ("Leak -- sink: %s\r\n", Data);
+    DEBUG ("Leak -- sink: %s\r\n", Data);
     return;
 }
 

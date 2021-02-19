@@ -42,9 +42,53 @@ struct ParaFt
 
     inline void AppendFormat (string Ft)
     {
+        unsigned Length = m_Format.length();
+        char LastChar   = m_Format.at(Length -1);
+        if (Ft == "," && LastChar == ',')
+        {
+            return;
+        }
+        
         m_Format += Ft; 
 
         return;
+    }
+
+    inline bool IsFull ()
+    {
+        return (bool) (m_ArgNum >= MAX_ARG_NUM);
+    }
+
+    inline bool IsNameExist (string Name)
+    {
+        string::size_type Position = 0;
+        unsigned Num = 0;
+        while((Position = m_Format.find(Name, Position)) != string::npos)
+        {
+            Position++;
+            Num++;
+        }
+
+        return (bool)(Num >= 2);
+    }
+
+    inline bool IsArgExist (Value *Arg)
+    {
+        unsigned Num = 0;
+        for (unsigned Index = 0; Index < m_ArgNum; Index++)
+        {
+            if (m_ArgBuf [Index] == Arg)
+            {
+                Num++;
+            }
+        }
+
+        if (Num >= 2)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     inline void AddArg (Value *Arg)
@@ -450,6 +494,11 @@ private:
 
     inline bool AddVarFormat (ParaFt *Pf, Value *Val)
     {
+        if (Pf->IsArgExist(Val) || Pf->IsFull())
+        {
+            return false;
+        }
+        
         unsigned VType = GetValueType (Val);
         bool Glv = IsGlv (Val);
         
@@ -469,8 +518,11 @@ private:
                 {
                     Name = GetValueName (Val) + ":" + "U";
                 }
-                 
-                Pf->AppendFormat (Name);
+
+                if (!Pf->IsNameExist (Name))
+                {           
+                    Pf->AppendFormat (Name);
+                }
                 return false;
             }
             case Type::PointerTyID:
@@ -505,7 +557,7 @@ private:
             default:
             {
                 printf ("Type=>%u, Not support\r\n", VType);
-                assert (0);
+                //assert (0);
             }
         }
 
