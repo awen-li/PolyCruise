@@ -42,10 +42,11 @@ class LiveObject ():
         print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
 
 class PyEvent(metaclass=abc.ABCMeta):
-    def __init__(self, Frame, Event, Statement):
+    def __init__(self, Frame, Event, Statement, Stmt2FuncDef=None):
         self.Frame = Frame
         self.Event = Event
         self.Statement = Statement
+        self.Stmt2FuncDef = Stmt2FuncDef
         self.LiveObj = LiveObject ()
   
     @abc.abstractmethod

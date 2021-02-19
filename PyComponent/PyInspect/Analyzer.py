@@ -21,7 +21,8 @@ class ClassDef ():
         self.Funcs.append (Func)
 
 class FuncDef ():
-    def __init__(self, FName, Fid, FormalParas):
+    def __init__(self, Cls, FName, Fid, FormalParas):
+        self.Cls   = Cls
         self.Id    = Fid
         self.Name  = FName
         self.Paras = FormalParas
@@ -35,6 +36,7 @@ class Analyzer ():
         self.FuncDef   = {}
         self.ClassDef  = {}
         self.PyMaping  = {}
+        self.Stmt2FuncDef = {}
         self.InitClsFuncSet ()
         #print ("Load AST info:", self.AstInfo)
         self.LoadPyMap (PyMap)
@@ -74,10 +76,10 @@ class Analyzer ():
         Fid = len (self.FuncDef)+1
         Paras = self.GetFuncParas (Stmt)
         if ClfName == None:
-            return FuncDef (Stmt.name, Fid, Paras)
+            return FuncDef ("", Stmt.name, Fid, Paras)
         else:
             FullName = ClfName + "." + Stmt.name
-            return FuncDef (FullName, Fid, Paras)
+            return FuncDef (ClfName, FullName, Fid, Paras)
    
     def ParseClsDef (self, Stmt):
         Cid = len (self.ClassDef)+1
@@ -88,11 +90,12 @@ class Analyzer ():
                 continue
             Cls.AddFunc (Fdef.name) 
             Def = self.ParseFuncDef (Fdef, Stmt.name)
-            self.FuncDef[Def.Name] = Def 
+            self.FuncDef[Def.Name]  = Def 
+            self.Stmt2FuncDef[Fdef] = Def
         return Cls
 
     def InitClsFuncSet (self):
-        self.FuncDef["main"] = FuncDef ("main", 1, [])
+        self.FuncDef["main"] = FuncDef ("", "main", 1, [])
         for Mod, ModAst in self.AstInfo.items ():
             Line2Stmt = ModAst.lineno2stmt
             for Line, Stmt in Line2Stmt.items ():

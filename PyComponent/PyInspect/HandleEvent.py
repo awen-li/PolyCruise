@@ -15,8 +15,8 @@ class RetEvent (PyEvent):
 
 
 class CallEvent (PyEvent):
-    def __init__(self, Frame, Event, Statement):
-        super(CallEvent, self).__init__(Frame, Event, Statement)
+    def __init__(self, Frame, Event, Statement, Stmt2FuncDef=None):
+        super(CallEvent, self).__init__(Frame, Event, Statement, Stmt2FuncDef)
 
     def GetDefUse (self):
         Statement = self.Statement
@@ -30,8 +30,14 @@ class CallEvent (PyEvent):
             ArgVal = arg.arg
             
             if ArgVal == "self":
-                Class  = self.Self2Obj (ArgVal)
-                Callee = Class + "." + Callee
+                if Callee == "__init__" and self.Stmt2FuncDef != None:
+                    FDef = self.Stmt2FuncDef.get (Statement)
+                    if FDef != None:
+                        Class  = FDef.Cls
+                        Callee = FDef.Name
+                else:
+                    Class  = self.Self2Obj (ArgVal)
+                    Callee = Class + "." + Callee
                 self.LiveObj.SetUse (Class)
             else:
                 self.LiveObj.SetUse (ArgVal)
@@ -149,9 +155,14 @@ class LineEvent (PyEvent):
         if isinstance(Func, Name):
             self.LiveObj.SetCallee (Func.id)
         elif isinstance(Func, Attribute):
-            #self.LiveObj.SetDef (Func.value.id)
-            Class  = self.Self2Obj (Func.value.id)
-            CallFunc = Class + "." + Func.attr
+            #print (ast.dump (Statement))
+            AttrValue = Func.value
+            Class = None
+            if isinstance (AttrValue, Bytes):
+                CallFunc = Func.attr
+            else:
+                Class  = self.Self2Obj (AttrValue.id)
+                CallFunc = Class + "." + Func.attr
             self.LiveObj.SetCallee (CallFunc, Class)
             #oo, add the object as the first parameter
             self.LiveObj.SetUse (Class)
