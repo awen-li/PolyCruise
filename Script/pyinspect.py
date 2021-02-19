@@ -9,6 +9,53 @@ from PyInspect import Inspector
 from PyInspect import PyTranslate, PyTranslateFile
 from PyInspect import Criterion
 
+PY_MAPING = "Pymap.ini"
+
+class PyMaping ():  
+    def __init__(self, IniSet="*.ini", SrcSet="pyList"):
+            IniFiles = self.LoadFile(IniSet)
+            SrcFiles = self.LoadFile(SrcSet)
+            PyMap = self.Maping (IniFiles, SrcFiles)
+            self.Dump (PyMap)
+
+    def LoadFile (self, Name):
+        Content = []
+        with open(Name, 'r', encoding='latin1') as File:
+            for line in File:
+                line = line.strip('\n')
+                Content.append (line)
+        return Content
+
+    def Dump (self, PyMap):
+        with open(PY_MAPING, "w") as File:
+            for ini, src in PyMap.items():
+                File.write(ini + " " + src + "\n")
+
+    def MaxPrefix(self, StrList):
+        Max = ""    
+        for S in zip(*StrList):        
+            if len(set(S))==1:            
+                Max +=S[0]        
+            else:            
+                break    
+        return Max
+
+    def Maping (self, IniFiles, SrcFiles):
+        PyMap = {}
+        for ini in IniFiles:
+            IniF = ini[::-1]
+            Max  = ""
+            MaxSrc = ""
+            for src in SrcFiles:
+                srcF = src[::-1]
+                StrList = [IniF, srcF]
+                Prefix = self.MaxPrefix (StrList)
+                if len (Prefix) > len (Max):
+                    Max = Prefix
+                    MaxSrc = src
+            print (ini, " -> ", MaxSrc)
+            PyMap[ini] = MaxSrc
+        return PyMap
 
 class xmlParse ():
     def __init__(self, CriteCfg="criterion.xml"):
@@ -63,6 +110,8 @@ def InitArgument (parser):
                      help='the xml file for defining criterion ')
     grp.add_argument('-E', '--exceptfile',
                      help='the configure file for elimiate unnecesssay py files')
+    grp.add_argument('-M', '--maping',
+                     help='maping the installed source py files')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -99,7 +148,7 @@ def DynTrace (EntryScript, CriteCfg):
             '__cached__': None,
         }
         
-        with Inspector ("pyList", XP.Critn):
+        with Inspector ("pyList", XP.Critn, PY_MAPING):
             RunCtx(code, globs, globs)
         
     except OSError as err:
@@ -111,8 +160,12 @@ def main():
     parser = argparse.ArgumentParser()
     InitArgument (parser)
 
-    opts = parser.parse_args()  
-    if opts.compile == True:
+    opts = parser.parse_args()
+    if opts.maping != None:
+        if opts.filename is None:
+            parser.error('filename is missing: required with the main options')
+        PyMaping (opts.maping, opts.filename)
+    elif opts.compile == True:
         ExpList=["setup.py", "__init__.py", "build.py"]
         if opts.exceptfile != None:
             ExpList = ParseExpList (opts.exceptfile)

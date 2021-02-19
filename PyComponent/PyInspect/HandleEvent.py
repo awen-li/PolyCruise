@@ -111,6 +111,8 @@ class LineEvent (PyEvent):
                 if not isinstance (elm, Name):
                     continue
                 self.LiveObj.SetUse (elm.id)
+        elif isinstance(Value, Bytes):
+            self.LiveObj.SetUse (Value.s)
         else:
             print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."

@@ -20,12 +20,32 @@ DelShareMem ()
 	fi	
 }
 
+GenMap ()
+{
+    SCRIPTS=$1
+    CASE_PATH=$2
+    target=$3
+    
+    pyMap=$SCRIPTS/Pymap.ini
+    if [ -f "$pyMap" ]; then
+    	cp $pyMap $CASE_PATH
+    else
+        echo "...................start generating Pymap.ini ............................."
+    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+        find $INSTALL_PATH -name "*.py" > "$target.ini"
+        python -m pyinspect -M "$target.ini" pyList	
+    fi
+    
+    return
+}
+
 target=japronto
 
 # 1. build and translate python modules
 cd ../../
-CASE_PATH=Temp/$target
-SCRIPTS=scripts/$target
+ROOT=`pwd`
+CASE_PATH=$ROOT/Temp/$target
+SCRIPTS=$ROOT/scripts/$target
 
 python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
@@ -42,8 +62,14 @@ rm -rf build
 python setup-instm.py install
 cp misc integration_tests/ -rf
 
-# 4. run the cases
-TestCase=(integration_tests/drain.py  examples/1_hello/hello.py examples/2_async/async.py examples/3_router/router.py examples/4_request/request.py)
+
+# 4. generate file maping
+GenMap $SCRIPTS $CASE_PATH $target
+
+# 5. run the cases
+#integration_tests/test_drain.py integration_tests/test_noleak.py integration_tests/test_perror.py integration_tests/test_reaper.py integration_tests/test_request.py\
+TestCase=(examples/1_hello/hello.py examples/2_async/async.py examples/3_router/router.py examples/4_request/request.py examples/8_template/template.py examples/7_extend/extend.py\
+          examples/6_exceptions/exceptions.py)
 CaseNum=${#TestCase[*]}
 Index=1
 for Case in ${TestCase[@]}
@@ -53,10 +79,11 @@ do
 	difaEngine &
 	
 	python -m pyinspect -C ../../criterion.xml -t $Case &
-	sleep 10m
+	sleep 60
 	let Index++
 	
 	killall python     2> /dev/null
 	killall difaEngine 2> /dev/null
 	sleep 15
+	break
 done

@@ -5,6 +5,7 @@ import inspect
 import astunparse
 import ast
 import pickle
+import os
 from ast import Name
 from os.path import abspath, sep, join
 from .ModRewriter import *
@@ -29,12 +30,37 @@ class FuncDef ():
         print ("FuncDef: Id = ", self.Id, " Name = ", self.Name, " Paras = ", self.Paras)
 
 class Analyzer ():
-    def __init__(self, PyListFile, SrcDir="."):
+    def __init__(self, PyListFile, SrcDir=".", PyMap=None):
         self.AstInfo   = self.LoadPlks (SrcDir, PyListFile)
         self.FuncDef   = {}
         self.ClassDef  = {}
+        self.PyMaping  = {}
         self.InitClsFuncSet ()
         #print ("Load AST info:", self.AstInfo)
+        self.LoadPyMap (PyMap)
+
+    def LoadPyMap (self, PyMap):
+        if PyMap == None:
+            return
+
+        if not os.path.exists(PyMap):
+            return
+        
+        with open(PyMap, 'r', encoding='latin1') as File:
+            for line in File:
+                ini, src = line.split ()
+                #print (ini, " -> ", src)
+                self.PyMaping [ini] = src
+
+    def GetPySrc (self, Src):
+        if len (self.PyMaping) == 0:
+            return Src
+        Ini = self.PyMaping.get (Src)
+        if Ini == None:
+            return Src
+        else:
+            #print ("Match: ", Src, " -> ", Ini);
+            return Ini
 
     def GetFuncParas (self, Stmt):
         #print (ast.dump (Stmt))
@@ -135,6 +161,7 @@ class Analyzer ():
 
     
     def HandleEvent(self, ScriptName, Frame, Event, LineNo):
+        ScriptName = self.GetPySrc (ScriptName)
         Mod = self.AstInfo.get(ScriptName)
         if Mod == None:
             #print (ScriptName, " -> get ast fail!!!")

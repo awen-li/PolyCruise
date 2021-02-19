@@ -15,13 +15,6 @@ class Criterion ():
     def Insert (self, Function,  Return, Local):
         self.Criterions[Function] = CrnF (Function, Return, Local) 
 
-    def GetTaintParas (self, FuncName):
-        crnF = self.Criterions.get (FuncName)
-        if crnF == None:
-            return None
-        else:
-            return crnF.Parameters
-
     def IsCriterion (self, FuncName, Def=None):
         crnF = self.Criterions.get (FuncName)
         if crnF == None:

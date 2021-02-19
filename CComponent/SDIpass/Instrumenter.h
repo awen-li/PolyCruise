@@ -43,10 +43,13 @@ struct ParaFt
     inline void AppendFormat (string Ft)
     {
         unsigned Length = m_Format.length();
-        char LastChar   = m_Format.at(Length -1);
-        if (Ft == "," && LastChar == ',')
+        if (Length > 0)
         {
-            return;
+            char LastChar   = m_Format.at(Length -1);
+            if (Ft == "," && LastChar == ',')
+            {
+                return;
+            }
         }
         
         m_Format += Ft; 

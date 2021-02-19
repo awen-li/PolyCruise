@@ -59,8 +59,8 @@ class Context:
             return True
 
 class Inspector:
-    def __init__(self, RecordFile, Criten, EntryFunc="main", SrcDir="."):
-        self.Analyzer = Analyzer (RecordFile, SrcDir)
+    def __init__(self, RecordFile, Criten, PyMap="Pymap.ini", EntryFunc="main", SrcDir="."):
+        self.Analyzer = Analyzer (RecordFile, SrcDir, PyMap)
         self.Crtn  = Criten
         self.CtxStack = []
         self.GlobalTaintLexical = {}
@@ -114,11 +114,6 @@ class Inspector:
 
     def SetCallCtx (self, LiveObj):
         TaintSet = self.GetTaintedParas (LiveObj)
-        TaintBits= self.Crtn.GetTaintParas (LiveObj.Callee)
-        if TaintBits != None:
-            TaintSet += TaintBits
-            TaintSet = list(set(TaintSet))
-
         self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
         #print ("\t@@@@@", self.CurCtx.Func, TaintSet, " Cache Callee: ", end="")
@@ -133,7 +128,7 @@ class Inspector:
             
         FCalleeDef = self.Analyzer.GetFuncDef (CallSiteObj.Callee)
         if len (FCalleeDef.Paras) == 0:
-            return
+            return TaintedFormal, CallSiteObj.Callee
         FCalleeDef.View ()
 
         Index = 0
@@ -231,16 +226,16 @@ class Inspector:
         self.IsSource = False
         self.IsTaint  = False
         if Event == "line" and LiveObj.Callee != None:
+            IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
+            if IsCrn != False:
+                self.CurCtx.InsertLexicon (LiveObj.Def)
+                self.IsTaint = True
+                self.IsSource = True
+                print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
+             
             if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
             else:
-                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
-                if IsCrn != False:
-                    self.CurCtx.InsertLexicon (LiveObj.Def)
-                    self.IsTaint = True
-                    self.IsSource = True
-                    print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
-            
                 self.Propogate (LiveObj)
             return EVENT_CALL
         
@@ -273,9 +268,12 @@ class Inspector:
                 Msg += ","
         return Msg
 
-    def IsLiveObjValid (self, LiveObj):
+    def IsLiveObjValid (self, LiveObj, Event):
         if LiveObj == None:
             return False
+
+        if Event == "call":
+            return True
 
         if LiveObj.Ret == LiveObject.RET_CALLER and self.CurCtx.Func != "main":
             return True
@@ -288,8 +286,6 @@ class Inspector:
     def Tracing(self, Frame, Event, Arg):        
         Code = Frame.f_code
 
-        #print ("Tracing -> ", Code.co_filename)
-
         if self.CacheMsg != None:
             print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
             PyTrace (self.CacheEvent, self.CacheMsg)
@@ -298,10 +294,12 @@ class Inspector:
         _, ScriptName = os.path.split(Code.co_filename) 
         if ScriptName in self.Scripts:
             return self.Tracing
+
+        #print("===> ", ScriptName, Frame.f_lineno, Event)
        
         LineNo  = Frame.f_lineno
         LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
-        if self.IsLiveObjValid (LiveObj) == False:
+        if self.IsLiveObjValid (LiveObj, Event) == False:
             return self.Tracing
 
         # return to caller
