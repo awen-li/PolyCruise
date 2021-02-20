@@ -69,6 +69,8 @@ class Analyzer ():
         Fparas = []
         Args = Stmt.args.args
         for arg in Args:
+            if Stmt.name == "__init__" and arg.arg == "self":
+                continue
             Fparas.append (arg.arg)
         return Fparas
 

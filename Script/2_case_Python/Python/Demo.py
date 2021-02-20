@@ -3,10 +3,10 @@ import os
 from DemoAdd import DemoAdd
     
 def DemoTr (Value):
-    Da = DemoAdd (Value)
     Var = os.getenv("CASE1")
     Var = int (Var)
-    Res = Da.Add (Var)
+    Da = DemoAdd (Var)
+    Res = Da.Add (Value)
     return Res
 
 

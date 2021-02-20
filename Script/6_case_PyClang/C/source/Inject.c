@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 
 int RunExec (char *Cmd)

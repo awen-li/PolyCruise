@@ -45,14 +45,14 @@ class Context:
         self.RetTaint = False
         self.CalleeLo = None
 
-    def InsertLexicon (self, Lexicon):
-        if Lexicon == None:
+    def InsertSymb (self, Symb):
+        if Symb == None:
             return
-        self.TaintSymbs [Lexicon] = True
+        self.TaintSymbs [Symb] = True
         #print ("self.TaintSymbs = ", self.TaintSymbs)
 
-    def IsTaint (self, Lexicon):
-        Flag = self.TaintSymbs.get (Lexicon)
+    def IsTaint (self, Symb):
+        Flag = self.TaintSymbs.get (Symb)
         if Flag == None:
             return False
         else:
@@ -105,13 +105,36 @@ class Inspector:
         TaintSet = []
         for Index in range (len(Uses)):
             use = Uses[Index]
-            if self.CurCtx.IsTaint (use):
+            if self.IsInTainted (use):
                 if LiveObj.Class != None:
                     TaintSet.append (Index+1)
                 else:
                     TaintSet.append (Index)
         return TaintSet
 
+    def IsGlobal (self, Symb):
+        if Symb.find('.') != -1:
+            return True
+        return False
+
+    def IsInTainted (self, Symb):
+        #print ("@@@@@@@@@ IsInTainted -> ",  Symb)
+        Exist = self.CurCtx.IsTaint (Symb)
+        if Exist == True:
+            return True
+        Exist = self.GlobalTaintSymbs.get (Symb)
+        if Exist != None:
+            return True
+        return False
+
+    def InsertSymb (self, Symb):
+        Cls = self.IsGlobal (Symb)
+        if Cls == False:
+            self.CurCtx.InsertSymb (Symb)
+        else:
+            self.GlobalTaintSymbs[Symb] = True
+        return
+        
     def SetCallCtx (self, LiveObj):
         TaintSet = self.GetTaintedParas (LiveObj)
         self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
@@ -134,12 +157,13 @@ class Inspector:
         Index = 0
         ParaNum = 0
         for use in CallSiteObj.Uses:
-            if use not in self.CurCtx.TaintSymbs:
+            if not self.IsInTainted(use):
                 Index += 1
                 continue
             TaintedFormal.append(FCalleeDef.Paras[Index])
             Index += 1  
-            
+
+        #print ("===> CallSiteObj: class= ", CallSiteObj.Class, ", TaintedFormal = ", TaintedFormal)
         return TaintedFormal, CallSiteObj.Callee
     
     def PushCtx (self):
@@ -156,7 +180,7 @@ class Inspector:
         print ("-------------------------> Push Context: ", self.CurCtx.Func, " ret = ", self.CurCtx.Ret, " Formal = ", TaintedFormal)
 
         for para in TaintedFormal:
-            self.CurCtx.InsertLexicon (para)
+            self.InsertSymb (para)
         self.IsTaint = True
         return   
     
@@ -180,7 +204,7 @@ class Inspector:
         for use in TaintedFormal:           
             if ParaNum > 0:
                 Msg += ","          
-            Msg += use + ":U"      
+            Msg += use + self.GetSymbType (use)      
             ParaNum += 1
         Msg += ")," 
 
@@ -188,7 +212,7 @@ class Inspector:
             Msg += self.FormatDefUse (CallSiteObj)
         else:
             if CallSiteObj.Def != None:
-                Msg += CallSiteObj.Def + ":U="
+                Msg += CallSiteObj.Def + self.GetSymbType (CallSiteObj.Def) + "="
         
         Msg += "}"
         
@@ -201,23 +225,23 @@ class Inspector:
         if IsSource:
             self.IsTaint = True
             self.IsSource = True
-            self.CurCtx.InsertLexicon (LiveObj.Def)
+            self.InsertSymb (LiveObj.Def)
             return
         
         Uses = LiveObj.Uses
         for use in Uses:
-            if self.CurCtx.IsTaint (use):
+            if self.IsInTainted (use):
                 self.IsTaint = True
                 if LiveObj.Def != None:
                     self.IsTaint = True
-                    self.CurCtx.InsertLexicon (LiveObj.Def)
+                    self.InsertSymb (LiveObj.Def)
                 break
         return
         
 
     def Ret2Callsite (self, LiveObj):
         Ret = LiveObj.Uses[0]
-        if self.CurCtx.IsTaint (Ret):
+        if self.IsInTainted (Ret):
             return True, self.CurCtx.Ret
         else:
             return False, None
@@ -228,7 +252,7 @@ class Inspector:
         if Event == "line" and LiveObj.Callee != None:
             IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
             if IsCrn != False:
-                self.CurCtx.InsertLexicon (LiveObj.Def)
+                self.InsertSymb (LiveObj.Def)
                 self.IsTaint = True
                 self.IsSource = True
                 print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
@@ -257,13 +281,19 @@ class Inspector:
         
         return EVENT_NR
 
+    def GetSymbType (self, Symb):
+        if self.IsGlobal (Symb) == True:
+            return ":G"
+        else:
+            return ":U"
+
     def FormatDefUse (self, LiveObj):
         Msg = ""
         if LiveObj.Def != None:
-            Msg += LiveObj.Def + ":U="
+            Msg += LiveObj.Def + self.GetSymbType (LiveObj.Def) + "="
         
         for use in LiveObj.Uses:
-            Msg += str(use) + ":U"
+            Msg += str(use) + self.GetSymbType (use)
             if use != LiveObj.Uses[-1]:
                 Msg += ","
         return Msg
@@ -300,6 +330,9 @@ class Inspector:
         if self.IsLiveObjValid (LiveObj, Event) == False:
             return self.Tracing
 
+        #print(ScriptName, LineNo, Event, Code.co_name, "<Local>", self.CurCtx.TaintSymbs, " <Global>", self.GlobalTaintSymbs, ", CurClass=",LiveObj.Class)
+        #LiveObj.View ()
+
         # return to caller
         if LiveObj.Ret == LiveObject.RET_CALLER:
             Ret = None
@@ -307,11 +340,9 @@ class Inspector:
                 Ret = self.CurCtx.Ret          
             self.PopCtx ()
             if Ret != None:
-                self.CurCtx.InsertLexicon (Ret)
+                self.InsertSymb (Ret)
                 print ("****************<> Ret Taint: ", Ret)      
             return self.Tracing
-        #print(ScriptName, LineNo, Event, Code.co_name, self.CurCtx.TaintLexical, LiveObj.Class) #, Frame.f_locals
-        #LiveObj.View ()
  
         EventTy  = self.TaintAnalysis (Event, LiveObj)
         if self.IsTaint == False:
