@@ -4,12 +4,9 @@
 static char Buffer[64] = "Here is an example for buffer read!";
 static char Target[32] = "";
 
-void IntOf (int Oper);
 
 int BinOp (int Oper)
 {
-    IntOf(Oper);
-
     int Value = Oper;
 
     printf ("Buffer -> %s \r\n", Buffer+Value);

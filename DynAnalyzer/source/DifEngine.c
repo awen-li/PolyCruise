@@ -408,23 +408,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
         FmlNode = FmlNode->Nxt;
     }
 
-    /* use */
     List *UseList = &CallNode->EMsg.Use;
-    FmlNode = UseList->Header;
-    while (FmlNode != NULL)
-    {
-        Variable *Val = (Variable *) (FmlNode->Data);      
-        Node *RefNode = GetReferNode (Val, FDifG);
-        if (RefNode != NULL)
-        {
-            E = AddDifEdge (DifGraph, CurNd, RefNode);
-            SetEdgeType (E, EDGE_DIF);
-            EdgeNum++;
-        }
-        
-        FmlNode = FmlNode->Nxt;
-    }
-
     if (EdgeNum == 0 && UseList->Header != NULL)
     {
         LNode *CalleeNode = FDifG->Header->Nxt;
@@ -821,7 +805,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
                 break;
             }
 
-            LN = LN->Pre;
+            LN = LN->Nxt;
         }
 
         /* dependence not found, try dependence cross-threads */

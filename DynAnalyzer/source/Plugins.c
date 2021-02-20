@@ -232,10 +232,10 @@ static inline void PrintVar (VOID *Data)
     return;
 }
 
-static void PrintEMsg (unsigned long EventId, EventMsg *EM)
+static void PrintEMsg (unsigned NodeId, unsigned long EventId, EventMsg *EM)
 {
-    printf ("\r\n==========================================================\r\n");
-    printf ("[%lx]<ViewEMsg> --- [Definition]:", EventId);
+    printf ("==========================================================\r\n");
+    printf ("[Node%u][%lx]<ViewEMsg> --- [Definition]:", NodeId, EventId);
     ListVisit (&EM->Def, PrintVar);
 
     printf (" -- [Use]:");
@@ -316,7 +316,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
         {
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
-            //DEBUG ("[%lx]SRCnode -> FunctionID = %x \r\n", SrcN->EventId, GetFuncId (N));
+            DEBUG ("[Node%u][%lx]SRCnode -> FunctionID = %x \r\n", N->Id, SrcN->EventId, GetFuncId (N));
             
             List *OutEdge = &N->OutEdge;
             LNode *LE = OutEdge->Header;
@@ -330,14 +330,6 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
                     continue;
                 }
                 Node *DstNode = E->Dst;
-
-                if (DE->EdgeType & EDGE_RET)
-                {
-                    DEBUG ("Reach Return node -> FunctionID = %x \r\n", GetFuncId (DstNode));
-                    ListInsert(LastVisit, DstNode);
-                    LE = LE->Nxt;
-                    continue;
-                }
                 
                 if (GET_VISIT(DstNode->VisitBits, DB_TYPE_DIF_PLUGIN_BEGIN))
                 {
@@ -349,8 +341,16 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
                     DstNode->VisitBits = SET_VISIT (DstNode->VisitBits, DB_TYPE_DIF_PLUGIN_BEGIN);
                 }
 
+                if (DE->EdgeType & EDGE_RET)
+                {
+                    DEBUG ("Reach Return node -> FunctionID = %x \r\n", GetFuncId (DstNode));
+                    ListInsert(LastVisit, DstNode);
+                    LE = LE->Nxt;
+                    continue;
+                }
+
                 DifNode *DstN = GN_2_DIFN (DstNode);
-                PrintEMsg(DstN->EventId, &DstN->EMsg);
+                PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
                 if (InvokePlugins (PluginList, SrcN, DstN) == FALSE)
                 {
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
@@ -359,6 +359,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
 
                 ListChange = TRUE;
                 LE = LE->Nxt;
+                DEBUG ("==============> Set ListChange = TRUE \r\n");
             }
 
             Last = Last->Nxt;
@@ -383,7 +384,7 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList)
     /* Visit all sources, and get context of source: (incremental) */
     DWORD SrcNum = QueryDataNum (SrcHandle);
     Req.dwDataType = SrcHandle;
-    DEBUG ("Source num: %u \r\n", SrcNum);
+    DEBUG ("\r\n @@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n", SrcNum);
     while (SrcNum > 0)
     {
         Req.dwDataId = SrcNum;
