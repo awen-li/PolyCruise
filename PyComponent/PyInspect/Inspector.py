@@ -39,7 +39,7 @@ EVENT_STORE  = 8
 class Context:
     def __init__(self, CurFunc, TaintInPara, Ret=None):
         self.Func = CurFunc
-        self.TaintLexical = {}
+        self.TaintSymbs  = {}
         self.TaintInpara = TaintInPara
         self.Ret = Ret
         self.RetTaint = False
@@ -48,11 +48,11 @@ class Context:
     def InsertLexicon (self, Lexicon):
         if Lexicon == None:
             return
-        self.TaintLexical [Lexicon] = True
-        #print ("self.TaintLexical = ", self.TaintLexical)
+        self.TaintSymbs [Lexicon] = True
+        #print ("self.TaintSymbs = ", self.TaintSymbs)
 
     def IsTaint (self, Lexicon):
-        Flag = self.TaintLexical.get (Lexicon)
+        Flag = self.TaintSymbs.get (Lexicon)
         if Flag == None:
             return False
         else:
@@ -63,7 +63,7 @@ class Inspector:
         self.Analyzer = Analyzer (RecordFile, SrcDir, PyMap)
         self.Crtn  = Criten
         self.CtxStack = []
-        self.GlobalTaintLexical = {}
+        self.GlobalTaintSymbs = {}
 
         self.CacheMsg = None
 
@@ -134,7 +134,7 @@ class Inspector:
         Index = 0
         ParaNum = 0
         for use in CallSiteObj.Uses:
-            if use not in self.CurCtx.TaintLexical:
+            if use not in self.CurCtx.TaintSymbs:
                 Index += 1
                 continue
             TaintedFormal.append(FCalleeDef.Paras[Index])
@@ -294,8 +294,6 @@ class Inspector:
         _, ScriptName = os.path.split(Code.co_filename) 
         if ScriptName in self.Scripts:
             return self.Tracing
-
-        #print("===> ", ScriptName, Frame.f_lineno, Event)
        
         LineNo  = Frame.f_lineno
         LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)

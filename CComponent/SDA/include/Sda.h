@@ -33,6 +33,8 @@
 using namespace llvm;
 using namespace std;
 
+#define MAX_ITERATE (16)
+
 
 typedef set<Instruction*>::iterator sii_iterator;
 typedef map <Instruction*, unsigned long>::iterator miu_iterator;
@@ -812,6 +814,10 @@ private:
         }
         else
         {
+            ExeFunction (LI, NULL, Cst, LexSet);
+            return;
+
+            #if 0
             FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
             //assert (Fset != NULL);
             if (Fset == NULL)
@@ -827,6 +833,7 @@ private:
                 ExeFunction (LI, Callee, Cst, LexSet);
                 Cst->m_Callees.insert(Callee);
             }
+            #endif
         }
 
         return;
@@ -905,7 +912,6 @@ private:
 
     inline unsigned ForwardDeduce (FSda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
-        //printf ("=>ForwardDeduce Entry %s : FTaintBits = %#x\r\n", Fd->GetName (), FTaintBits);
         Function *Func = Fd->GetFunc ();
         InitCriterions (Func, FTaintBits, LocalLexSet);
 
@@ -928,7 +934,10 @@ private:
                 {
                     m_GlvAlias [Inst] = LV;
                     m_GlvUse2Entry[LV].insert (m_CurEntry);
-                    m_Entry2GlvUse[m_CurEntry].insert (LV);
+                    if (m_Entry2GlvUse[m_CurEntry].size() < MAX_ITERATE)
+                    {
+                        m_Entry2GlvUse[m_CurEntry].insert (LV);
+                    }
                     //errs ()<<"Entry Function: "<<m_CurEntry->getName()
                     //       <<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
                 }

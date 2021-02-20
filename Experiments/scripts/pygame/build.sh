@@ -8,8 +8,11 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
+		echo "...SdaAnalysis -> $bc"
 		sda -file $bc -criterion ../../criterion.xml
 	done
+	
+	echo "...Finish SdaAnalysis....................."
 }
 
 DelShareMem ()
@@ -20,6 +23,25 @@ DelShareMem ()
 	fi	
 }
 
+GenMap ()
+{
+    SCRIPTS=$1
+    CASE_PATH=$2
+    target=$3
+    
+    pyMap=$SCRIPTS/Pymap.ini
+    if [ -f "$pyMap" ]; then
+    	cp $pyMap $CASE_PATH
+    else
+        echo "...................start generating Pymap.ini ............................."
+    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+        find $INSTALL_PATH -name "*.py" > "$target.ini"
+        python -m pyinspect -M "$target.ini" pyList	
+    fi
+    
+    return
+}
+
 target=pygame
 
 DelShareMem
@@ -27,8 +49,9 @@ difaEngine &
 
 # 1. build and translate python modules
 cd ../../
-CASE_PATH=Temp/$target
-SCRIPTS=scripts/$target
+ROOT=`pwd`
+CASE_PATH=$ROOT/Temp/$target
+SCRIPTS=$ROOT/scripts/$target
 
 python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
@@ -45,7 +68,10 @@ rm -rf build
 python setup-instm.py install
 
 
-# 4. run the cases
+# 4. generate file maping
+#GenMap $SCRIPTS $CASE_PATH $target
+
+# 5. run the cases
 python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
 
 
