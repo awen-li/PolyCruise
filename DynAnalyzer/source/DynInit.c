@@ -79,7 +79,7 @@ void DynExit ()
     DWORD Exit;
     while (!(Exit = QueueGetExit()))
     {
-        printf ("......\tWait for exit[%u]...\r\n", Exit);
+        //printf ("......\tWait for exit[%u]...\r\n", Exit);
         sleep (5);
     }
 

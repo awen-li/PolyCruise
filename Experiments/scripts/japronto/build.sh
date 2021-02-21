@@ -85,5 +85,4 @@ do
 	killall python     2> /dev/null
 	killall difaEngine 2> /dev/null
 	sleep 15
-	break
 done

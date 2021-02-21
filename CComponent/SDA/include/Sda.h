@@ -33,7 +33,7 @@
 using namespace llvm;
 using namespace std;
 
-#define MAX_ITERATE (16)
+#define MAX_ITERATE (8)
 
 
 typedef set<Instruction*>::iterator sii_iterator;
@@ -1170,7 +1170,13 @@ private:
             TaintInstNum += Fd->GetTaintInstNum ();
             
             FldaBin Fdb = {0};
-            strcpy (Fdb.FuncName, Fd->GetName());
+            char *FdName = Fd->GetName();
+            if (strlen (FdName) >= F_NAME_LEN)
+            {
+                printf ("@Waring: Max-lenggth = %u, but the name length is %u/%s \r\n", 
+                        F_NAME_LEN, (unsigned)strlen (FdName), FdName);
+            }
+            strncpy (Fdb.FuncName, FdName, sizeof (Fdb.FuncName));
             Fdb.FuncId       = Fd->GetFID ();
             Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();

@@ -8,7 +8,7 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
-		echo "...SdaAnalysis -> $bc"
+		echo "sda -file $bc -criterion ../../criterion.xml"
 		sda -file $bc -criterion ../../criterion.xml
 	done
 	
@@ -42,6 +42,9 @@ GenMap ()
     return
 }
 
+Recompile=$1
+echo "Recompile = $Recompile............"
+
 target=pygame
 
 DelShareMem
@@ -53,25 +56,33 @@ ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
-python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-
-# 2. build and instrument C modules
-cp criterion.xml $CASE_PATH/
-cp $SCRIPTS/setup-*.py $CASE_PATH/
-cd $CASE_PATH
-rm -rf build
-python setup-lda.py build
-SdaAnalysis
-
-# 3. build again and install the instrumented software
-rm -rf build
-python setup-instm.py install
+if [ "$Recompile" == "recmpl" ]; then
+	echo "Translate python sources............"
+    python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
 
-# 4. generate file maping
-#GenMap $SCRIPTS $CASE_PATH $target
+    # 2. build and instrument C modules
+    cp criterion.xml $CASE_PATH/
+    cp $SCRIPTS/setup-*.py $CASE_PATH/
+    cd $CASE_PATH
+    rm -rf build
+    python setup-lda.py build
+    echo "Start SdaAnalysis............"
+    SdaAnalysis
+
+    # 3. build again and install the instrumented software
+    rm -rf build
+    echo "Start Instrumentation............"
+    python setup-instm.py install
+
+
+    # 4. generate file maping
+    #GenMap $SCRIPTS $CASE_PATH $target
+fi
 
 # 5. run the cases
+cd $CASE_PATH
+echo "Start run the case............"
 python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
 
 

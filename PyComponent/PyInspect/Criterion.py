@@ -20,11 +20,15 @@ class Criterion ():
         if crnF == None:
             return False
         else:
-            if crnF.Return != 'False':
-                return True
-            elif Def != None and crnF.Local == Def:
-                return True
+            if Def == None:      
+                if crnF.Return != 'False':
+                    return True
+                else:
+                    return False
             else:
-                return False
+                if crnF.Local == Def:
+                    return True
+                else:
+                    return False
 
         

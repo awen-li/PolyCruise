@@ -15,5 +15,5 @@
 <criterion> <function>getchar</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>receive</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>Source</function> <return>True</return> <local>None</local> </criterion>
-
+<criterion> <function>module.Info</function> <return>True</return> <local>None</local> </criterion>
 </criterions>

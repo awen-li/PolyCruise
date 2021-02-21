@@ -252,7 +252,7 @@ static inline List* GetLastVisit (Node *Source)
     if (VisitCache.Header == NULL)
     {
         ListInsert(&VisitCache, Source);
-        DEBUG("@@@@@@@ INSERT source: [%u]%p\r\n", VisitCache.NodeNum, VisitCache.Header->Data);
+        DEBUG("@@@@@@@ INSERT source: Node%u -> [%u]%p\r\n", Source->Id, VisitCache.NodeNum, VisitCache.Header->Data);
     }
 
     return &VisitCache;
@@ -384,7 +384,7 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList)
     /* Visit all sources, and get context of source: (incremental) */
     DWORD SrcNum = QueryDataNum (SrcHandle);
     Req.dwDataType = SrcHandle;
-    DEBUG ("\r\n @@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n", SrcNum);
+    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n", SrcNum);
     while (SrcNum > 0)
     {
         Req.dwDataId = SrcNum;
@@ -396,7 +396,8 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList)
 
         SrcNum--;
     }
-    
+
+    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n\r\n", SrcNum);
     return;
 }
 

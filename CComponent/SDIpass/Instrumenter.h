@@ -50,8 +50,15 @@ struct ParaFt
             {
                 return;
             }
+
+            char *Last = &m_Format[Length-1];
+            if (*Last == ',' && Ft == "}")
+            {
+                *Last = '}';
+                return;
+            }
         }
-        
+
         m_Format += Ft; 
 
         return;
@@ -401,10 +408,11 @@ private:
             printf ("LoadLdaBin: read ldabin error...\r\n");
             exit (0);
         }
-        printf ("FldaNum = %u \r\n", Lb.FuncNum);
+        
 
         for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
         {
+            printf ("Load Flda number = %u/%u \r", Fid, Lb.FuncNum);
             FldaBin Fdb = {0};
             N = fread (&Fdb, sizeof(Fdb), 1, Bf);
             assert (N == 1);
@@ -439,6 +447,8 @@ private:
                 }
             }
         }
+
+        printf ("Load Flda number = %u \r\n", Lb.FuncNum);
 
         fclose (Bf);
     }
@@ -692,10 +702,10 @@ private:
                 }
 
                 /* ret tatinted */
-                if (OutArg & (1<<31))
-                {
-                    Def = LI.GetDef ();             
-                    if (AddVarFormat (Pf, Def))
+                Def = LI.GetDef ();
+                if ((OutArg & (1<<31)) && (Def != NULL))
+                {    
+                    if (AddVarFormat (Pf, Def)) 
                     {
                         Pf->AddArg (Def);
                     }
@@ -726,15 +736,17 @@ private:
                 { 
                     if (OutArg & (1<<31))
                     {
-                        //printf ("OutArg = %x, No = %u \r\n", OutArg, No);
                         Def = LI.GetUse (No-1);
-                        assert (Def != NULL);
+                        if (Def == NULL)
+                        {
+                            break;
+                        }
 
                         if (DefNo > 0)
                         {
                             Pf->AppendFormat(",");
                         }
-                            
+
                         if (AddVarFormat (Pf, Def))
                         {
                             Pf->AddArg (Def);
@@ -1025,14 +1037,13 @@ private:
                 {
                     continue;
                 }
-                //errs ()<<EventId<<"["<<InstID<<"] "<<*CurInst<<"\r\n";
 
                 Pf.Reset ();
                 GetInstrPara (Fd, InstID, CurInst, &Pf, &DefSets);
                 if (Pf.m_Format != "")
                 {
                     Instruction *InstrumentSite = Fd->GetInstById (InstID+1);
-                    if (InstrumentSite == NULL)
+                    if (InstrumentSite == NULL || CurInst->getOpcode() == Instruction::Ret)
                     {
                         InstrumentSite = CurInst;
                     }
@@ -1043,6 +1054,10 @@ private:
                             InstrumentSite = Fd->GetFirstNonPHI(CurInst->getParent ());
                         }
                     }
+
+                    //errs ()<<"\r\n";      
+                    //errs ()<<"INST: "<<*CurInst<<"\r\n";            
+                    //errs ()<<"\t=>InstrumentSite: "<<*InstrumentSite<<"\r\n";
 
                     EventId = Fd->GetEventID (InstID);
                     AddTrack (EventId, InstrumentSite, &Pf);

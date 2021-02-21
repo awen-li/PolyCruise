@@ -36,11 +36,11 @@ class CallEvent (PyEvent):
                         Class  = FDef.Cls
                         Callee = FDef.Name
                 else:
-                    Class  = self.Self2Obj (ArgVal)
+                    Class  = self.GetClassType (ArgVal)
                     Callee = Class + "." + Callee
                 self.LiveObj.SetUse (Class)
             else:
-                self.LiveObj.SetUse (ArgVal)
+                self.SetRealUse (ArgVal)
         self.LiveObj.SetCallee (Callee, Class)
         return
 
@@ -59,17 +59,18 @@ class LineEvent (PyEvent):
     def SetDef (self, Target, Statement):
         if isinstance(Target, Name):
             Def = Target.id
-            self.LiveObj.SetDef (Def)
+            #self.LiveObj.SetDef (Def)
+            self.SetRealDef (Def)
         elif isinstance(Target, Attribute):
             Def = Target.value.id
             if hasattr (Target, "attr") == True:
-               RealDef = self.Self2Obj (Def)
-               #print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", RealDef)
-               Def = RealDef + "." + Target.attr             
+               Class = self.GetClassType (Def)
+               #print ("@@@@@@@@@@@@@@ Def: ", Def, " ---> ", Obj.__name__)
+               Def = Class + "." + Target.attr             
             self.LiveObj.SetDef (Def)
         elif isinstance(Target, Subscript):
             Def = Target.value.id
-            self.LiveObj.SetDef (Def)
+            self.SetRealDef (Def)
         else:
             print (ast.dump (Statement))
             assert (0), "!!! LE_assign, unsupport type assignment."
@@ -77,48 +78,50 @@ class LineEvent (PyEvent):
 
     def SetUse (self, Value, Statement):
         if isinstance(Value, Name):
-            self.LiveObj.SetUse (Value.id)
+            #self.LiveObj.SetUse (Value.id)
+            self.SetRealUse (Value.id)
         elif isinstance(Value, Call):
             self.LE_call (Statement)
         elif isinstance(Value, List):
             for Use in Value.elts:
-                self.LiveObj.SetUse (Use)
+                sself.SetRealUse (Value.id)
         elif isinstance(Value, Num):
-            self.LiveObj.SetUse (Value.n)
+            self.SetRealUse (Value.n)
         elif isinstance(Value, BinOp):
-            self.LiveObj.SetUse (Value.left.id)
-            self.LiveObj.SetUse (Value.right.id)
+            self.SetRealUse (Value.left.id)
+            self.SetRealUse (Value.right.id)
         elif isinstance(Value, Str):
             pass
         elif isinstance(Value, Compare):
-            self.LiveObj.SetUse (Value.left.id)
+            self.SetRealUse(Value.left.id)
             Cmp = Value.comparators[0]
             if not isinstance(Cmp, NameConstant):
-                self.LiveObj.SetUse (Cmp.id)
+                self.SetRealUse (Cmp.id)
         elif isinstance(Value, Attribute):
             Use = Value.value.id
+            self.LiveObj.SetUse (Use)
             if hasattr (Value, "attr") == True:
-                RealUse = self.Self2Obj (Use)
-                Use = RealUse + "." + Value.attr
+                Class = self.GetClassType (Use)
+                Use = Class + "." + Value.attr
             self.LiveObj.SetUse (Use)
         elif isinstance(Value, Dict):
             dValue = Value.values
             if len (dValue) != 0:
-                self.LiveObj.SetUse (dValue[0].id)
+                self.SetRealUse (dValue[0].id)
         elif isinstance(Value, NameConstant):
             pass
         elif isinstance(Value, UnaryOp):
             pass
         elif isinstance(Value, Subscript):
-            self.LiveObj.SetUse (Value.value.id)
+            self.SetRealUse (Value.value.id)
         elif isinstance(Value, Tuple):
             Elemts = Value.elts
             for elm in Elemts:
                 if not isinstance (elm, Name):
                     continue
-                self.LiveObj.SetUse (elm.id)
+                self.SetRealUse (elm.id)
         elif isinstance(Value, Bytes):
-            self.LiveObj.SetUse (Value.s)
+            self.SetRealUse (Value.s)
         else:
             print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
@@ -161,7 +164,7 @@ class LineEvent (PyEvent):
             if isinstance (AttrValue, Bytes):
                 CallFunc = Func.attr
             else:
-                Class  = self.Self2Obj (AttrValue.id)
+                Class  = self.GetClassType (AttrValue.id)
                 CallFunc = Class + "." + Func.attr
             self.LiveObj.SetCallee (CallFunc, Class)
             #oo, add the object as the first parameter
@@ -175,10 +178,10 @@ class LineEvent (PyEvent):
             if isinstance(arg, NameConstant) or isinstance(arg, Bytes):
                 continue
             if isinstance (arg, Name):
-                self.LiveObj.SetUse (arg.id)
+                self.SetRealUse (arg.id)
             elif isinstance (arg, Starred):
                 arg = arg.value
-                self.LiveObj.SetUse (arg.id)
+                self.SetRealUse (arg.id)
             else:
                 print ("!!!!!!!!! unsupport type in CALL. => ", type(arg), "   -ast-> ", ast.dump (Statement))
                 assert (0), "!!!!!!!!! unsupport tyep in CALL."
@@ -191,7 +194,7 @@ class LineEvent (PyEvent):
         self.LiveObj.SetRet (LiveObject.RET_VALUE)
         if not isinstance(Value, Name):
             return
-        self.LiveObj.SetUse (Value.id)
+        self.SetRealUse (Value.id)
         
     def LE_functiondef(self, Statement):
         pass
@@ -205,7 +208,7 @@ class LineEvent (PyEvent):
     def LE_if(self, Statement):
         Test = Statement.test
         if isinstance(Test, Name):
-            self.LiveObj.SetUse (Test.id)
+            self.SetRealUse (Test.id)
             self.LiveObj.SetBr (True)
         else:
             print ("!!!!!!!!! unknown type in IF. => ", ast.dump (Statement))
@@ -215,7 +218,7 @@ class LineEvent (PyEvent):
         Def = Statement.target.elts[1].id
         self.LiveObj.SetDef (Def)
         Use = Statement.iter.args[0].id
-        self.LiveObj.SetUse (Use)
+        self.SetRealUse (Use)
         return
 
         

@@ -113,22 +113,34 @@ class Inspector:
         return TaintSet
 
     def IsGlobal (self, Symb):
+        if not isinstance (Symb, str):
+            return False
+        
         if Symb.find('.') != -1:
             return True
         return False
 
     def IsInTainted (self, Symb):
         #print ("@@@@@@@@@ IsInTainted -> ",  Symb)
+        #1. local
         Exist = self.CurCtx.IsTaint (Symb)
         if Exist == True:
             return True
+        #2. global field-sensitive
         Exist = self.GlobalTaintSymbs.get (Symb)
+        if Exist != None:
+            return True
+        #3. global field-insensitive
+        if not isinstance (Symb, str):
+            return False
+        Obj = Symb.split (".")[0]
+        Exist = self.GlobalTaintSymbs.get (Obj)
         if Exist != None:
             return True
         return False
 
-    def InsertSymb (self, Symb):
-        Cls = self.IsGlobal (Symb)
+    def InsertSymb (self, Symb, Global=False):
+        Cls = self.IsGlobal (Symb) or Global
         if Cls == False:
             self.CurCtx.InsertSymb (Symb)
         else:
@@ -193,11 +205,13 @@ class Inspector:
         #trace the call-site
         CallSiteObj = self.CurCtx.CalleeLo
         TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
-        #if len (TaintedFormal) == 0:
-        #    return
-                
+
+        IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee, None)
+        if IsSource != False:
+            self.InsertSymb (CallSiteObj.Def)
+                    
         FCallerDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
-        EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, 0)
+        EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, IsSource)
 
         Msg = "{" + Callee + "("           
         ParaNum = 0
@@ -235,6 +249,8 @@ class Inspector:
                 if LiveObj.Def != None:
                     self.IsTaint = True
                     self.InsertSymb (LiveObj.Def)
+                if LiveObj.UseClf != None:
+                    self.InsertSymb (LiveObj.UseClf, True)
                 break
         return
         
@@ -249,17 +265,16 @@ class Inspector:
     def TaintAnalysis (self, Event, LiveObj):
         self.IsSource = False
         self.IsTaint  = False
-        if Event == "line" and LiveObj.Callee != None:
-            IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
-            if IsCrn != False:
-                self.InsertSymb (LiveObj.Def)
-                self.IsTaint = True
-                self.IsSource = True
-                print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)
-             
+        if Event == "line" and LiveObj.Callee != None: 
             if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
             else:
+                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
+                if IsCrn != False:
+                    self.InsertSymb (LiveObj.Def)
+                    self.IsTaint = True
+                    self.IsSource = True
+                    print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)  
                 self.Propogate (LiveObj)
             return EVENT_CALL
         

@@ -13,6 +13,7 @@ class LiveObject ():
     def __init__(self):
         self.Def = None
         self.Uses = []
+        self.UseClf = None
         self.Callee = None
         self.Ret = LiveObject.RET_NONE
         self.LineNo = 0
@@ -28,8 +29,10 @@ class LiveObject ():
     def SetLineNo (self, LineNo):
         self.LineNo = LineNo
 
-    def SetUse (self, Use):
+    def SetUse (self, Use, Clf=None):
         self.Uses.append (Use)
+        if self.UseClf == None:
+            self.UseClf = Clf
 
     def SetCallee (self, CallFunc, Class=None):
         self.Callee = CallFunc
@@ -39,7 +42,7 @@ class LiveObject ():
         self.Ret = RetFlg
 
     def View (self):
-        print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, " Call: ", self.Callee, " Ret: ", self.Ret)
+        print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, "(", self.UseClf, ") Call: ", self.Callee, " Ret: ", self.Ret)
 
 class PyEvent(metaclass=abc.ABCMeta):
     def __init__(self, Frame, Event, Statement, Stmt2FuncDef=None):
@@ -53,13 +56,32 @@ class PyEvent(metaclass=abc.ABCMeta):
     def GetDefUse (self):
         pass
 
-    def Self2Obj (self, SelfName):
-        Obj = self.GetLiveObject(SelfName)
-        if Obj == None:
-            return SelfName
+    def SetRealDef (self, Def):
+        Obj = self.Self2Obj (Def)
+        if hasattr (Obj, '__dict__'):
+            Type = type (Obj)
+            self.LiveObj.SetDef (Type.__name__)
+        else:
+            self.LiveObj.SetDef (Def)
+
+    def SetRealUse (self, Use):
+        Obj = self.Self2Obj (Use)
+        if hasattr (Obj, '__dict__'):
+            Type = type (Obj)
+            self.LiveObj.SetUse (Use, Type.__name__)
+        else:
+            self.LiveObj.SetUse (Use)
+
+    def GetClassType (self, Val):
+        Obj = self.Self2Obj (Val)
         Type = type (Obj)
-        #print ("=====> ", Type, "class: ", type (Obj).__name__)
         return Type.__name__
+
+    def Self2Obj (self, Val):
+        Obj = self.GetLiveObject(Val)
+        if Obj == None:
+            return Val
+        return Obj
 
     def GetLiveObject(self, ValName):
         if isinstance(ValName, Name):

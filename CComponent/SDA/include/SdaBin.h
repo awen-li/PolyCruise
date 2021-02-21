@@ -14,7 +14,7 @@
 #include <set>
 #include "llvm/ADT/DenseMap.h"
 
-#define F_NAME_LEN  (64)
+#define F_NAME_LEN  (80)
 
 struct CSTaintBin
 {
