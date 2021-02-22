@@ -59,7 +59,7 @@ class Context:
             return True
 
 class Inspector:
-    def __init__(self, RecordFile, Criten, PyMap="Pymap.ini", EntryFunc="main", SrcDir="."):
+    def __init__(self, RecordFile, Criten, PyMap="Pymap.ini", EntryFunc="pyinspect", SrcDir="."):
         self.Analyzer = Analyzer (RecordFile, SrcDir, PyMap)
         self.Crtn  = Criten
         self.CtxStack = []
@@ -120,22 +120,28 @@ class Inspector:
             return True
         return False
 
-    def IsInTainted (self, Symb):
-        #print ("@@@@@@@@@ IsInTainted -> ",  Symb)
-        #1. local
-        Exist = self.CurCtx.IsTaint (Symb)
-        if Exist == True:
-            return True
-        #2. global field-sensitive
+    def IsGlobalTainted (self, Symb):
         Exist = self.GlobalTaintSymbs.get (Symb)
         if Exist != None:
             return True
+        return False
+
+    def IsInTainted (self, Symb):
+        #print ("@@@@@@@@@ IsInTainted -> ",  Symb)
+        #1. local
+        Taint = self.CurCtx.IsTaint (Symb)
+        if Taint == True:
+            return True
+        #2. global field-sensitive
+        Taint = self.IsGlobalTainted (Symb)
+        if Taint == True:
+            return True      
         #3. global field-insensitive
         if not isinstance (Symb, str):
             return False
         Obj = Symb.split (".")[0]
-        Exist = self.GlobalTaintSymbs.get (Obj)
-        if Exist != None:
+        Taint = self.IsGlobalTainted (Symb)
+        if Taint == True:
             return True
         return False
 
@@ -178,13 +184,16 @@ class Inspector:
         #print ("===> CallSiteObj: class= ", CallSiteObj.Class, ", TaintedFormal = ", TaintedFormal)
         return TaintedFormal, CallSiteObj.Callee
     
-    def PushCtx (self):
+    def PushCtx (self, CalleeFunc):
         if self.CallCtx == None:
             return
 
         # actual -> formal
         CallSiteObj = self.CurCtx.CalleeLo
-        TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
+        if CalleeFunc != CallSiteObj.Callee:
+            print ("@@ Warning: Callee-<", CallSiteObj.Callee, " -> ", CalleeFunc, "> not consistent!!!!")
+            return
+        TaintedFormal, _ = self.Actual2Formal (CallSiteObj)
         
         self.CtxStack.append (self.CallCtx)
         self.CurCtx = self.CallCtx
@@ -197,6 +206,8 @@ class Inspector:
         return   
     
     def PopCtx (self):
+        if len (self.CtxStack) <= 1:
+            return
         PopCtx = self.CtxStack[-1]
         self.CtxStack.pop ()
         self.CurCtx = self.CtxStack[-1]
@@ -247,7 +258,6 @@ class Inspector:
             if self.IsInTainted (use):
                 self.IsTaint = True
                 if LiveObj.Def != None:
-                    self.IsTaint = True
                     self.InsertSymb (LiveObj.Def)
                 if LiveObj.UseClf != None:
                     self.InsertSymb (LiveObj.UseClf, True)
@@ -269,6 +279,7 @@ class Inspector:
             if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
                 self.SetCallCtx (LiveObj)
             else:
+                self.CallCtx = None
                 IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
                 if IsCrn != False:
                     self.InsertSymb (LiveObj.Def)
@@ -279,7 +290,7 @@ class Inspector:
             return EVENT_CALL
         
         elif Event == "call" and LiveObj.Callee != None:
-            self.PushCtx ()
+            self.PushCtx (LiveObj.Callee)
             return EVENT_FENTRY
         
         elif LiveObj.Ret == LiveObject.RET_VALUE:
@@ -297,7 +308,7 @@ class Inspector:
         return EVENT_NR
 
     def GetSymbType (self, Symb):
-        if self.IsGlobal (Symb) == True:
+        if self.IsGlobalTainted (Symb) == True:
             return ":G"
         else:
             return ":U"
@@ -344,9 +355,6 @@ class Inspector:
         LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
         if self.IsLiveObjValid (LiveObj, Event) == False:
             return self.Tracing
-
-        #print(ScriptName, LineNo, Event, Code.co_name, "<Local>", self.CurCtx.TaintSymbs, " <Global>", self.GlobalTaintSymbs, ", CurClass=",LiveObj.Class)
-        #LiveObj.View ()
 
         # return to caller
         if LiveObj.Ret == LiveObject.RET_CALLER:

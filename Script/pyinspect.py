@@ -40,9 +40,22 @@ class PyMaping ():
                 break    
         return Max
 
+    def IsValidPy (self, Py):
+        with open(Py, 'r', encoding='latin1') as File:
+            Line = 0
+            for line in File:
+                if line.find ("__bootstrap__") != -1:
+                    return False
+                Line += 1
+                if Line >= 2:
+                    break;
+        return True
+
     def Maping (self, IniFiles, SrcFiles):
         PyMap = {}
         for ini in IniFiles:
+            if not self.IsValidPy (ini):
+                continue
             IniF = ini[::-1]
             Max  = ""
             MaxSrc = ""

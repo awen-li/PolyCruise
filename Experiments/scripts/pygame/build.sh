@@ -34,7 +34,7 @@ GenMap ()
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+    	INSTALL_PATH=`find /root/.local/lib/python3.7/site-packages/ -name $target`
         find $INSTALL_PATH -name "*.py" > "$target.ini"
         python -m pyinspect -M "$target.ini" pyList	
     fi
@@ -77,13 +77,13 @@ if [ "$Recompile" == "recmpl" ]; then
 
 
     # 4. generate file maping
-    #GenMap $SCRIPTS $CASE_PATH $target
+    GenMap $SCRIPTS $CASE_PATH $target
 fi
 
 # 5. run the cases
 cd $CASE_PATH
 echo "Start run the case............"
-python -m pyinspect -C ../../criterion.xml -t examples/font_viewer.py 
+python -m pyinspect -C ../../criterion.xml -t examples/aacircle.py
 
 
 

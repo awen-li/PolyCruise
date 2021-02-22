@@ -97,7 +97,7 @@ class Analyzer ():
         return Cls
 
     def InitClsFuncSet (self):
-        self.FuncDef["main"] = FuncDef ("", "main", 1, [])
+        self.FuncDef["pyinspect"] = FuncDef ("", "pyinspect", 1, [])
         for Mod, ModAst in self.AstInfo.items ():
             Line2Stmt = ModAst.lineno2stmt
             for Line, Stmt in Line2Stmt.items ():

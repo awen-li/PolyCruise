@@ -14,3 +14,8 @@ if __name__ == '__main__':
 	Val = O.Value
 	Ret = pyBinOp(Val)
 	print ("pyBinOp Ret = ", Ret)
+	
+	O2 = Obj (10)
+	Val = O2.Value
+	Ret = pyBinOp(Val)
+	print ("O2-pyBinOp Ret = ", Ret)

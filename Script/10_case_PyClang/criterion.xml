@@ -8,4 +8,5 @@
 <criterion> <function>os.getenv</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>module.getenv</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>GetObj</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>Obj.__init__</function> <return>True</return> <local>None</local> </criterion>
 </criterions>

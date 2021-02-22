@@ -66,7 +66,8 @@ class PyEvent(metaclass=abc.ABCMeta):
 
     def SetRealUse (self, Use):
         Obj = self.Self2Obj (Use)
-        if hasattr (Obj, '__dict__'):
+        #print (Use, " ----type-> ", type (Obj))
+        if not isinstance(Obj, (int, str, list, dict, bool, tuple, set)):
             Type = type (Obj)
             self.LiveObj.SetUse (Use, Type.__name__)
         else:

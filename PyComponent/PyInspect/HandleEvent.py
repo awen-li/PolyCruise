@@ -84,7 +84,7 @@ class LineEvent (PyEvent):
             self.LE_call (Statement)
         elif isinstance(Value, List):
             for Use in Value.elts:
-                sself.SetRealUse (Value.id)
+                self.SetRealUse (Use)
         elif isinstance(Value, Num):
             self.SetRealUse (Value.n)
         elif isinstance(Value, BinOp):
