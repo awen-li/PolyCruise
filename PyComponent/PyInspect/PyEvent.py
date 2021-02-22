@@ -4,6 +4,7 @@ import sys
 import abc
 import ast
 from ast import *
+import numpy as np
 
 class LiveObject ():
     RET_CALLER = 2
@@ -30,7 +31,8 @@ class LiveObject ():
         self.LineNo = LineNo
 
     def SetUse (self, Use, Clf=None):
-        self.Uses.append (Use)
+        if len (self.Uses) < 3:
+            self.Uses.append (Use)
         if self.UseClf == None:
             self.UseClf = Clf
 
@@ -41,8 +43,11 @@ class LiveObject ():
     def SetRet (self, RetFlg = 0):
         self.Ret = RetFlg
 
-    def View (self):
-        print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, "(", self.UseClf, ") Call: ", self.Callee, " Ret: ", self.Ret)
+    def View (self):      
+        if self.Callee != None:
+            print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, "(", self.UseClf, ")  Ret: ", self.Ret, " Call: ", self.Callee)
+        else:
+            print ("\t==>[",  self.LineNo, "]Def: ", self.Def, " Use: ", self.Uses, "(", self.UseClf, ")  Ret: ", self.Ret)
 
 class PyEvent(metaclass=abc.ABCMeta):
     def __init__(self, Frame, Event, Statement, Stmt2FuncDef=None):
@@ -58,7 +63,7 @@ class PyEvent(metaclass=abc.ABCMeta):
 
     def SetRealDef (self, Def):
         Obj = self.Self2Obj (Def)
-        if hasattr (Obj, '__dict__'):
+        if not isinstance(Obj, (int, str, list, dict, bool, tuple, set)):
             Type = type (Obj)
             self.LiveObj.SetDef (Type.__name__)
         else:
@@ -80,7 +85,7 @@ class PyEvent(metaclass=abc.ABCMeta):
 
     def Self2Obj (self, Val):
         Obj = self.GetLiveObject(Val)
-        if Obj == None:
+        if type(Obj) is np.ndarray or Obj == None:
             return Val
         return Obj
 

@@ -84,7 +84,10 @@ class LineEvent (PyEvent):
             self.LE_call (Statement)
         elif isinstance(Value, List):
             for Use in Value.elts:
-                self.SetRealUse (Use)
+                if isinstance(Use, Name):
+                    self.SetRealUse (Use.id)
+                else:
+                    print ("!!!!!!!!! unknown type. => ", ast.dump (Statement))
         elif isinstance(Value, Num):
             self.SetRealUse (Value.n)
         elif isinstance(Value, BinOp):

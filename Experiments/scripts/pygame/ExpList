@@ -1,8 +1,4 @@
 setup.py build.py 
 setup-lda.py
 setup-instm.py
-test_route.py
-test_analyzer.py
-test_matcher.py
-test_pipeline.py
-test_parser.py
+__init__.py

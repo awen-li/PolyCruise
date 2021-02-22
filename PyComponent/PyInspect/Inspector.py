@@ -371,6 +371,9 @@ class Inspector:
         if self.IsTaint == False:
             return self.Tracing
 
+        #print("@@@@@ ->", ScriptName, LineNo, Event, Code.co_name, "<Local>", self.CurCtx.TaintSymbs, " <Global>", self.GlobalTaintSymbs, ", CurCtx=", self.CurCtx.Func)
+        #LiveObj.View ()
+
         FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         if FuncDef == None:
             return self.Tracing
