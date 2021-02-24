@@ -96,6 +96,9 @@ else
     fi
 fi
 
+
+exit 0
+
 # 5. run the cases
 cd $CASE_PATH
 echo "Start run the case............"

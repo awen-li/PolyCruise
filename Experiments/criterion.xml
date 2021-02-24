@@ -17,5 +17,8 @@
 <criterion> <function>Source</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>module.Info</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>module.set_mode</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>load_image</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>get_fg</function> <return>True</return> <local>None</local> </criterion>
+
 
 </criterions>
