@@ -44,7 +44,7 @@ static inline unsigned Eid2DifgKey (unsigned long Eid)
     return (Fid | (Lang<<28));
 }
 
-static inline List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId)
+List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId)
 {
     DbReq Req;
     DbAck Ack;
@@ -906,7 +906,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     /* invoke plugins */
     if (DA->PluginList != NULL)
     {
-        VisitDifg (DA->Sources, DA->PluginList);
+        VisitDifg (DA->Sources, DA->PluginList, ThreadId);
     }
 
     return;

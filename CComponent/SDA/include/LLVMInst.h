@@ -189,9 +189,16 @@ private:
         
         switch (m_InstOp) 
         {
-            case Instruction::Alloca: 
+            case Instruction::Alloca:
+            {
+                break;
+            }
             case Instruction::Br:
             {
+                if (OpNum > 0)
+                {
+                    m_Use.push_back(m_Inst->getOperand (0));
+                }
                 break;              
             }
             case Instruction::Ret:

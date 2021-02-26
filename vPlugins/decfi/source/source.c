@@ -10,6 +10,7 @@
 
 static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
+    DEBUG ("[Cfi]EventType = %u \r\n", R_EID2ETY(DstNode->EventId));
     if (R_EID2ETY(DstNode->EventId) ==  EVENT_BR)
     {
         ListInsert(&Plg->DynSinks, DstNode);

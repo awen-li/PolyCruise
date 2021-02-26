@@ -33,7 +33,7 @@ typedef struct tag_Plugin
 
 List* InstallPlugins ();
 VOID UnInstallPlugins ();
-VOID VisitDifg (DWORD SrcHandle, List* PluginList);
+VOID VisitDifg (DWORD SrcHandle, List* PluginList, DWORD ThreadId);
 
 
 

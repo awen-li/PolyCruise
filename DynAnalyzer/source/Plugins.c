@@ -15,6 +15,9 @@
 static List PluginList;
 static List VisitCache;
 
+List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId);
+
+
 static inline VOID LoadSinks (List *SinkList, char* CfgName)
 {
     char PgnSinks[256];
@@ -259,9 +262,8 @@ static inline List* GetLastVisit (Node *Source)
 }
 
 
-static inline DWORD GetFuncId (Node *N)
+static inline DWORD GetFuncId (DifNode *DN)
 {
-    DifNode *DN = GN_2_DIFN (N);
     ULONG Eid = DN->EventId;
 
     unsigned Fid  = R_EID2FID(Eid);
@@ -270,7 +272,38 @@ static inline DWORD GetFuncId (Node *N)
     return (Fid | (Lang<<28));
 }
 
-static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *DstNode)
+
+static inline char* GetFuncName (DifNode *DN, DWORD ThreadId)
+{
+    DWORD FID = GetFuncId (DN);
+     
+    List *FDifG = GetFDifG (DB_TYPE_DIF_FUNC, FID, ThreadId);
+    assert (FDifG  != NULL);
+
+    Node* N = (Node*)FDifG->Header->Data;
+    assert (N != NULL);
+
+    DifNode *difN = GN_2_DIFN (N);
+    LNode *DefNode = difN->EMsg.Def.Header;
+    while (DefNode != NULL)
+    {
+        Variable *Val = (Variable *)DefNode->Data;
+        if (Val ->Type != VT_FUNCTION)
+        {
+            continue;
+        }
+
+        return Val->Name;
+            
+        DefNode = DefNode->Nxt;
+    }
+
+    return NULL;
+
+}
+
+
+static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *DstNode, DWORD ThreadId)
 {
     DWORD SINK = FALSE;
     Plugin *Plg;
@@ -287,8 +320,13 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
             DWORD IsSink = Plg->Detect (Plg, SrcNode, DstNode);
             if (IsSink == TRUE)
             {
-                printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u (%p) \r\n", 
-                        Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), DstNode);
+                char *FuncName = GetFuncName (DstNode, ThreadId);
+                if (FuncName == NULL)
+                {
+                    FuncName = "Unknown";
+                }
+                printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u -- <Function:%s,  Inst:%u> \r\n", 
+                        Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), FuncName, R_EID2IID(DstNode->EventId));
             }
 
             SINK |= IsSink;
@@ -301,7 +339,7 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
 }
 
 
-static inline VOID ProcSource (Node *Source, List* PluginList)
+static inline VOID ProcSource (Node *Source, List* PluginList, DWORD ThreadId)
 {
     List *LastVisit = GetLastVisit (Source);
 
@@ -316,7 +354,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
         {
             Node *N = (Node *)Last->Data;
             DifNode *SrcN = GN_2_DIFN (N);
-            DEBUG ("[Node%u][%lx]SRCnode -> FunctionID = %x \r\n", N->Id, SrcN->EventId, GetFuncId (N));
+            DEBUG ("[Node%u][%lx]SRCnode -> FunctionID = %x \r\n", N->Id, SrcN->EventId, GetFuncId (SrcN));
             
             List *OutEdge = &N->OutEdge;
             LNode *LE = OutEdge->Header;
@@ -341,17 +379,17 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
                     DstNode->VisitBits = SET_VISIT (DstNode->VisitBits, DB_TYPE_DIF_PLUGIN_BEGIN);
                 }
 
+                DifNode *DstN = GN_2_DIFN (DstNode);
                 if (DE->EdgeType & EDGE_RET)
                 {
-                    DEBUG ("Reach Return node -> FunctionID = %x \r\n", GetFuncId (DstNode));
+                    DEBUG ("Reach Return node -> FunctionID = %x \r\n", GetFuncId (DstN));
                     ListInsert(LastVisit, DstNode);
                     LE = LE->Nxt;
                     continue;
                 }
-
-                DifNode *DstN = GN_2_DIFN (DstNode);
+   
                 PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
-                if (InvokePlugins (PluginList, SrcN, DstN) == FALSE)
+                if (InvokePlugins (PluginList, SrcN, DstN, ThreadId) == FALSE)
                 {
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
                     ListInsert(LastVisit, DstNode);
@@ -376,7 +414,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList)
 }
 
 
-VOID VisitDifg (DWORD SrcHandle, List* PluginList)
+VOID VisitDifg (DWORD SrcHandle, List* PluginList, DWORD ThreadId)
 {
     DbReq Req;
     DbAck Ack;
@@ -392,7 +430,7 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList)
         assert (Ret != R_FAIL);
         
         Node *Source = *((Node **)(Ack.pDataAddr));
-        ProcSource (Source, PluginList);
+        ProcSource (Source, PluginList, ThreadId);
 
         SrcNum--;
     }

@@ -1,5 +1,6 @@
 strcpy
 strncpy
+__strncpy_chk
 strcat
 memcpy
 memmove
