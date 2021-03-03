@@ -391,7 +391,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     while (FmlNode != NULL)
     {
         Variable *Val = (Variable *) (FmlNode->Data);
-        if (Val->Type != VT_FPARA)
+        if (Val->Type != VT_FPARA && Val->Type != VT_POINTER)
         {
             FmlNode = FmlNode->Nxt;
             continue;            

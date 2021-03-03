@@ -346,6 +346,7 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
                 
                 printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u -- <Function:%s,  Inst:%u> \r\n", 
                         Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), FuncName, R_EID2IID(DstNode->EventId));
+                printf ("\t\t ---->case: %s %s %u \r\n", Plg->Name, FuncName, R_EID2IID(DstNode->EventId));
             }
 
             SINK |= IsSink;
@@ -408,11 +409,9 @@ static inline VOID ProcSource (Node *Source, List* PluginList, DWORD ThreadId)
                 }
    
                 //PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
-                if (InvokePlugins (PluginList, SrcN, DstN, ThreadId) == FALSE)
-                {
-                    DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
-                    ListInsert(LastVisit, DstNode);
-                }
+                InvokePlugins (PluginList, SrcN, DstN, ThreadId);
+                DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
+                ListInsert(LastVisit, DstNode);
 
                 ListChange = TRUE;
                 LE = LE->Nxt;

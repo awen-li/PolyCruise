@@ -4,22 +4,26 @@
 
 int g = 10;
 
-int increase (int value)
+int increase ()
 {
-     if  (value > 0)
-     {
-        return value - g;
-     }
-     else
-     {
-        return value + g;
-     }
+    int Val = 0;
+    if  (g > 0)
+    {
+        Val = g--;
+    }
+    else
+    {
+        Val = g++;
+    }
+
+    return Val;
 }
 
 
 int BinOp (int Oper)
 {
-    int Value = increase (Oper);
+    g = Oper;
+    int Value = increase ();
 
     return Value;
 }

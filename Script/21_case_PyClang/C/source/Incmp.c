@@ -8,12 +8,12 @@ typedef struct S
 
 char* Key = "echo hello world";
 
-int g = 0;
+size_t g = 0;
 
 
 int Cmp (S *st)
 {
-    if (strncmp (st->buf, Key, strlen(st->buf)) == 0) 
+    if (strncmp (st->buf, Key, g) == 0) 
     {
         printf("match <%s, %s> \n", Key, st->buf);
         return 1;

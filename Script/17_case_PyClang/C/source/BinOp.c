@@ -13,13 +13,13 @@ typedef struct S
 
 int increase (S *st)
 {
-     if  (st.a > 0)
+     if  (st->a > 0)
      {
-        return st.a - g;
+        return st->a - g;
      }
      else
      {
-        return st.a + g;
+        return st->a + g;
      }
 }
 
