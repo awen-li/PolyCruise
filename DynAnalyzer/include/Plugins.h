@@ -16,9 +16,9 @@ typedef DWORD (*_DETECT_) (VOID *Plg, VOID *SrcNode, VOID *DstNode);
 
 typedef struct tag_Plugin
 {
-    CHAR Name[64];
-    CHAR Init[64];
-    CHAR Module[64];
+    char Name[64];
+    char Init[64];
+    char Module[64];
     DWORD Active;
     DWORD DataHandle;
 
@@ -29,7 +29,6 @@ typedef struct tag_Plugin
 
     List DynSinks;
 }Plugin;
-
 
 List* InstallPlugins ();
 VOID UnInstallPlugins ();

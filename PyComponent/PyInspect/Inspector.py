@@ -198,7 +198,7 @@ class Inspector:
         self.CtxStack.append (self.CallCtx)
         self.CurCtx = self.CallCtx
         self.CallCtx = None 
-        print ("-------------------------> Push Context: ", self.CurCtx.Func, " ret = ", self.CurCtx.Ret, " Formal = ", TaintedFormal)
+        #print ("-------------------------> Push Context: ", self.CurCtx.Func, " ret = ", self.CurCtx.Ret, " Formal = ", TaintedFormal)
 
         for para in TaintedFormal:
             self.InsertSymb (para)
@@ -211,7 +211,7 @@ class Inspector:
         PopCtx = self.CtxStack[-1]
         self.CtxStack.pop ()
         self.CurCtx = self.CtxStack[-1]
-        print ("-------------------------> Pop Context: ", PopCtx.Func)
+        #print ("-------------------------> Pop Context: ", PopCtx.Func)
 
         #trace the call-site
         CallSiteObj = self.CurCtx.CalleeLo
@@ -242,7 +242,7 @@ class Inspector:
         Msg += "}"
         
         PyTrace (EventId, Msg)
-        print ("$$$ Python---> %lx %s" %(EventId, Msg))
+        #print ("$$$ Python---> %lx %s" %(EventId, Msg))
         return
 
     def Propogate (self, LiveObj):
@@ -343,7 +343,7 @@ class Inspector:
         Code = Frame.f_code
 
         if self.CacheMsg != None:
-            print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
+            #print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
             PyTrace (self.CacheEvent, self.CacheMsg)
             self.CacheMsg = None
 
@@ -356,6 +356,9 @@ class Inspector:
         if self.IsLiveObjValid (LiveObj, Event) == False:
             return self.Tracing
 
+        #print("@@@@@ ->", ScriptName, LineNo, Event, Code.co_name, "<Local>", self.CurCtx.TaintSymbs, " <Global>", self.GlobalTaintSymbs, ", CurCtx=", self.CurCtx.Func)
+        #LiveObj.View ()
+
         # return to caller
         if LiveObj.Ret == LiveObject.RET_CALLER:
             Ret = None
@@ -364,15 +367,12 @@ class Inspector:
             self.PopCtx ()
             if Ret != None:
                 self.InsertSymb (Ret)
-                print ("****************<> Ret Taint: ", Ret)      
+                #print ("****************<> Ret Taint: ", Ret)      
             return self.Tracing
  
         EventTy  = self.TaintAnalysis (Event, LiveObj)
         if self.IsTaint == False:
             return self.Tracing
-
-        #print("@@@@@ ->", ScriptName, LineNo, Event, Code.co_name, "<Local>", self.CurCtx.TaintSymbs, " <Global>", self.GlobalTaintSymbs, ", CurCtx=", self.CurCtx.Func)
-        #LiveObj.View ()
 
         FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         if FuncDef == None:
@@ -391,7 +391,7 @@ class Inspector:
             Msg = "{" + self.FormatDefUse (LiveObj) + "}"                
 
         if Msg != "":
-            print ("Python---> %lx %s" %(EventId, Msg))
+            #print ("Python---> %lx %s" %(EventId, Msg))
             PyTrace (EventId, Msg)
         
         return self.Tracing

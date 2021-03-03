@@ -11,9 +11,19 @@
 #include <DifGraph.h>
 
 #define DATA_DIR ("/tmp/difg/")
+typedef struct tag_CasesSinks
+{
+    char PluginName[32];
+    char FuncName[128];
+    DWORD InstId;
+}CasesSinks;
 
+/////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 static List PluginList;
 static List VisitCache;
+static List DetSinks;
+
 
 List* GetFDifG (DWORD Handle, ULONG FID, DWORD ThreadId);
 
@@ -320,11 +330,20 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
             DWORD IsSink = Plg->Detect (Plg, SrcNode, DstNode);
             if (IsSink == TRUE)
             {
+                CasesSinks *Cs = (CasesSinks*)malloc (sizeof (CasesSinks));
+                assert (Cs != NULL);
+                ListInsert(&DetSinks, Cs);
+                
                 char *FuncName = GetFuncName (DstNode, ThreadId);
                 if (FuncName == NULL)
                 {
                     FuncName = "Unknown";
                 }
+
+                strncpy (Cs->FuncName, FuncName, sizeof (Cs->FuncName));
+                strncpy (Cs->PluginName, Plg->Name, sizeof (Cs->PluginName));
+                Cs->InstId = R_EID2IID(DstNode->EventId);
+                
                 printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u -- <Function:%s,  Inst:%u> \r\n", 
                         Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), FuncName, R_EID2IID(DstNode->EventId));
             }
@@ -388,7 +407,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList, DWORD ThreadId)
                     continue;
                 }
    
-                PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
+                //PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
                 if (InvokePlugins (PluginList, SrcN, DstN, ThreadId) == FALSE)
                 {
                     DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
@@ -440,3 +459,88 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList, DWORD ThreadId)
 }
 
 
+static inline DWORD LoadCases (char *Cases, List* CaseList)
+{
+    FILE *Pf = fopen (Cases, "r");
+    if (Pf == NULL)
+    {
+        return R_FAIL;
+    }
+
+    CasesSinks Csk;
+    while (!feof (Pf))
+    {
+        memset (&Csk, 0, sizeof(Csk));
+        fscanf (Pf, "%s %s %u", Csk.PluginName, Csk.FuncName, &Csk.InstId);
+        if (Csk.PluginName[0] == 0)
+        {
+            continue;
+        }
+    
+        printf ("LoadCases -> %s:%s:%u\r\n", Csk.PluginName, Csk.FuncName, Csk.InstId);
+
+        CasesSinks *Cnode = (CasesSinks *)malloc (sizeof (CasesSinks));
+        assert (Cnode != NULL);
+        memcpy (Cnode, &Csk, sizeof (Csk));
+        ListInsert(CaseList, Cnode);
+    }
+    fclose (Pf);
+    
+    return R_SUCCESS;
+}
+
+VOID CheckCases (char *Cases)
+{
+    printf ("entry CheckCases ... %s\r\n", Cases);
+    if (Cases == NULL)
+    {
+        return;
+    }
+    
+    List CaseList;
+    memset (&CaseList, 0, sizeof (CaseList));
+    if (LoadCases (Cases, &CaseList) != R_SUCCESS)
+    {
+        return;
+    }
+
+    
+    LNode *Ln = CaseList.Header;
+    while (Ln != NULL)
+    {
+        CasesSinks *Cnode = (CasesSinks *)Ln->Data;
+
+        DWORD OK = FALSE;
+        LNode *cLn = DetSinks.Header;
+        while (cLn != NULL)
+        {
+            CasesSinks *Ds = (CasesSinks *)cLn->Data;
+            if (strcmp (Cnode->PluginName, Ds->PluginName) == 0 &&
+                strcmp (Cnode->FuncName, Ds->FuncName) == 0 &&
+                Cnode->InstId == Ds->InstId)
+            {
+                OK = TRUE;
+                break;
+            }
+
+            cLn = cLn->Nxt;
+        }
+
+        if (OK)
+        {
+            printf ("@@@@ PASS -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
+        }
+        else
+        {
+            printf ("@@@@ FAIL -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
+            assert (0);
+        }
+        
+        Ln = Ln->Nxt;
+    }
+
+    ListDel(&CaseList, (DelData)free);
+    ListDel(&DetSinks, (DelData)free);
+    return;
+
+}

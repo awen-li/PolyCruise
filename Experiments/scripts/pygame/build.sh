@@ -51,12 +51,12 @@ Analyze ()
 }
 
 Para=$1
+if [ "$Para" == "" ]; then
+	Para="all"
+fi
 echo "Recompile = $Para............"
 
 target=pygame
-
-DelShareMem
-difaEngine &
 
 # 1. build and translate python modules
 cd ../../
@@ -87,7 +87,7 @@ if [ "$Para" == "recmpl" ]; then
     GenMap $SCRIPTS $CASE_PATH $target
 else
 	echo "Analyze a file $Para............"
-    if [ -n $Para ]; then 
+    if [ "$Para" != "all" ]; then 
     	cd $CASE_PATH
     	Analyze $Para
     	sleep 2m
@@ -95,9 +95,6 @@ else
     	exit 0
     fi
 fi
-
-
-exit 0
 
 # 5. run the cases
 cd $CASE_PATH
@@ -110,7 +107,9 @@ echo "Start run the case............"
 #          examples/blit_blends.py examples/fastevents.py examples/liquid.py examples/playmus.py examples/setmodescale.py examples/vgrade.py\
 #          examples/camera.py examples/font_viewer.py examples/mask.py examples/prevent_display_stretching.py examples/sound_array_demos.py examples/video.py)
           
-TestCase=(examples/aacircle.py examples/arraydemo.py examples/blend_fill.py examples/camera.py examples/fonty.py)
+TestCase=(examples/aacircle.py examples/arraydemo.py examples/blend_fill.py examples/camera.py examples/fonty.py\
+          examples/cursors.py examples/moveit.py examples/resizing_new.py examples/dropevent.py examples/headless_no_windows_needed.py\
+          examples/scrap_clipboard.py examples/pixelarray.py examples/blit_blends.py examples/fastevents.py examples/setmodescale.py examples/font_viewer.py)
 CaseNum=${#TestCase[*]}
 Index=1
 for Case in ${TestCase[@]}

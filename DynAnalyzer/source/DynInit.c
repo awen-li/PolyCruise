@@ -11,6 +11,7 @@
 #include "Event.h"
 #include "GraphViz.h"
 
+VOID CheckCases (char *Cases);
 
 void *EventProcess (void* Arg)
 {
@@ -74,7 +75,7 @@ void DynInit ()
 }
 
 
-void DynExit ()
+void DynExit (char *CaseResult)
 {
     DWORD Exit;
     while (!(Exit = QueueGetExit()))
@@ -92,6 +93,8 @@ void DynExit ()
 
     printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
     sleep (5);
+
+    CheckCases (CaseResult);
     WiteGraph ("DIFG");
     DelQueue ();
     DeInitDif ();

@@ -236,9 +236,13 @@ private:
         
         switch (m_InstOp) 
         {
-            case Instruction::Alloca: 
+            case Instruction::Alloca:
+            {
+                break;
+            }
             case Instruction::Br:
             {
+                SetUse (OpNum);
                 break;              
             }
             case Instruction::Ret:
