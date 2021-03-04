@@ -9,6 +9,9 @@ def DemoTr (Value):
     Da = DemoAdd (ca.v)
     Res = Da.Add (Value)
     return Res
+    
+def Trace (res):
+    print ("trace end", res)
 
 class CA ():
     def __init__ (self, a):
@@ -17,5 +20,5 @@ class CA ():
 if __name__ == '__main__':
     Temp = 8
     Result = DemoTr(Temp)
-    print ("trace end", Result)
+    Trace (Result)
 

@@ -2,23 +2,28 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* Getpasswd ();
+typedef struct S
+{
+    char ctx[128];
+    int length;
+}S;
 
 extern char * g;
+char* Getpasswd ();
+void Trace (S *st);
 
-void Trace ()
-{
-	printf ("trac : %s \r\n", g);
-	return;
-}
 
 int main(int argc, char ** argv) 
 {
-	Getpasswd ();
+    Getpasswd ();
 
-	Trace ();
-	
-	return 0;
+    S st;
+
+    strcpy (st.ctx, g);
+
+    Trace (&st);
+
+    return 0;
 }
 
 

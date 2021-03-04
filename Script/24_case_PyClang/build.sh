@@ -10,7 +10,7 @@ DelShareMem ()
 }
 
 DelShareMem
-difaEngine &
+difaEngine -c CaseResults &
 
 # 2. translate the python code
 rm -rf /tmp/difg/LdaBin*

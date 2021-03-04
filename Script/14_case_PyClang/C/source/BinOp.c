@@ -2,8 +2,6 @@
 #include <string.h>
 
 static char Buffer[64] = "Here is an example for buffer read!";
-static char Target[32] = "";
-
 
 typedef struct S
 {

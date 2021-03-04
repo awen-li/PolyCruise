@@ -3,8 +3,8 @@
 
 static PyObject *DemoTrace(PyObject *self, PyObject *args)
 {
-    char* Module;
-	const int Value;
+    char* Module = NULL;
+	const int Value = 0;
 	
     if (!PyArg_ParseTuple(args, "si", &Module, &Value))
 	{

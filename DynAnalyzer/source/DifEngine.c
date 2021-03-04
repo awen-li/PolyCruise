@@ -662,18 +662,13 @@ static inline VOID UpdateGlv (Node *GlvNode, Variable *Glv)
     return;
 }
 
-static inline Node* IsGlvAccess (DifNode* DifN)
+static inline Node* IsGlvAccess (Variable *Glv)
 {
-    Variable *Glv = IsUseGlv (&DifN->EMsg);
-    if (Glv == NULL)
-    {
-        return NULL;
-    }
-    
     DbReq Req;
     DbAck Ack;
 
     ULONG GlvAddr  = GetBaseAddr (Glv);
+    DEBUG ("USE global variable: %s - %lx \r\n", Glv->Name, GlvAddr);
 
     Req.dwDataType = DifA.GlvHandle;
     Req.dwKeyLen   = sizeof (ULONG);
@@ -692,14 +687,26 @@ static inline Node* IsGlvAccess (DifNode* DifN)
 
 static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
 {
-    Node *GlvcNd = IsGlvAccess (GN_2_DIFN (CurNd));
-    if (GlvcNd == NULL || (GlvcNd == CurNd))
+    DifNode *Dfn = GN_2_DIFN (CurNd);
+    LNode *UseHdr = Dfn->EMsg.Use.Header;
+    while (UseHdr != NULL)
     {
-        return;
+        Variable *Gv = (Variable *)UseHdr->Data;
+        assert (Gv != NULL);
+        
+        Node *GlvcNd = IsGlvAccess (Gv);
+        DEBUG ("AddGlvAccessEdge ----  %p -> %p \r\n", GlvcNd, CurNd);
+        if (GlvcNd == NULL || (GlvcNd == CurNd))
+        {
+            UseHdr = UseHdr->Nxt;
+            continue;
+        }
+
+        Edge* E = AddDifEdge (DifGraph, GlvcNd, CurNd);
+        SetEdgeType (E, EDGE_DIF);
+
+        UseHdr = UseHdr->Nxt;
     }
-    
-    Edge* E = AddDifEdge (DifGraph, GlvcNd, CurNd);
-    SetEdgeType (E, EDGE_DIF);
 
     return;
 }

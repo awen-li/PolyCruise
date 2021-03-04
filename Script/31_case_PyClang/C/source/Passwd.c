@@ -8,17 +8,14 @@ void Retrive ()
     g = getenv("CASE1");
 }
 
-char* Pass ()
-{
-    return g;
-}
+char* cmp ();
+
 
 char* Getpasswd ()
 {
-	Retrive ();
-	
-	return Pass ();
-	
+    Retrive ();
+
+    return cmp ();
 }
 
 

@@ -60,7 +60,7 @@ vector<LibTaintBits> ExternalLib::m_FTaintBits =
     {"memcpy", TAINT_ARG1, TAINT_ARG0},  
     {"memmove", TAINT_ARG1, TAINT_ARG0}, 
     {"bcopy", TAINT_ARG0, TAINT_ARG1}, 
-    {"stpcpy", TAINT_ARG1, TAINT_ARG0},  
+    {"__strcpy_chk", TAINT_ARG1, TAINT_ARG0}, 
     {"strcat", TAINT_ARG1, TAINT_ARG0},  
     {"strcpy", TAINT_ARG1, TAINT_ARG0},   
     {"strncat", TAINT_ARG1, TAINT_ARG0},   
@@ -73,7 +73,8 @@ vector<LibTaintBits> ExternalLib::m_FTaintBits =
     {"strtoul", TAINT_ARG0, TAINT_RET},
     {"strtoull", TAINT_ARG0, TAINT_RET},
     {"sprintf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_ARG0},
-    {"printf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_NONE}
+    {"printf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_NONE},
+    {"__printf_chk", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_NONE}
     
 };
 

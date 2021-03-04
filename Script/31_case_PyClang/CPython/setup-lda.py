@@ -14,7 +14,7 @@ module1 = Extension('DemoTrace',
                     include_dirs = ['../C/include'],
                     #libraries = ['DemoTrace'],
                     #library_dirs = ['/usr/lib'],
-                    sources = ['Demo.c', '../C/source/Passwd.c'])
+                    sources = ['Demo.c', '../C/source/Passwd.c', '../C/source/Cmp.c'])
 
 setup (name = 'PyDemo',
        version = '1.0',

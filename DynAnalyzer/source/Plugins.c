@@ -527,12 +527,11 @@ VOID CheckCases (char *Cases)
 
         if (OK)
         {
-            printf ("@@@@ PASS -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
+            printf ("@@@@CASE-TEST PASS -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
         }
         else
         {
-            printf ("@@@@ FAIL -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
-            assert (0);
+            printf ("@@@@CASE-TEST FAIL -> %s-%s:%u\r\n", Cnode->PluginName, Cnode->FuncName, Cnode->InstId);
         }
         
         Ln = Ln->Nxt;

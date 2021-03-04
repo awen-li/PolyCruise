@@ -3,6 +3,9 @@
 
 char *g;
 
+char * Return (char *ctx);
+
+
 void Retrive ()
 {
     g = getenv("CASE1");
@@ -10,11 +13,9 @@ void Retrive ()
 
 char* Getpasswd ()
 {
-	Retrive ();
-	
-	printf ("Value = %s\r\n", g);
-	return g;
-	
+    Retrive ();
+
+    return Return (g);
 }
 
 
