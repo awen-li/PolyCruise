@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Operator.h"
 
 using namespace llvm;
 using namespace std;
@@ -169,6 +170,19 @@ public:
         return m_Use.end();
     }
 
+    inline VOID SetUse (Value *Use)
+    {
+        if (GEPOperator* gepo = dyn_cast<GEPOperator>(Use))
+        {
+            m_Use.push_back (gepo->getPointerOperand());
+        }
+        else
+        {
+            m_Use.push_back (Use);
+        }
+        return;
+    }
+
 private:
 
     inline Function* GetCallee(const Instruction *Inst) 
@@ -197,7 +211,7 @@ private:
             {
                 if (OpNum > 0)
                 {
-                    m_Use.push_back(m_Inst->getOperand (0));
+                    SetUse(m_Inst->getOperand (0));
                 }
                 break;              
             }
@@ -205,7 +219,7 @@ private:
             {
                 if (m_Inst->getNumOperands() != 0) 
                 {
-                    m_Use.push_back(m_Inst->getOperand (0));
+                    SetUse(m_Inst->getOperand (0));
                 }
                 
                 break;
@@ -213,7 +227,7 @@ private:
             case Instruction::Store:
             {
                 m_Def = m_Inst->getOperand(1);
-                m_Use.push_back(m_Inst->getOperand (0));
+                SetUse(m_Inst->getOperand (0));
                 break;
             }
             case Instruction::Call:
@@ -265,7 +279,7 @@ private:
                 unsigned Index = 0;                
                 while (Index < OpNum)
                 {
-                    m_Use.push_back(m_Inst->getOperand (Index));
+                    SetUse(m_Inst->getOperand (Index));
                     Index++;
                 }
             }

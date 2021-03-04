@@ -378,13 +378,6 @@ private:
             It->second += 1;
         }
     }
-    
-    inline bool IsGlobalValue (Value *Val)
-    {
-        GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
-
-        return (GVal != NULL);
-    }
 
     inline bool IsConstStr (Value* Glv)
     {
@@ -398,6 +391,13 @@ private:
         {
             return false;
         }
+    }
+
+    inline bool IsGlobalValue (Value *Val)
+    {
+        GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
+
+        return (GVal != NULL);
     }
 
     inline Value* IsInGlvSet (Value *Val)
@@ -730,8 +730,8 @@ private:
             }
             else
             {
-                Cst->m_InTaintBits &= ~FTaintBits;
-                FTaintBits |= Cst->m_InTaintBits; 
+                //Cst->m_InTaintBits &= ~FTaintBits;
+                //FTaintBits |= Cst->m_InTaintBits; 
                 //printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
                 //        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
             }
@@ -758,6 +758,10 @@ private:
             if (IS_TAINTED(FTaintBits, BitNo))
             {
                 LexSet->insert (U);
+                if (IsGlobalValue(U))
+                {
+                    m_GlvLexset.insert (U);
+                }
             }
         }
 
@@ -915,6 +919,8 @@ private:
         Function *Func = Fd->GetFunc ();
         InitCriterions (Func, FTaintBits, LocalLexSet);
 
+        //errs()<<"@@@@@@ execute function "<<Func->getName()<<"\r\n";
+
         unsigned InstID = 1;
         for (inst_iterator ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstID++) 
         {
@@ -925,6 +931,7 @@ private:
             {    
                 continue;
             }
+            //errs ()<<"\t =>"<<Func->getName()<<": execute instruction "<<*Inst<<"\r\n";
 
             /* check all use */
             for (auto It = LI.begin (); It != LI.end (); It++)
@@ -953,6 +960,8 @@ private:
             }
 
             unsigned TaintedBits = GetTaintedBits (&LI, LocalLexSet);
+            //errs ()<<"\t => TaintedBits = "<<TaintedBits<<"\r\n";
+            
             if (LI.IsBitCast())
             {
                 Value *Def = LI.GetDef ();

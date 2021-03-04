@@ -4,21 +4,21 @@
 
 char* Getpasswd ();
 
-extern char * g;
+extern char g[128];
 
 void Trace ()
 {
-	
-	return;
+    printf ("trac : %s \r\n", g);
+    return;
 }
 
 int main(int argc, char ** argv) 
 {
-	Getpasswd ();
+    Getpasswd ();
 
-	printf ("trac : %s \r\n", g);
-	
-	return 0;
+    Trace ();
+
+    return 0;
 }
 
 

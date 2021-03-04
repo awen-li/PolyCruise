@@ -72,7 +72,8 @@ vector<LibTaintBits> ExternalLib::m_FTaintBits =
     {"strtoll", TAINT_ARG0, TAINT_RET}, 
     {"strtoul", TAINT_ARG0, TAINT_RET},
     {"strtoull", TAINT_ARG0, TAINT_RET},
-    {"sprintf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_ARG0}
+    {"sprintf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_ARG0},
+    {"printf", TAINT_ARG0|TAINT_ARG1|TAINT_ARG2|TAINT_ARG3, TAINT_NONE}
     
 };
 

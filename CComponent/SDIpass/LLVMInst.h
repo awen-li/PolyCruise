@@ -222,7 +222,14 @@ private:
             auto It = m_UseSet.find (U);
             if (It == m_UseSet.end ())
             {
-                m_Use.push_back(U);
+                if (GEPOperator* gepo = dyn_cast<GEPOperator>(U))
+                {
+                    m_Use.push_back (gepo->getPointerOperand());
+                }
+                else
+                {
+                    m_Use.push_back (U);
+                }
             }
             Index++;
         }
