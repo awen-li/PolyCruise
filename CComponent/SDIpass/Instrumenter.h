@@ -1035,6 +1035,7 @@ private:
                 unsigned long EventId = Fd->GetEventID (InstID);
                 if (EventId == 0)
                 {
+                    //errs ()<<"INST: "<<*CurInst<<" ---- EventId==0, pass...\r\n";  
                     continue;
                 }
 
@@ -1054,9 +1055,8 @@ private:
                             InstrumentSite = Fd->GetFirstNonPHI(CurInst->getParent ());
                         }
                     }
-
-                    //errs ()<<"\r\n";      
-                    //errs ()<<"INST: "<<*CurInst<<"\r\n";            
+    
+                    //errs ()<<"\r\nINST: "<<*CurInst<<"\r\n";            
                     //errs ()<<"\t=>InstrumentSite: "<<*InstrumentSite<<"\r\n";
 
                     EventId = Fd->GetEventID (InstID);

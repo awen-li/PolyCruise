@@ -897,7 +897,7 @@ private:
             Instruction *Inst = &*ItI;
 
             LLVMInst LI (Inst);
-            if (!LI.IsLoad() && !LI.IsStore() && !LI.IsGep())
+            if (!LI.IsLoad() && !LI.IsStore() && !LI.IsGep() && !LI.IsBitCast())
             {
                 continue;
             }
@@ -1067,6 +1067,7 @@ private:
                         break;
                     }
                     case Instruction::ICmp:
+                    case Instruction::BitCast:
                     {
                         continue;
                     }
@@ -1094,7 +1095,7 @@ private:
 
                         if (LI.IsPHI ())
                         {
-                            continue;
+                            //continue;
                         }
 
                         break;
@@ -1134,11 +1135,11 @@ private:
             unsigned FWTaintedNum = m_InstSet.size ();
                     
             /* deduce backward information */
-            //FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
-            //if (m_InstSet.size () == FWTaintedNum)
-            //{
+            FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
+            if (m_InstSet.size () == FWTaintedNum)
+            {
                 break;                
-            //}
+            }
        
             Count++;
         }
