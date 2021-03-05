@@ -106,6 +106,11 @@ public:
         return (m_InstOp == Instruction::Load);
     }
 
+    inline bool IsStore ()
+    {
+        return (m_InstOp == Instruction::Store);
+    }
+
     inline bool IsBR ()
     {
         return (m_InstOp == Instruction::Br);

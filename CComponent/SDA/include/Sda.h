@@ -618,6 +618,24 @@ private:
         return TAINT_NONE;
     }
 
+    inline unsigned CheckOutArgTaint (Function *Func, set<Value*> *LexSet)
+    {
+        unsigned BitNo = ARG0_NO;
+        unsigned TaintBit = TAINT_NONE;
+        for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
+        {
+            Argument *Formal = &(*Ita);
+
+            if (LexSet->find (Formal) != LexSet->end ())
+            {
+                TaintBit |= TAINT_BIT(BitNo);
+            }
+        }
+
+        //printf ("\t CheckOutArgTaint -> %x \r\n", TaintBit);
+        return TaintBit;
+    }
+
     inline void AddTaintValue (set<Value*> *LexSet, Value *Val)
     {
         if (Val == NULL)
@@ -745,8 +763,11 @@ private:
             {
                 FTaintBits = Cst->m_InTaintBits;
             }
+            //printf ("[CALL function] %s -> IN:%#x, Out:%#x \r\n", Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
         }
         Cst->m_OutTaintBits = FTaintBits;
+
+        
 
         /* actual arguments */       
         unsigned BitNo = ARG0_NO;
@@ -875,8 +896,8 @@ private:
         {
             Instruction *Inst = &*ItI;
 
-            LLVMInst LI (Inst);          
-            if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable())
+            LLVMInst LI (Inst);
+            if (!LI.IsLoad() && !LI.IsStore() && !LI.IsGep())
             {
                 continue;
             }
@@ -1041,7 +1062,8 @@ private:
                         CSTaint *Cst = Fd->InsertCst (Inst, TaintedBits);
                         assert (Cst != NULL);
 
-                        ProcessCall (&LI, Cst, LocalLexSet); 
+                        ProcessCall (&LI, Cst, LocalLexSet);
+                        FTaintBits |= CheckOutArgTaint (Func, LocalLexSet);
                         break;
                     }
                     case Instruction::ICmp:
