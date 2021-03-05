@@ -732,8 +732,7 @@ private:
             {
                 //Cst->m_InTaintBits &= ~FTaintBits;
                 //FTaintBits |= Cst->m_InTaintBits; 
-                //printf ("[CALL Library] %s -> IN:%#x, TaintBits = %#x \r\n", 
-                //        Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
+                //printf ("[CALL Library] %s -> IN:%#x, Out:%#x \r\n", Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
             }
         }
         else
@@ -913,6 +912,48 @@ private:
         return FTaintBits;
     }
 
+    inline VOID DebugInfo (Function *Func, LLVMInst *LI)
+    {
+        errs ()<<"\t =>"<<Func->getName()<<": execute instruction "<<*LI->GetInst()<<" ---> ";
+        if (LI->GetDef())
+        {
+            errs ()<<"def="<<LI->GetDef();
+        }
+
+        errs ()<<", use=";
+        for (auto It = LI->begin (); It != LI->end (); It++)
+        {
+            errs ()<<*It<<" ";            
+        }
+        errs() <<"\r\n";
+    }
+
+    inline VOID EqualProcess (LLVMInst *LI)
+    {
+        if (LI->IsBitCast())
+        {
+            Value *Def = LI->GetDef ();
+            Value *Use = LI->GetValue (0);
+            m_EqualVal[Def] = Use;
+        }
+        else
+        {
+            Value *Def = LI->GetDef ();
+            if (Def == NULL)
+            {
+                return;
+            }
+            
+            Value *Base = LI->GetBaseAddr (Def);
+            if (Base != Def)
+            {
+                m_EqualVal[Def] = Base;
+                //printf ("EqualProcess ---- %p --> %p \r\n", Def, Base);
+            }
+        }
+
+        return;
+    }
 
     inline unsigned ForwardDeduce (FSda *Fd, unsigned FTaintBits, set<Value*> *LocalLexSet)
     {
@@ -931,8 +972,9 @@ private:
             {    
                 continue;
             }
-            //errs ()<<"\t =>"<<Func->getName()<<": execute instruction "<<*Inst<<"\r\n";
-
+            
+            //DebugInfo (Func, &LI);
+            
             /* check all use */
             for (auto It = LI.begin (); It != LI.end (); It++)
             {
@@ -945,8 +987,7 @@ private:
                     {
                         m_Entry2GlvUse[m_CurEntry].insert (LV);
                     }
-                    //errs ()<<"Entry Function: "<<m_CurEntry->getName()
-                    //       <<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
+                    //errs ()<<"Entry Function: "<<m_CurEntry->getName()<<" Use Glv: "<<LV<<" - "<<LV->getName ()<<"\r\n";
                 }
             }
 
@@ -960,26 +1001,12 @@ private:
             }
 
             unsigned TaintedBits = GetTaintedBits (&LI, LocalLexSet);
-            //errs ()<<"\t => TaintedBits = "<<TaintedBits<<"\r\n";
-            
-            if (LI.IsBitCast())
-            {
-                Value *Def = LI.GetDef ();
-                Value *Use = LI.GetValue (0);
-                m_EqualVal[Def] = Use;
-
-                Value *LV = IsInGlvSet (Use);
-                if (LV != NULL)
-                {
-                    m_GlvAlias [Def] = LV;
-                    //errs()<<*Inst<<" => "<<Def<<" to "<<LV<<"\r\n";
-                }
-                
-                continue;
-            }
+            //printf("\t => TaintedBits = %x\r\n", TaintedBits);
             
             if (TaintedBits == 0)
             {
+                EqualProcess (&LI);
+                
                 if (!LI.IsCall ())
                 {
                     continue;
@@ -999,6 +1026,8 @@ private:
             }
             else
             {
+                EqualProcess (&LI);
+                
                 switch (Inst->getOpcode ())
                 {
                     case Instruction::Ret:
@@ -1083,11 +1112,11 @@ private:
             unsigned FWTaintedNum = m_InstSet.size ();
                     
             /* deduce backward information */
-            FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
-            if (m_InstSet.size () == FWTaintedNum)
-            {
+            //FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
+            //if (m_InstSet.size () == FWTaintedNum)
+            //{
                 break;                
-            }
+            //}
        
             Count++;
         }

@@ -92,7 +92,7 @@ void DynExit (char *CaseResult)
     }
 
     printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
-    sleep (5);
+    sleep (2);
 
     CheckCases (CaseResult);
     WiteGraph ("DIFG");

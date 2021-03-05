@@ -116,6 +116,11 @@ public:
         return (m_InstOp == Instruction::BitCast);
     }
 
+    inline bool IsGep ()
+    {     
+        return (m_InstOp == Instruction::GetElementPtr);
+    }
+
     inline bool IsIntrinsic ()
     {
         return isa<IntrinsicInst>(m_Inst);
@@ -170,20 +175,28 @@ public:
         return m_Use.end();
     }
 
-    inline VOID SetUse (Value *Use)
+    inline Value* GetBaseAddr (Value *V)
     {
-        if (GEPOperator* gepo = dyn_cast<GEPOperator>(Use))
+        if (GEPOperator* gepo = dyn_cast<GEPOperator>(V))
         {
-            m_Use.push_back (gepo->getPointerOperand());
+            return gepo->getPointerOperand();
         }
         else
         {
-            m_Use.push_back (Use);
+            return V;
         }
-        return;
     }
 
+    
+
 private:
+    inline VOID SetUse (Value *Use)
+    {
+        Value *Base = GetBaseAddr (Use);
+        m_Use.push_back (Base);
+        
+        return;
+    }
 
     inline Function* GetCallee(const Instruction *Inst) 
     {
@@ -233,14 +246,30 @@ private:
             case Instruction::Call:
             case Instruction::Invoke: 
             {
-                Function* Func = GetCallee (m_Inst);
-                
+                m_CallFunc = GetCallee (m_Inst);               
                 OpNum--;
-                m_CallFunc = Func;
+                
+                unsigned Index = 0;                
+                while (Index < OpNum)
+                {
+                    SetUse(m_Inst->getOperand (Index));
+                    Index++;
+                }
+
+                if (!m_Inst->getType ()->isVoidTy())
+                {
+                    m_Def = m_Inst;
+                }
+
+                break;
+            }
+            case Instruction::GetElementPtr:
+            {
+                auto *gepo = cast<GEPOperator>(m_Inst);
+                //m_Def = gepo->getPointerOperand();
             }
             case Instruction::PHI:
-            case Instruction::Load:
-            case Instruction::GetElementPtr:      
+            case Instruction::Load:     
             case Instruction::Trunc:
             case Instruction::ZExt:
             case Instruction::SExt:
@@ -274,7 +303,10 @@ private:
             case Instruction::URem:
             case Instruction::SRem:
             {
-                m_Def = m_Inst;
+                if (m_Def == NULL)
+                {
+                    m_Def = m_Inst;
+                }
 
                 unsigned Index = 0;                
                 while (Index < OpNum)
