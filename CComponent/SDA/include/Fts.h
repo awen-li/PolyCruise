@@ -55,12 +55,12 @@ public:
 public:
     FUNC_SET* GetCalleeFuncs (LLVMInst *CI)
     {
-        Value *val = CI->GetDef ();
-        string FuncType = to_string (GetTypeId (val->getType ()));
+        Instruction *Inst = CI->GetInst();
+        string FuncType = to_string (GetTypeId (Inst->getType ()));
 
         for (auto It = CI->begin (); It != CI->end(); It++) 
         {
-            val = *It;
+            Value *val = *It;
             FuncType += "." + to_string (GetTypeId (val->getType ()));
         }
 

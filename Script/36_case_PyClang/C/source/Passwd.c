@@ -29,7 +29,7 @@ void Pass (S *st, char *Store);
 void Pass2 (S *st, char *Store);
 
 
-char* Getpasswd ()
+char* Getpasswd (int Index)
 {
     char *Store = (char*) malloc (128);
     assert (Store != NULL);
@@ -43,13 +43,10 @@ char* Getpasswd ()
         {"Pass2", (FUNCTION_PTR)Pass2},
     };
 
-    for (int Index = 0; Index < sizeof (CBary)/sizeof (Callback); Index++)
-    {
-        Callback* CB = CBary + Index;
-        printf ("Invoce : %s \r\n", CB->FuncName);
-        CB->FuncPtr (&st, Store);
-        printf ("leak --- %s \r\n", Store);
-    }
+    int CallIndex = Index%2;
+    printf ("---------->>>>> CallIndex = %d \r\n", CallIndex);
+    CBary[CallIndex].FuncPtr(&st, Store);
+    printf ("leak --- %s \r\n", Store);
     
     return Store;
 }

@@ -43,7 +43,8 @@ struct CSTaint
 {
     CSTaint (unsigned InTaintBits)
     {
-        m_InTaintBits = InTaintBits;
+        m_InTaintBits  = InTaintBits;
+        m_OutTaintBits = 0;
     }
 
     ~CSTaint ()
@@ -765,9 +766,7 @@ private:
             }
             //printf ("[CALL function] %s -> IN:%#x, Out:%#x \r\n", Callee->getName ().data(), Cst->m_InTaintBits, FTaintBits);
         }
-        Cst->m_OutTaintBits = FTaintBits;
-
-        
+        Cst->m_OutTaintBits = FTaintBits;  
 
         /* actual arguments */       
         unsigned BitNo = ARG0_NO;
@@ -830,7 +829,7 @@ private:
             ProcEntry (LI->GetInst (), Cst, LexSet);
             return;            
         }
-        
+
         if  (Callee != NULL)
         {  
             ExeFunction (LI, Callee, Cst, LexSet);
@@ -838,26 +837,23 @@ private:
         }
         else
         {
-            ExeFunction (LI, NULL, Cst, LexSet);
-            return;
-
-            #if 0
             FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
-            //assert (Fset != NULL);
             if (Fset == NULL)
             {
                 ExeFunction (LI, NULL, Cst, LexSet);
                 return;
             }
 
+            unsigned OutTaintBit = Cst->m_OutTaintBits;
             for (auto Fit = Fset->begin(), End = Fset->end(); Fit != End; Fit++)
             {
                 Callee = *Fit;
-                //errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
                 ExeFunction (LI, Callee, Cst, LexSet);
-                Cst->m_Callees.insert(Callee);
+                OutTaintBit |= Cst->m_OutTaintBits;
+                //printf("\t ----------- Indirect call %s: %x[%x]\r\n", Callee->getName ().data(), Cst->m_OutTaintBits, OutTaintBit);
             }
-            #endif
+            Cst->m_OutTaintBits = OutTaintBit;
+            //printf("\t [end]----------- Indirect call OutTaintBit: %x\r\n", Cst->m_OutTaintBits);
         }
 
         return;

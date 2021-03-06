@@ -79,7 +79,8 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
 
 
 static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
-{  
+{ 
+    Fts  Fts (Mm);
     for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
     {
         Function *Func  = *It;
@@ -100,10 +101,23 @@ static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
             Function *Callee = LI.GetCallee ();
             if (Callee == NULL)
             {
-                continue;
+                FUNC_SET *Fset = Fts.GetCalleeFuncs (&LI);
+                if (Fset == NULL)
+                {
+                    continue;
+                }
+                
+                for (auto Fit = Fset->begin(), End = Fset->end(); Fit != End; Fit++)
+                {
+                    Callee = *Fit;
+                    //errs()<<"Indirect Function: "<<Callee->getName ()<<"\r\n";
+                    CalledFunc->insert (Callee);
+                }
             }
-
-            CalledFunc->insert (Callee);
+            else
+            {
+                CalledFunc->insert (Callee);
+            }    
         }
     }
     

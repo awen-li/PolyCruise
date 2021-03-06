@@ -32,7 +32,7 @@ python -m pyinspect -E $CASE/ExpList -c -d $CASE
 
 # 3. run the case
 echo "@@@@@@@@@ runing the case.........."
-export CASE1="8"
+export CASE1="hello"
 cd Temp/$CASE/
 cp CPython/build/lib.linux-x86_64-3.7/DemoTrace.cpython-37m-x86_64-linux-gnu.so Python/PyDemo.so
 python -m pyinspect -C criterion.xml -t Python/Demo.py

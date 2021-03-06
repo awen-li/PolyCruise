@@ -3,8 +3,8 @@
 
 static PyObject *PwdInfo(PyObject *self, PyObject *args)
 {
-    char* pwd =  Getpasswd ();
-
+    char* pwd  =  Getpasswd (0);
+    
     return Py_BuildValue("s", pwd);
 }
 
