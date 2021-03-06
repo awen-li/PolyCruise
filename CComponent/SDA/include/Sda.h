@@ -720,7 +720,7 @@ private:
         for (auto It = LI->begin (); It != LI->end(); It++, BitNo++)
         {
             Value *U = *It;
-            if (LI->IsConst (U))
+            if (LI->IsConst (U) || !U->getType()->isPointerTy())
             {
                 continue;
             }
@@ -837,6 +837,9 @@ private:
         }
         else
         {
+            #if 1
+            ExeFunction (LI, NULL, Cst, LexSet);
+            #else
             FUNC_SET *Fset = m_Fts->GetCalleeFuncs (LI);
             if (Fset == NULL)
             {
@@ -854,6 +857,7 @@ private:
             }
             Cst->m_OutTaintBits = OutTaintBit;
             //printf("\t [end]----------- Indirect call OutTaintBit: %x\r\n", Cst->m_OutTaintBits);
+            #endif
         }
 
         return;

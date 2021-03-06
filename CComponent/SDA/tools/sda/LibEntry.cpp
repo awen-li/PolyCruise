@@ -101,6 +101,7 @@ static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
             Function *Callee = LI.GetCallee ();
             if (Callee == NULL)
             {
+                continue;
                 FUNC_SET *Fset = Fts.GetCalleeFuncs (&LI);
                 if (Fset == NULL)
                 {
