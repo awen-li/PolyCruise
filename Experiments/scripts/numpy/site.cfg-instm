@@ -1,0 +1,3 @@
+[extra_args]
+extra_compile_args = -emit-llvm -Xclang -load -Xclang llvmSDIpass.so
+extra_link_args = -flto -pthread -shared -lDynAnalyze

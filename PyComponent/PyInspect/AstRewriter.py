@@ -104,8 +104,10 @@ class ASTVisitor(NodeTransformer):
             self._oldlineno = node.lineno
         method = 'visit_' + node.__class__.__name__.lower()
         visitor = getattr(self, method, self.generic_visit)
-        #print (method, node.__class__.__name__.lower())
-        #print (ast.dump (node), "\r\nwen----------------------------------------\r\n")
+        if visitor.__name__ == "generic_visit":
+            print ("@@@@@ visitor ", method, " not defined yet, enter generic_visit...")
+        #print (method, end=", ")
+        #print (ast.dump (node), "\r\n----------------------------------------\r\n")
         return visitor(node)
 
     def visit_module(self, node):
@@ -1293,3 +1295,7 @@ class ASTVisitor(NodeTransformer):
 
     def visit_await(self, node):
         return Await(value=self.visit(node.value))
+
+    def visit_joinedstr(self, node):
+        #print (ast.dump (node))
+        return JoinedStr(values=node.values)

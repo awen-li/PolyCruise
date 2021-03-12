@@ -1,0 +1,3 @@
+[extra_args]
+extra_compile_args = -emit-llvm 
+extra_link_args = -flto -shared
