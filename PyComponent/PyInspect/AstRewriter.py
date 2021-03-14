@@ -479,9 +479,10 @@ class ASTVisitor(NodeTransformer):
         self._col_offset += 4
         for s in node.body:
             self.visit(s)
-        if_.body = self._codelist
+        if_.body = self._codelist      
         # process the orelse part
-        #self._lineno += 1
+        if len(node.orelse) != 0:
+            self._lineno += 1
         self._codelist = []
         for s in node.orelse:
             self.visit(s)
@@ -649,6 +650,67 @@ class ASTVisitor(NodeTransformer):
         fix_missing_locations(delete)
         self._add_to_codelist(delete)
 
+    def visit_try(self, node):
+        print (ast.dump (node))
+        type_names_body = []
+        for handler in node.handlers:
+            type_names_body.append((self.visit(handler.type),
+                                    self.visit(handler.name),
+                                    handler.body))
+
+        tryexp = Try(body=None,    # add latter
+                     handlers=[],  # add latter
+                     orelse=None,  # add latter
+                     finalbody=None, # add latter
+                     lineno=self._new_lineno(),
+                     col_offset=self._col_offset)
+        fix_missing_locations(tryexp)
+        self._add_to_codelist(tryexp)
+        ori_code = self._codelist
+        # process the body part
+        self._codelist = []
+        self._col_offset += 4
+        for s in node.body:
+            self.visit(s)
+        tryexp.body = self._codelist
+        # process except handlers
+        self._col_offset -= 4
+        for t, n, b in type_names_body:
+            eh = ExceptHandler(type=t,
+                               name=n,
+                               body=None,
+                               lineno=self._new_lineno(),
+                               col_offset=self._col_offset)
+            fix_missing_locations(eh)
+            self._add_to_lineno2stmt(eh.lineno, eh)
+            tryexp.handlers.append(eh)
+            self._add_to_lineno2ids(self._lineno, [x.id for x in [t, n]
+                                                   if isinstance(x, Name)])
+            # process the handler body stmts
+            self._codelist = []
+            self._col_offset += 4
+            for s in b:
+                self.visit(s)
+            eh.body = self._codelist
+            self._col_offset -= 4
+        # process the orelse part
+        #self._lineno += 1
+        self._codelist = []
+        self._col_offset += 4
+        for s in node.orelse:
+            self.visit(s)
+        tryexp.orelse = self._codelist
+        # process the finally part
+        self._codelist = []
+        self._col_offset += 4
+        for s in node.finalbody:
+            self.visit(s)
+        tryexp.finalbody = self._codelist
+        # recover it to the outer code list
+        self._codelist = ori_code
+        self._col_offset -= 4
+
+    
     def visit_tryexcept(self, node):
         type_names_body = []
         for handler in node.handlers:
@@ -1005,6 +1067,7 @@ class ASTVisitor(NodeTransformer):
         if isinstance(if_.test, Name):
             self._add_to_lineno2ids(self._lineno, (if_.test.id,))
         ori_code = self._codelist
+        self._lineno += 1
 
         def _next_eval(rest):
             self._codelist = []

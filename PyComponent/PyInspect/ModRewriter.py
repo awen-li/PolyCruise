@@ -18,6 +18,13 @@ class NewASTInfo(object):
         self.filename = filename
         self.lineno2stmt = lineno2stmt
         self.newlineno2oldlineno = newlineno2oldlineno
+        if filename.find ("runtests"):
+            self.dump(filename+"-debug.txt")
+
+    def dump (self, Name):
+        with open(Name, 'w') as File:
+            for line, stmt in self.lineno2stmt.items ():
+                File.write("line-" + str(line) + ", stmt-" + ast.dump (stmt) + "\n")
 
 class PyRecompile (object):
     def __init__(self, PyFile, PrjDir, OutDir="."):
