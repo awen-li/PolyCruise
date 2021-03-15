@@ -539,7 +539,8 @@ class ASTVisitor(NodeTransformer):
             self.visit(s)
         for_.body = self._codelist
         # process the orelse part
-        #self._lineno += 1
+        if len(node.orelse) != 0:
+            self._lineno += 1
         self._codelist = []
         for s in node.orelse:
             self.visit(s)
