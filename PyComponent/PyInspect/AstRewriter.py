@@ -654,6 +654,7 @@ class ASTVisitor(NodeTransformer):
         self._add_to_codelist(delete)
 
     def visit_try(self, node):
+        #print (ast.dump (node))
         type_names_body = []
         for handler in node.handlers:
             type_names_body.append((self.visit(handler.type),
@@ -907,6 +908,8 @@ class ASTVisitor(NodeTransformer):
         return id_
 
     def visit_str(self, node):
+        if isinstance (node, str):
+            return node
         assign = Assign(targets=[self._new_tmp_name(Store())],
                         value=Str(s=node.s),
                         lineno=self._new_lineno(),
@@ -1371,12 +1374,11 @@ class ASTVisitor(NodeTransformer):
         #                   Str(s='\n')]
         #          )
         Js = JoinedStr(values=[])
-        vList = node.values
-        Js.values.append (vList[0])
-        Js.values.append (vList[1])
-        if vList[2].s.find ("\n") != -1:
-            end = vList[2].s.replace ("\n", "")
-            Js.values.append (Str(s=end))
-        else:
-            Js.values.append (vList[2])
+        for value in node.values:
+            if isinstance (value, Str):
+                if value.s.find ("\n") != -1:
+                    end = value.s.replace ("\n", "")
+                    Js.values.append (Str(s=end))
+            else:           
+                Js.values.append (value)
         return Js
