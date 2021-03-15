@@ -464,6 +464,7 @@ class ASTVisitor(NodeTransformer):
             self._currclassname = oriclassname
 
     def visit_if(self, node):
+        #print ("visit_if ----> ", ast.dump (node))
         # add if stmt to the code list
         if_ = If(test=self.visit(node.test),
                  body=None,  # add latter
@@ -543,6 +544,7 @@ class ASTVisitor(NodeTransformer):
             self._lineno += 1
         self._codelist = []
         for s in node.orelse:
+            #print ("\tForelse ----> ", ast.dump (s))
             self.visit(s)
         for_.orelse = self._codelist
         #recover to the outer code list
@@ -652,7 +654,6 @@ class ASTVisitor(NodeTransformer):
         self._add_to_codelist(delete)
 
     def visit_try(self, node):
-        print (ast.dump (node))
         type_names_body = []
         for handler in node.handlers:
             type_names_body.append((self.visit(handler.type),
@@ -695,13 +696,16 @@ class ASTVisitor(NodeTransformer):
             eh.body = self._codelist
             self._col_offset -= 4
         # process the orelse part
-        #self._lineno += 1
+        if len (node.orelse) != 0:
+            self._lineno += 1
         self._codelist = []
         self._col_offset += 4
         for s in node.orelse:
             self.visit(s)
         tryexp.orelse = self._codelist
         # process the finally part
+        if len (node.finalbody) != 0:
+            self._lineno += 1
         self._codelist = []
         self._col_offset += 4
         for s in node.finalbody:
