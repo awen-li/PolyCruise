@@ -1366,4 +1366,17 @@ class ASTVisitor(NodeTransformer):
 
     def visit_joinedstr(self, node):
         #print (ast.dump (node))
-        return JoinedStr(values=node.values)
+        # JoinedStr(values=[Str(s='// hash:'), 
+        #                   FormattedValue(value=Name(id='vars_hash', ctx=Load()), conversion=-1, format_spec=None), 
+        #                   Str(s='\n')]
+        #          )
+        Js = JoinedStr(values=[])
+        vList = node.values
+        Js.values.append (vList[0])
+        Js.values.append (vList[1])
+        if vList[2].s.find ("\n") != -1:
+            end = vList[2].s.replace ("\n", "")
+            Js.values.append (Str(s=end))
+        else:
+            Js.values.append (vList[2])
+        return Js
