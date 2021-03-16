@@ -22,8 +22,6 @@ from copy import deepcopy, copy
 # Wen Li: adapt to Python3.7
 #################################################################
 
-
-
 class ASTVisitor(NodeTransformer):
 
     def __init__(self, lineno=0, col_offset=0, nestedexpand=False):
@@ -104,10 +102,13 @@ class ASTVisitor(NodeTransformer):
             self._oldlineno = node.lineno
         method = 'visit_' + node.__class__.__name__.lower()
         visitor = getattr(self, method, self.generic_visit)
-        if visitor.__name__ == "generic_visit":
-            print ("@@@@@ visitor ", method, " not defined yet, enter generic_visit...")
+        #if visitor.__name__ == "generic_visit":
+        #    print ("@@@@@ visitor ", method, " not defined yet, enter generic_visit...")
         #print (method, end=", ")
-        #print (ast.dump (node), "\r\n----------------------------------------\r\n")
+        #if isinstance (node, str):
+        #    print (node, "\r\n----------------------------------------\r\n")
+        #else:
+        #    print (ast.dump (node), "\r\n----------------------------------------\r\n")
         return visitor(node)
 
     def visit_module(self, node):
@@ -390,10 +391,19 @@ class ASTVisitor(NodeTransformer):
             self._col_offset -= 4
 
     def visit_functiondef(self, node, expand=False):
+        #v358 = 'numpy'
+        #v359 = array_function_dispatch(_pad_dispatcher, module=v358)
+        #@v359
+        #def pad(array, pad_width, mode=v357, **kwargs)
+        def _deco_list (decorator_list):
+            list = [self.visit(deco) for deco in decorator_list]
+            if len (list) != 0:
+                self._lineno += 1
+            return list
         funcdef = FunctionDef(name=self.visit_identifier(node.name),
                               args=self.visit(node.args),
                               body=None,
-                              decorator_list=[self.visit(deco) for deco in node.decorator_list],
+                              decorator_list=_deco_list(node.decorator_list),
                               lineno=self._new_lineno(),
                               col_offset=self._col_offset)
         fix_missing_locations(funcdef)
@@ -464,7 +474,7 @@ class ASTVisitor(NodeTransformer):
             self._currclassname = oriclassname
 
     def visit_if(self, node):
-        #print ("visit_if ----> ", ast.dump (node))
+        #print ("[", self._lineno, "]visit_if ----> ", ast.dump (node))
         # add if stmt to the code list
         if_ = If(test=self.visit(node.test),
                  body=None,  # add latter
@@ -478,6 +488,7 @@ class ASTVisitor(NodeTransformer):
         # process the body part
         self._codelist = []
         self._col_offset += 4
+        #print ("\t If-body, lineno = ", self._lineno)
         for s in node.body:
             self.visit(s)
         if_.body = self._codelist      
@@ -485,6 +496,7 @@ class ASTVisitor(NodeTransformer):
         if len(node.orelse) != 0:
             self._lineno += 1
         self._codelist = []
+        #print ("\t If-else, lineno = ", self._lineno)
         for s in node.orelse:
             self.visit(s)
         if_.orelse = self._codelist
@@ -1064,6 +1076,7 @@ class ASTVisitor(NodeTransformer):
         return Name(id=assign.targets[0].id, ctx=Load())
 
     def visit_boolop(self, node):
+        #print ("[", self._lineno, "]visit_boolop ----> ", ast.dump (node.op), ", cmp_num = ", len (node.values))
         tmp_name = self._new_tmp_name(Store())
         if_ = If(test=self.visit(node.values[0]),
                  body=None,
@@ -1075,7 +1088,6 @@ class ASTVisitor(NodeTransformer):
         if isinstance(if_.test, Name):
             self._add_to_lineno2ids(self._lineno, (if_.test.id,))
         ori_code = self._codelist
-        self._lineno += 1
 
         def _next_eval(rest):
             self._codelist = []
@@ -1087,6 +1099,7 @@ class ASTVisitor(NodeTransformer):
             return self._codelist
 
         def _stop_eval(cur):
+            self._lineno += 1
             self._codelist = []
             assign = Assign(targets=[copy(tmp_name)],
                             value=cur)
@@ -1106,8 +1119,7 @@ class ASTVisitor(NodeTransformer):
         #recover the original code
         self._codelist = ori_code
         self._col_offset -= 4
-        return Name(id=tmp_name.id,
-                    ctx=Load())
+        return Name(id=tmp_name.id, ctx=Load())
 
     def visit_compare(self, node):
         if len(node.ops) == 1:

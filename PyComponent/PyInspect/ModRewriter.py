@@ -18,7 +18,7 @@ class NewASTInfo(object):
         self.filename = filename
         self.lineno2stmt = lineno2stmt
         self.newlineno2oldlineno = newlineno2oldlineno
-        if filename.find ("runtests"):
+        if filename.find ("runtests") != -1:
             self.dump(filename+"-debug.txt")
 
     def dump (self, Name):
@@ -30,8 +30,7 @@ class PyRecompile (object):
     def __init__(self, PyFile, PrjDir, OutDir="."):
         self.RecompilePyFile (PyFile, PrjDir, OutDir)
 
-    def RecompilePyFile(self, SrcFile, PrjName, OutDir='.'):
-        
+    def RecompilePyFile(self, SrcFile, PrjName, OutDir='.'):        
         print ("Recompile python source: ", SrcFile)
         with open(SrcFile) as Pyfile:
             OrgAst = parse(Pyfile.read(), SrcFile, 'exec')
