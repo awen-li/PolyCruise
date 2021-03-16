@@ -298,7 +298,8 @@ public:
         {
             m_EntryFQ.InQueue (MainEntry);
         }
-        
+
+        unsigned Index = 0;
         while (!m_EntryFQ.IsEmpty ())
         {
             m_CurEntry = m_EntryFQ.OutQueue ();
@@ -308,7 +309,7 @@ public:
             }
             
             
-            //errs()<<"=====================> Process Entery Function: "<<m_CurEntry->getName ()<<" <====================\r\n";         
+            printf("[%u]=====================> [%u]Process Entery Function:%s <====================\r\n", Index, m_EntryFQ.Size(), m_CurEntry->getName ().data());         
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
             //printf ("IN TaintBits = %x\r\n", TaintBits);
             
@@ -318,6 +319,7 @@ public:
 
             UpdateEntryExeNum (m_CurEntry);
             //printf ("OUT TaintBits = %x\r\n", TaintBits);
+            Index++;
         }
 
         Dump ();
@@ -609,6 +611,10 @@ private:
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
         {
             Argument *Formal = &(*Ita);
+            if (Formal->onlyReadsMemory ())
+            {
+                continue;
+            }
 
             if (Formal == Val)
             {
@@ -626,6 +632,10 @@ private:
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
         {
             Argument *Formal = &(*Ita);
+            if (Formal->onlyReadsMemory ())
+            {
+                continue;
+            }
 
             if (LexSet->find (Formal) != LexSet->end ())
             {

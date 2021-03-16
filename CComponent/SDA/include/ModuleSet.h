@@ -116,6 +116,11 @@ public:
     {
         return m_FuncVector.end();
     }
+
+    DWORD Size ()
+    {
+        return m_FuncVector.size ();
+    }
 };
 
 class ModuleSet

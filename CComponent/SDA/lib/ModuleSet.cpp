@@ -316,7 +316,7 @@ VOID ModuleSet::loadModules(const vector<string> &ModulePathVec)
     {
         InitModuleSet();        
     }
-
+    printf("---> Load Module: function number = %u\n", m_FuncSet.Size());
     return;
 }
 

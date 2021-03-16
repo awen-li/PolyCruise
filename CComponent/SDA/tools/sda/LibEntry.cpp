@@ -149,7 +149,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
         Entry->insert (Func);
         //errs()<<"Add entry function: "<<Func->getName ()<<"\r\n";
     }
-
+    printf ("GetLibEntry: %u \r\n", (DWORD)Entry->size ());
     return;
 }
 
