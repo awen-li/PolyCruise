@@ -395,10 +395,10 @@ class ASTVisitor(NodeTransformer):
         #v359 = array_function_dispatch(_pad_dispatcher, module=v358)
         #@v359
         #def pad(array, pad_width, mode=v357, **kwargs)
+        #print (ast.dump (node))
         def _deco_list (decorator_list):
             list = [self.visit(deco) for deco in decorator_list]
-            if len (list) != 0:
-                self._lineno += 1
+            self._lineno += len (list)
             return list
         funcdef = FunctionDef(name=self.visit_identifier(node.name),
                               args=self.visit(node.args),
@@ -433,11 +433,15 @@ class ASTVisitor(NodeTransformer):
             self._col_offset -= 4
 
     def visit_classdef(self, node, expanded=False):
+        def _deco_list (decorator_list):
+            list = [self.visit(deco) for deco in decorator_list]
+            self._lineno += len (list)
+            return list
         classdef = ClassDef(name=self.visit_identifier(node.name),
                             bases=[self.visit(base) for base in node.bases],
                             keywords=[self.visit(kw) for kw in node.keywords],
                             body=node.body,
-                            decorator_list=[self.visit(deco) for deco in node.decorator_list],
+                            decorator_list=_deco_list(node.decorator_list),
                             lineno=self._new_lineno(),
                             col_offset=self._col_offset)
         fix_missing_locations(classdef)
@@ -875,20 +879,31 @@ class ASTVisitor(NodeTransformer):
             raise NotImplementedError('unknown context.')
 
     def visit_call(self, node, needtarget=True):
+        call_args = [self.visit(arg) for arg in node.args]
+        keywords_list = [keyword(arg=self.visit_identifier(kd.arg),
+                         value=self.visit(kd.value)) for kd in node.keywords]
         if isinstance(node.func, Attribute):
             func_name = Attribute(value=self.visit(node.func.value),
                                   attr=self.visit_identifier(node.func.attr),
                                   ctx=Load())
         else:
-            func_name = self.visit(node.func)
- 
+            func_name = self.visit(node.func) 
+            if func_name.id == "next":
+                iter_assign = Assign(targets=[self._new_tmp_name(Store())], 
+                                      value=Call(func=Name(id='iter', ctx=Load()),
+                                                  args=call_args,
+                                                  keywords=keywords_list),
+                                      lineno=self._new_lineno(),
+                                      col_offset=self._col_offset
+                                    )
+                fix_missing_locations(iter_assign)
+                self._add_to_codelist(iter_assign)
+                self._add_to_lineno2ids(self._lineno, self._get_ids(iter_assign))
+                call_args = iter_assign.targets
+
         call = Call(func=func_name,
-                    args=[self.visit(arg) for arg in node.args],
-                    keywords=[keyword(arg=self.visit_identifier(kd.arg),
-                                      value=self.visit(kd.value)) for kd in node.keywords],
-                    #starargs=self.visit(node.starargs),
-                    #wargs=self.visit(node.kwargs)
-                    )
+                    args=call_args,
+                    keywords=keywords_list)
         if needtarget:
             assign = Assign(targets=[self._new_tmp_name(Store())],
                             value=call,
@@ -897,6 +912,18 @@ class ASTVisitor(NodeTransformer):
             fix_missing_locations(assign)
             self._add_to_codelist(assign)
             self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
+            if not isinstance(node.func, Attribute) and func_name.id == "zip":
+                zip_assign = Assign(targets=[self._new_tmp_name(Store())], 
+                                     value=Call(func=Name(id='list', ctx=Load()),
+                                                 args=[Name(id=assign.targets[0].id, ctx=Load())],
+                                                 keywords=[]),
+                                     lineno=self._new_lineno(),
+                                     col_offset=self._col_offset
+                                    )
+                fix_missing_locations(zip_assign)
+                self._add_to_codelist(zip_assign)
+                self._add_to_lineno2ids(self._lineno, self._get_ids(zip_assign))
+                assign = zip_assign
             return Name(id=assign.targets[0].id, ctx=Load())
         else:
             return call
@@ -1021,15 +1048,9 @@ class ASTVisitor(NodeTransformer):
         self._add_to_codelist(assign)
         self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
         assign = Assign(targets=[self._new_tmp_name(Store())],
-                        value=Call(func=Attribute(value=Name(id='__builtins__',
-                                                             ctx=Load()),
-                                                  attr='set',
-                                                  ctx=Load()),
-                                   args=[Name(id=assign.targets[0].id,
-                                              ctx=Load())],
-                                   keywords=[],
-                                   starargs=None,
-                                   kwargs=None),
+                        value=Call(func=Name(id='set', ctx=Load()),
+                                    args=[Name(id=assign.targets[0].id, ctx=Load())],
+                                    keywords=[]),
                         lineno=self._new_lineno(),
                         col_offset=self._col_offset)
         fix_missing_locations(assign)
@@ -1389,8 +1410,10 @@ class ASTVisitor(NodeTransformer):
         for value in node.values:
             if isinstance (value, Str):
                 if value.s.find ("\n") != -1:
-                    end = value.s.replace ("\n", "")
+                    end = value.s.replace ("\n", "\\n")
                     Js.values.append (Str(s=end))
+                else:
+                    Js.values.append (value)
             else:           
                 Js.values.append (value)
         return Js
