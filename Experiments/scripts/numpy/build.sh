@@ -48,7 +48,6 @@ CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
 python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-exit (0)
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
@@ -56,13 +55,14 @@ cp $SCRIPTS/setup-*.py $CASE_PATH/
 cp $SCRIPTS/site.cfg-lda $CASE_PATH/site.cfg
 cd $CASE_PATH
 rm -rf build
-python setup-lda.py build
+python setup-lda.py build_ext --inplace
+
 SdaAnalysis
 
 # 3. build again and install the instrumented software
 rm -rf build
 cp $SCRIPTS/site.cfg-instm $CASE_PATH/site.cfg
-python setup-instm.py install
+python setup-instm.py build_ext --inplace
 
 
 # 4. generate file maping
