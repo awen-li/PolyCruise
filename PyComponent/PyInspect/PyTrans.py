@@ -30,6 +30,19 @@ def PyTranslateFile (PyFile):
         _, Name = os.path.split(PyFile)
         File.write(Name + "\n")
 
+def IsInExpList (py, PyFile, ExpList):
+    if ExpList == None:
+        return False
+    if py in ExpList:
+        return True
+    for exp in ExpList:
+        Hd = exp[0:2]
+        if Hd != "-D":
+            continue
+        if PyFile.find (exp[2:]) != -1:
+            return True
+    return False
+        
 def PyTranslate (PyDir, ExpList=None):
     __Copy (PyDir)
 
@@ -41,10 +54,10 @@ def PyTranslate (PyDir, ExpList=None):
             if Ext != ".py":
                 continue
 
-            if (ExpList != None) and (py in ExpList):
-                continue
-            
             PyFile = os.path.join(Path, py)
+            if IsInExpList (py, PyFile, ExpList) == True:
+                continue    
+            
             PyRecompile (PyFile, PyDir, ROOTDIR)
 
             RelativePath = RelatPath (PyFile, PyDir)

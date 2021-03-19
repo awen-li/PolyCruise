@@ -487,7 +487,13 @@ class ASTVisitor(NodeTransformer):
                  col_offset=self._col_offset)
         fix_missing_locations(if_)
         self._add_to_codelist(if_)
-        self._add_to_lineno2ids(self._lineno, (if_.test.id, ))
+        if isinstance (if_.test, Name):
+            self._add_to_lineno2ids(self._lineno, (if_.test.id, ))
+        elif isinstance (if_.test, NameConstant):
+            self._add_to_lineno2ids(self._lineno, (if_.test.value, ))
+        else:
+            raise NotImplementedError('visit_if -> unknown type in test.')
+        
         ori_code = self._codelist
         # process the body part
         self._codelist = []
@@ -512,7 +518,6 @@ class ASTVisitor(NodeTransformer):
         # add for stmt into the codelist
         # we call the enumerate function to generate
         # the index for the trace generation
-
         index_name, tgt_name = self._new_tmp_name(Store()), self._new_tmp_name(Store())
         for_ = For(target=Tuple(elts=[index_name, tgt_name], ctx=Store()),
                    iter=Call(func=Attribute(value=Name(id='builtins', ctx=Load()),
@@ -581,7 +586,9 @@ class ASTVisitor(NodeTransformer):
             self._add_to_lineno2ids(self._lineno, (_test.id,))
         elif isinstance (_test, NameConstant):
             #print ("while.test => NameConstant", ast.dump (_test))
-            pass
+            self._add_to_lineno2ids(self._lineno, (_test.value,))
+        else:
+            raise NotImplementedError('visit_while -> unknown type in test.')
         
         ori_code = self._codelist
         # process the body part
@@ -1127,14 +1134,22 @@ class ASTVisitor(NodeTransformer):
             self.visit(assign)
             return self._codelist
 
+        NameVal = None
+        if isinstance (if_.test, Name):
+            NameVal = Name(id=if_.test.id, ctx=Load())
+        elif isinstance (if_.test, NameConstant):
+            NameVal = NameConstant(value=if_.test.value)
+        else:
+            raise NotImplementedError('visit_boolop -> unknown type in test.')
+
         # process the body part
         self._col_offset += 4
         if_.body = _next_eval(node.values[1:]) \
             if isinstance(node.op, And) \
-            else _stop_eval(Name(id=if_.test.id, ctx=Load()))
+            else _stop_eval(NameVal)
         # process the orelse part
         #self._lineno += 1
-        if_.orelse = _stop_eval(Name(id=if_.test.id, ctx=Load())) \
+        if_.orelse = _stop_eval(NameVal) \
             if isinstance(node.op, And) \
             else _next_eval(node.values[1:])
         #recover the original code

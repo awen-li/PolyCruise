@@ -41,7 +41,7 @@ GenMap ()
     return
 }
 
-target=numpy
+target=pytorch
 
 # 1. build and translate python modules
 cd ../../
@@ -49,12 +49,11 @@ ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
-#python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+exit 0
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
-cp $SCRIPTS/setup.py $CASE_PATH/
-
 cd $CASE_PATH
 rm -rf build
 export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
