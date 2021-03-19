@@ -49,22 +49,31 @@ ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
-python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+#python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
-cp $SCRIPTS/setup-*.py $CASE_PATH/
-cp $SCRIPTS/site.cfg-lda $CASE_PATH/site.cfg
+cp $SCRIPTS/setup.py $CASE_PATH/
+
 cd $CASE_PATH
 rm -rf build
-python setup-lda.py build_ext --inplace
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+export CC="clang -emit-llvm -flto -pthread"
+export CXX="clang++ -emit-llvm -flto -pthread"
+export LDSHARED="clang -flto -shared -pthread -lm"
+export RANLIB=/bin/true
+python setup.py develop
 
-SdaAnalysis
+#SdaAnalysis
 
 # 3. build again and install the instrumented software
 rm -rf build
-cp $SCRIPTS/site.cfg-instm $CASE_PATH/site.cfg
-python setup-instm.py build_ext --inplace
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+export CXX="clang++ -emit-llvm -flto -pthread  -Xclang -load -Xclang llvmSDIpass.so"
+export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
+export RANLIB=/bin/true
+python setup.py develop
 
 
 # 4. generate file maping
