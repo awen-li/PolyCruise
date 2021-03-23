@@ -1,4 +1,20 @@
 
+EnvVerify ()
+{
+if [ $LLVM_PATH == "" ]; then
+ echo "please set ENV variable LLVM_PATH"
+ exit
+fi
+
+if [ $CLANG_PATH == "" ]; then
+ echo "please set ENV variable CLANG_PATH"
+ exit
+fi
+
+echo "Environment is checking ok!"
+}
+
+EnvVerify
 export SDI_PATH=`pwd`
 
 #0. temp data directory

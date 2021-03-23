@@ -29,10 +29,10 @@ BUILD_DIR="build"
 rm -rf $BUILD_DIR
 mkdir $BUILD_DIR
 
-cp -rf $SDA_PATH/thirdparty/mxml-3.2.tar.gz $BUILD_DIR/
-cd $BUILD_DIR && tar -xvf mxml-3.2.tar.gz
-cd mxml-3.2 && ./configure && make && make install
-cd $SDA_PATH
+#cp -rf $SDA_PATH/thirdparty/mxml-3.2.tar.gz $BUILD_DIR/
+#cd $BUILD_DIR && tar -xvf mxml-3.2.tar.gz
+#cd mxml-3.2 && ./configure && make && make install
+#cd $SDA_PATH
 
 cd $BUILD_DIR
 cmake -D CMAKE_BUILD_TYPE:STRING=Debug ../
