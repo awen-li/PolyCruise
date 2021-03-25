@@ -41,6 +41,7 @@ PreProcess("pre", cl::desc("<preprocess before analysis >"), cl::init("0"), cl::
 
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
 VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS);
+VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */);
 
 
 VOID GetModulePath (vector<string> &ModulePathVec)
@@ -155,6 +156,8 @@ int main(int argc, char ** argv)
     initializeInstrumentation(Registry);
     initializeTarget(Registry);
 
+    LoadFuncSds ("/tmp/difg/function_sds.xml");
+ 
     GetParas(argc, argv);
   
     GetModulePath(ModulePathVec);

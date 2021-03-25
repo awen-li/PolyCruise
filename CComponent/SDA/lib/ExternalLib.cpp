@@ -87,8 +87,17 @@ VOID ExternalLib::InitExtLib ()
         m_ExtFuncMap[lgt->FName] = lgt;
     }
 
+    m_IsInit = 1;
     return;
 }
+
+void ExternalLib::AddFuncSds (string FuncName, unsigned InTaintBit, unsigned OutTaintBit)
+{
+    m_FTaintBits.push_back (LibTaintBits (FuncName, InTaintBit, OutTaintBit));
+
+    return;
+}
+
 
 
 

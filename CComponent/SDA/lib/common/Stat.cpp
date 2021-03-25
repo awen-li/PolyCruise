@@ -94,7 +94,7 @@ VOID Stat::EndTime (std::string StrName)
 {
     double Time = m_StatUnit->GetTime (StrName);
     DWORD MemUsage = m_StatUnit->GetMemUse(StrName);
-    printf ("%s cost-time: %0.2lf (ms), memory-usage: %u (KB)\r\n", StrName.c_str(), Time, MemUsage);
+    printf ("\t-->[%s] cost-time: %0.2lf (ms), memory-usage: %u (KB)\r\n", StrName.c_str(), Time, MemUsage);
 }
 	
 VOID Stat::IncStatNum (std::string StrName, DWORD Num)
@@ -105,7 +105,7 @@ VOID Stat::IncStatNum (std::string StrName, DWORD Num)
 DWORD Stat::GetStatNum (std::string StrName)
 {
     DWORD Num = m_StatUnit->GetStatNum (StrName);
-    printf ("%-16s has count: %d \r\n", StrName.c_str(), Num);
+    printf ("\t-->%-16s has count: %d \r\n", StrName.c_str(), Num);
 
     return Num;
 }

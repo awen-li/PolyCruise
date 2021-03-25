@@ -77,6 +77,47 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
     return;
 }
 
+/* <function_sds>
+    <sds>
+        <function>numpy_lapack_lite_s_cmp</function> 
+        <in>0110000</in> 
+        <out>00000000</out>
+    </sds>
+   </function_sds> */
+VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */)
+{
+
+    FILE *fp = fopen(XmlDoc, "r");
+    if (fp == NULL)
+    {
+        printf ("LoadFuncSds: open %s fail.....\r\n", XmlDoc);
+        return;
+    }    
+    mxml_node_t* tree = mxmlLoadFile(NULL, fp, MXML_TEXT_CALLBACK);
+    fclose(fp);
+
+    DWORD No = 0;
+    set <string> SStr;
+    mxml_node_t* XmlNode = mxmlFindElement(tree, tree, "sds", NULL, NULL, MXML_DESCEND);
+    while (XmlNode != NULL)
+    {     
+        mxml_node_t *Func  = mxmlFindElement(XmlNode, tree, "function", NULL, NULL, MXML_DESCEND_FIRST);
+        mxml_node_t *In   = mxmlFindElement(XmlNode, tree, "in", NULL, NULL, MXML_DESCEND_FIRST);      
+        mxml_node_t *Out = mxmlFindElement(XmlNode, tree, "out", NULL, NULL, MXML_DESCEND_FIRST);
+        printf("[%u]function:%s, in:%s, out:%s \r\n", No, mxmlGetText(Func, 0), mxmlGetText(In, 0), mxmlGetText(Out, 0));
+
+        XmlNode = mxmlFindElement(XmlNode, tree, "sds", NULL, NULL, MXML_DESCEND);
+        No++;
+
+    }
+
+    mxmlDelete(tree);
+
+    printf ("LoadFuncSds %s success [%u]\r\n", XmlDoc, No);
+    return;
+}
+
+
 
 static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
 { 

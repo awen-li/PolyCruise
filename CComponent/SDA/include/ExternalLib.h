@@ -34,6 +34,13 @@ struct LibTaintBits
     string FName;
     unsigned InTaintBit;
     unsigned OutTaintBit;
+
+    LibTaintBits (string Name, unsigned In, unsigned Out)
+    {
+        FName = Name;
+        InTaintBit = In;
+        OutTaintBit = Out;
+    }
 };
 
 class ExternalLib 
@@ -42,12 +49,13 @@ private:
     static vector<LibTaintBits> m_FTaintBits;
 
     map<string, LibTaintBits*> m_ExtFuncMap;
+    unsigned m_IsInit;
     
 public:
     
     ExternalLib()
     {
-        InitExtLib ();
+        m_IsInit = 0;
     }
 
     ~ ExternalLib()
@@ -58,8 +66,15 @@ private:
     VOID InitExtLib ();
 
 public:
+    void AddFuncSds (string FuncName, unsigned InTaintBit, unsigned OutTaintBit);
+    
     inline unsigned ComputeTaintBits (string FuncName, unsigned InTaintBits)
     {
+        if (m_IsInit == 0)
+        {
+            InitExtLib ();
+        }
+        
         auto It = m_ExtFuncMap.find(FuncName);
         if (It == m_ExtFuncMap.end())
         {
