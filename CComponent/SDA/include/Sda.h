@@ -28,6 +28,7 @@
 #include "StField.h"
 #include "SdaBin.h"
 #include "Event.h"
+#include "common/Stat.h"
 
 
 using namespace llvm;
@@ -234,6 +235,8 @@ private:
     set<Value *> m_GlvLexset;
     map<Value *, Value *> m_GlvAlias;
 
+    unsigned m_FuncExeNum;
+
 public:
     
     Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
@@ -251,6 +254,8 @@ public:
 
         m_CurEntry = NULL;
         InitGlv ();
+        
+        m_FuncExeNum = 0;
     }
 
     ~Sda ()
@@ -302,6 +307,7 @@ public:
         unsigned Index = 0;
         while (!m_EntryFQ.IsEmpty ())
         {
+            m_FuncExeNum = 0;
             m_CurEntry = m_EntryFQ.OutQueue ();
             if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ()+1)
             {
@@ -320,6 +326,9 @@ public:
             UpdateEntryExeNum (m_CurEntry);
             //printf ("OUT TaintBits = %x\r\n", TaintBits);
             Index++;
+
+            printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
+                    Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);
         }
 
         Dump ();
@@ -1137,7 +1146,7 @@ private:
         FSda *Fd = GetFlda (Func);
 
         m_RunStack.insert (Func);
-
+        Stat::StartTime(Func->getName().data());
         while (1)
         {            
             /* forward execution */
@@ -1153,7 +1162,9 @@ private:
        
             Count++;
         }
-        
+        Stat::EndTime(Func->getName().data());
+
+        m_FuncExeNum++;
         m_RunStack.erase (Func);
         return FTaintBits;
     }
