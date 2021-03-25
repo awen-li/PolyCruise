@@ -6,7 +6,12 @@ SdaAnalysis ()
 	
 	sda -dir ./ -pre=1
 	BC_FILES=`find ./ -name *.preopt.bc`
-	BC_LIST=()
+	BC_LIST=(_simd.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/core/_struct_ufunc_tests.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
+	         ./numpy/core/_operand_flag_tests.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/core/_rational_tests.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/core/_umath_tests.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
+	         ./numpy/fft/_pocketfft_internal.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/_bounded_integers.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/_pcg64.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
+	         ./numpy/random/_mt19937.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/_generator.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/mtrand.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
+	         ./numpy/random/bit_generator.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/_common.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc ./numpy/random/_sfc64.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc
+	          )
 	for bc in $BC_FILES
 	do
 		echo ".......................sda -file $bc......................."
