@@ -57,6 +57,9 @@ make clean && make
 killall difaEngine
 cp difaEngine /usr/bin/
 
+cd $SDI_PATH
+cp Experiments/function_sds.xml $DATA_DIR/
+
 #4. buld PyComponent:PyTrace
 echo ""
 echo ""

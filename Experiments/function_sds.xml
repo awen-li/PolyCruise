@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<function_sds>
+  
+<sds> <function>numpy_lapack_lite_s_cmp</function> <in>0110000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_s_cat</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_s_wsfe</function> <in>0100000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_s_rnge</function> <in>0100000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_s_copy</function> <in>0010000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_s_stop</function> <in>0100000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_i_nint</function> <in>0100000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_do_fio</function> <in>0110000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_e_wsfe</function> <in>0000000</in> <out>00000000</out> </sds>
+<sds> <function>numpy_lapack_lite_f__cabsf</function> <in>0110000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_f__cabs</function> <in>0110000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_r_cnjg</function> <in>0010000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_pow_ri</function> <in>0110000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_pow_di</function> <in>0110000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_d_cnjg</function> <in>0010000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_z_div</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_r_imag</function> <in>0100000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_c_abs</function> <in>0100000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_c_sqrt</function> <in>0010000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_pow_ci</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>numpy_lapack_lite_r_lg10</function> <in>0100000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_r_sign</function> <in>0110000</in> <out>10000000</out> </sds>
+
+
+<sds> <function>lsame_64_</function> <in>0110000</in> <out>00000000</out> </sds>
+<sds> <function>xerbla_64_</function> <in>0010000</in> <out>01000000</out> </sds>
+<sds> <function>ilaenv_64_</function> <in>011111111100</in> <out>101000000</out> </sds>
+<sds> <function>ztrmv_64_</function> <in>0111111110</in> <out>0111010100</out> </sds>
+<sds> <function>ztrsm_64_</function> <in>0111111110</in> <out>0111010100</out> </sds>
+<sds> <function>ztrti2_64_</function> <in>0111111000</in> <out>01101100</out> </sds>
+<sds> <function>cscal_64_</function> <in>0110100</in> <out>000100100</out> </sds>
+<sds> <function>slamc2_64_</function> <in>0111111110</in> <out>0111111110</out> </sds>
+<sds> <function>slamc4_64_</function> <in>00110000</in> <out>010000100</out> </sds>
+<sds> <function>slamc5_64_</function> <in>01111000</in> <out>00000110</out> </sds>
+<sds> <function>slapy3_64_</function> <in>01100000</in> <out>10000000</out> </sds>
+<sds> <function>slamch_64_</function> <in>01000000</in> <out>10000000</out> </sds>
+<sds> <function>sladiv_64_</function> <in>01111000</in> <out>00000110</out> </sds>
+<sds> <function>ccopy_64_</function> <in>01110100</in> <out>00001000</out> </sds>
+<sds> <function>csscal_64_</function> <in>01101000</in> <out>00010000</out> </sds>
+<sds> <function>ctrmv_64_</function> <in>000010101</in> <out>011101010</out> </sds>
+<sds> <function>dgesdd_64_</function> <in>0111111111111110</in> <out>0111111111110110</out> </sds>
+<sds> <function>cgeev_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>zgeev_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>zgesdd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>zgesdd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>cgesdd_64_</function> <in>0111111111111111</in> <out>0111111111110111</out> </sds>
+<sds> <function>dgeev_64_</function> <in>0111111111111110</in> <out>0111111111111010</out> </sds>
+<sds> <function>zheevd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>cgelsd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>cheevd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>dsyevd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>sgeev_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>sgeev_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>sgelsd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>sgesdd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+<sds> <function>sgelsd_64_</function> <in>0111111111111110</in> <out>0111111111111110</out> </sds>
+
+
+
+<sds> <function>FLOAT_lstsq</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_lstsq</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_lstsq</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_lstsq</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eigvals</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eigvals</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_eigvals</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eigvals</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eig</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eig</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eig</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_svd_A</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_svd_A</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_svd_A</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_svd_A</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_svd_S</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_svd_S</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_svd_S</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_svd_S</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_svd_N</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_svd_N</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_svd_N</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_svd_N</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_cholesky_lo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_cholesky_lo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_cholesky_lo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_cholesky_lo</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_inv</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_inv</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_inv</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_inv</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_solve1</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_solve1</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_solve1</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_solve1</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_solve</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_solve</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_solve</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_solve</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eigvalshup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eigvalshup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_eigvalshup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eigvalshup</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eigvalshlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eigvalshlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_eigvalshlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eigvalshlo</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eighup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eighup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_eighup</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eighup</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_eighlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_eighlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_eighlo</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_eighlo</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_det</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_det</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_det</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_det</function> <in>0011000</in> <out>01000000</out> </sds>
+
+<sds> <function>FLOAT_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>DOUBLE_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CFLOAT_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
+<sds> <function>CDOUBLE_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
+
+
+
+</function_sds>

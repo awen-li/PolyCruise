@@ -573,7 +573,7 @@ private:
         }
 
         Type *Rty = cast<PointerType>(Ty)->getElementType();
-        if (!Rty->isStructTy ())
+        if (!Rty->isStructTy () || Rty->getStructName ().data() == NULL)
         {
             return true;
         }
@@ -793,7 +793,11 @@ private:
         {
             if (!IsInStack (Callee))
             {
-                FTaintBits = ComputeFlda (Callee, Cst->m_InTaintBits);
+                FTaintBits = ExtLib->ComputeTaintBits (Callee->getName ().data(), Cst->m_InTaintBits);
+                if (FTaintBits == TAINT_UNKNOWN)
+                {
+                    FTaintBits = ComputeFlda (Callee, Cst->m_InTaintBits);
+                }
             }
             else
             {

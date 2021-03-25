@@ -6,4 +6,5 @@ pavement.py
 versioneer.py
 -Dnumpy/doc
 -Dnumpy/numpy/distutils
+-Dnumpy/numpy/compat
 -Dnumpy/tools

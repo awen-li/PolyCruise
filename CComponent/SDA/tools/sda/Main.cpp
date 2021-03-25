@@ -121,7 +121,7 @@ VOID RunPasses (vector<string> &ModulePathVec)
     }
 
     sda.Compute ();
-    printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());
+    //printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());
 
     return;
 }
@@ -167,9 +167,11 @@ int main(int argc, char ** argv)
     }
 
     Preprocess (ModulePathVec);
-    
-    RunPasses (ModulePathVec);
 
+    Stat::StartTime("SDA");
+    RunPasses (ModulePathVec);
+    Stat::EndTime("SDA");
+    
     return 0;
 }
 
