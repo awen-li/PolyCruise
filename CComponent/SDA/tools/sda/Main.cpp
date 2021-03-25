@@ -156,8 +156,7 @@ int main(int argc, char ** argv)
     initializeInstrumentation(Registry);
     initializeTarget(Registry);
 
-    LoadFuncSds ("/tmp/difg/function_sds.xml");
- 
+    LoadFuncSds ((char *)"/tmp/difg/function_sds.xml");
     GetParas(argc, argv);
   
     GetModulePath(ModulePathVec);

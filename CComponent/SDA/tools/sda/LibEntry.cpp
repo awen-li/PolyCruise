@@ -61,12 +61,14 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
         mxml_node_t *Func  = mxmlFindElement(XmlNode, tree, "function", NULL, NULL, MXML_DESCEND_FIRST);
         mxml_node_t *Ret   = mxmlFindElement(XmlNode, tree, "return", NULL, NULL, MXML_DESCEND_FIRST);      
         mxml_node_t *Local = mxmlFindElement(XmlNode, tree, "local", NULL, NULL, MXML_DESCEND_FIRST);
-        printf("[%u]function:%s, return:%s, local:%s \r\n", No, mxmlGetText(Func, 0), mxmlGetText(Ret, 0), mxmlGetText(Local, 0));
+
+        const char *FuncName = mxmlGetText(Func, 0);
+        printf("[%u]function:%s, return:%s, local:%s \r\n", No, FuncName, mxmlGetText(Ret, 0), mxmlGetText(Local, 0));
 
         XmlNode = mxmlFindElement(XmlNode, tree, "criterion", NULL, NULL, MXML_DESCEND);
         No++;
 
-        SStr.insert (string (mxmlGetText(Func, 0)));
+        SStr.insert (FuncName);
     }
 
     mxmlDelete(tree);
@@ -75,6 +77,27 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
     TranslateSS (Mm, &SStr, SS);
     
     return;
+}
+
+static inline unsigned Str2Bits (const char *StrBits)
+{
+    unsigned No = RET_NO;
+    unsigned Bits = 0;
+
+    const char *C = StrBits;
+    while (*C != 0)
+    {
+        if (*C != '0')
+        {
+            SET_TAINTED(Bits, No);
+        }
+        
+        No++;
+        C++;
+    }
+    
+    //printf ("StrBits=%s ---> %x \r\n", StrBits, Bits);
+    return Bits;
 }
 
 /* <function_sds>
@@ -104,7 +127,12 @@ VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */)
         mxml_node_t *Func  = mxmlFindElement(XmlNode, tree, "function", NULL, NULL, MXML_DESCEND_FIRST);
         mxml_node_t *In   = mxmlFindElement(XmlNode, tree, "in", NULL, NULL, MXML_DESCEND_FIRST);      
         mxml_node_t *Out = mxmlFindElement(XmlNode, tree, "out", NULL, NULL, MXML_DESCEND_FIRST);
-        printf("[%u]function:%s, in:%s, out:%s \r\n", No, mxmlGetText(Func, 0), mxmlGetText(In, 0), mxmlGetText(Out, 0));
+
+        const char *FuncName = mxmlGetText(Func, 0);
+        const char *InBits   = mxmlGetText(In, 0);
+        const char *OutBits  = mxmlGetText(Out, 0);
+        //printf("[%u]function:%s, in:%s, out:%s \r\n", No, FuncName, InBits, OutBits);
+        ExternalLib::AddFuncSds(mxmlGetText(Func, 0), Str2Bits (InBits), Str2Bits (OutBits));
 
         XmlNode = mxmlFindElement(XmlNode, tree, "sds", NULL, NULL, MXML_DESCEND);
         No++;
@@ -183,6 +211,12 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
 
         auto ItC = CalledFunc.find (Func);
         if (ItC != CalledFunc.end ())
+        {
+            continue;
+        }
+
+        const char *FuncName = Func->getName().data ();
+        if (ExternalLib::IsExistSds(FuncName))
         {
             continue;
         }

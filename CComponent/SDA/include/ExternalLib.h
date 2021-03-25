@@ -66,7 +66,8 @@ private:
     VOID InitExtLib ();
 
 public:
-    void AddFuncSds (string FuncName, unsigned InTaintBit, unsigned OutTaintBit);
+    static void AddFuncSds (string FuncName, unsigned InTaintBit, unsigned OutTaintBit);
+    static bool IsExistSds (string FuncName);
     
     inline unsigned ComputeTaintBits (string FuncName, unsigned InTaintBits)
     {

@@ -25,6 +25,7 @@
 #include "common/SoftPara.h"
 
 #define MAX_MODULE_NUM (128)
+using namespace std;
 
 typedef std::vector<llvm::Function*> T_FunVector;
 typedef std::set<llvm::Function*> T_FunSet;
@@ -238,12 +239,14 @@ class ModuleManage
 {
 
 private:
+    string m_ModName;
     static ModuleSet *m_ModuleSet;
 
 public:
  
     ModuleManage(const std::vector<std::string> &ModulePathVec) 
     {
+        m_ModName = ModulePathVec[0] + ".md";
         if (m_ModuleSet == NULL)
         {
             m_ModuleSet = new ModuleSet(ModulePathVec);
@@ -252,6 +255,7 @@ public:
 
     ModuleManage(llvm::Module &Mod) 
     {
+        m_ModName = string (Mod.getName().data ()) + ".md";
         if (m_ModuleSet == NULL)
         {
             m_ModuleSet = new ModuleSet(Mod);
@@ -264,6 +268,11 @@ public:
         {
             m_ModuleSet = new ModuleSet();
         }
+    }
+
+    string ModName ()
+    {
+        return m_ModName;
     }
 
     static void DelModuleSet() 

@@ -66,6 +66,8 @@ class FSda
 private:
     unsigned m_InstNum;
     unsigned m_FuncId;
+    unsigned m_ExeNum;
+    
     Function *m_CurFunc;
     map <Instruction*, CSTaint> m_CallSite2Cst;
     map <Instruction*, unsigned long> m_TaintInsts2ID;
@@ -74,6 +76,7 @@ private:
 public:
     FSda (unsigned FuncId, Function *Func)
     {
+        m_ExeNum  = 0;
         m_CurFunc = Func;
         m_FuncId  = FuncId;
 
@@ -87,6 +90,17 @@ public:
     ~FSda ()
     {
 
+    }
+    
+    inline void IncreaseExe ()
+    {
+        m_ExeNum++;
+        return;
+    }
+
+    inline unsigned ExeNum ()
+    {
+        return m_ExeNum;
     }
 
     inline void SetInstNum (unsigned InstNum)
@@ -236,11 +250,14 @@ private:
     map<Value *, Value *> m_GlvAlias;
 
     unsigned m_FuncExeNum;
-
+    unsigned m_TotalInstNum;
 public:
     
     Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
     {
+        m_FuncExeNum = 0;
+        m_TotalInstNum = 0;
+        
         m_Ms  = Ms;
         m_Sf  = Sf;
         
@@ -253,9 +270,7 @@ public:
         assert (ExtLib != NULL);
 
         m_CurEntry = NULL;
-        InitGlv ();
-        
-        m_FuncExeNum = 0;
+        InitGlv ();   
     }
 
     ~Sda ()
@@ -450,6 +465,7 @@ private:
                 continue;
             }
 
+            m_TotalInstNum += Func->getInstructionCount();
             for (inst_iterator itr = inst_begin(*Func), ite = inst_end(*Func); itr != ite; ++itr) 
             {
                 Instruction *Inst = &*itr.getInstructionIterator();
@@ -1144,9 +1160,10 @@ private:
         unsigned Count = 0;
         set<Value*> LocalLexSet;
         FSda *Fd = GetFlda (Func);
+        Fd->IncreaseExe();
 
         m_RunStack.insert (Func);
-        Stat::StartTime(Func->getName().data());
+        //Stat::StartTime(Func->getName().data());
         while (1)
         {            
             /* forward execution */
@@ -1162,7 +1179,7 @@ private:
        
             Count++;
         }
-        Stat::EndTime(Func->getName().data());
+        //Stat::EndTime(Func->getName().data());
 
         m_FuncExeNum++;
         m_RunStack.erase (Func);
@@ -1170,6 +1187,29 @@ private:
     }
 
 
+    inline void DumpExeNum (unsigned ExeNum)
+    {
+        unsigned Num = 0;
+        string ModName = m_Ms->ModName() + ".exenum";
+        
+        FILE *EnFile  = fopen (ModName.c_str(), "w");
+        assert (EnFile != NULL);
+        
+        for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
+        {
+            FSda *Fd = &(It->second);
+
+            if (Fd->ExeNum () >= ExeNum)
+            {
+                fprintf (EnFile, "%-124s ------- %u \r\n", Fd->GetName(), Fd->ExeNum ());
+                Num++;
+            }
+        }
+
+        printf ("DumpExeNum -> %s --- %u \r\n", ModName.c_str(), Num);
+        fclose (EnFile);
+    }
+    
     /////////////////////////////////////////////////////////////////////
     //// LdaBin.bin
     /////////////////////////////////////////////////////////////////////
@@ -1242,13 +1282,11 @@ private:
             fwrite (&Lb, sizeof(Lb), 1, Bf);
         }
 
-        unsigned TotalInstNum = 0;
         unsigned TaintInstNum = 0;
         for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
         {
             FSda *Fd = &(It->second);
 
-            TotalInstNum += Fd->GetInstNum ();
             TaintInstNum += Fd->GetTaintInstNum ();
             
             FldaBin Fdb = {0};
@@ -1304,7 +1342,13 @@ private:
         fclose (Bf);
         fclose (BfTxt);
         printf ("@@@@@@@@@ Instrumentation rate: %0.2f [%u/%u]\r\n", 
-                TaintInstNum*1.0/TotalInstNum, TaintInstNum, TotalInstNum);
+                TaintInstNum*1.0/m_TotalInstNum, TaintInstNum, m_TotalInstNum);
+
+        const char *ExeNum = getenv ("ExeNum");
+        if (ExeNum != NULL)
+        {
+            DumpExeNum ((unsigned)atoi (ExeNum));
+        }
     }  
 };
 

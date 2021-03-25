@@ -98,6 +98,21 @@ void ExternalLib::AddFuncSds (string FuncName, unsigned InTaintBit, unsigned Out
     return;
 }
 
+bool ExternalLib::IsExistSds (string FuncName)
+{
+    for (auto It = m_FTaintBits.begin (); It != m_FTaintBits.end (); It++)
+    {
+        LibTaintBits *lgt = &(*It);
+        if (lgt->FName == FuncName)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 
 
 
