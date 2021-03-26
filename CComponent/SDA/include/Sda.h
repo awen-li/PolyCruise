@@ -30,6 +30,8 @@
 #include "Event.h"
 #include "common/Stat.h"
 
+#define TIMEINTERVAL 1000
+#define CLOCK_IN_MS() (clock() / (CLOCKS_PER_SEC / TIMEINTERVAL))
 
 using namespace llvm;
 using namespace std;
@@ -96,10 +98,6 @@ public:
     inline unsigned GetSdsCache (unsigned InSds)
     {
         m_ExeNum++;
-        if (m_ExeNum < 64)
-        {
-            return 0;
-        }
 
         auto It = m_SdsCache.find (InSds);
         if (It == m_SdsCache.end ())
@@ -340,6 +338,17 @@ public:
         return;
     }
 
+    inline bool IsEntryFunc (Function *Callee)
+    {
+        auto It = m_EntryTaintBits.find (Callee);
+        if (It == m_EntryTaintBits.end ())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     inline void Compute ()
     {      
         Function *MainEntry = m_Ms->GetEntryFunction ();
@@ -349,17 +358,16 @@ public:
         }
 
         unsigned Index = 0;
+        double Start = CLOCK_IN_MS();
+        unsigned EntryNum = m_EntryFQ.Size();
         while (!m_EntryFQ.IsEmpty ())
         {
-            m_FuncExeNum = 0;
+            //m_FuncExeNum = 0;
             m_CurEntry = m_EntryFQ.OutQueue ();
             if (GetEntryExeNum (m_CurEntry) > m_Entry2GlvUse[m_CurEntry].size ()+1)
             {
                 continue;
-            }
-
-            //printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
-            //        Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);        
+            }      
           
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
             //printf ("IN TaintBits = %x\r\n", TaintBits);
@@ -372,13 +380,17 @@ public:
             //printf ("OUT TaintBits = %x\r\n", TaintBits);
             Index++;
 
-            //if (m_FuncExeNum > 512)
-            //    printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
-            //            Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);
+            if (!(Index%100))
+            {
+                printf("---> [T-%-6.2f S] Process --- %-2.2f / %u --- ExeFunc[%u]\r", 
+                       (CLOCK_IN_MS()-Start)/1000, (1-1.0*m_EntryFQ.Size()/EntryNum), EntryNum, m_FuncExeNum);
+            }
         }
-
+        printf("---> [T-%-6.2f S] Process --- %-2.2f / %u --- ExeFunc[%u]\r\n", 
+                (CLOCK_IN_MS()-Start)/1000, (1-1.0*m_EntryFQ.Size()/EntryNum), EntryNum, m_FuncExeNum);
+        
         Dump ();
-        printf ("\r\n#m_InstSet = %u \r\n", (unsigned)m_InstSet.size());
+        printf ("---> m_InstSet = %u \r\n", (unsigned)m_InstSet.size());  
     }
     
 private:
@@ -501,7 +513,7 @@ private:
             {
                 Instruction *Inst = &*itr.getInstructionIterator();
                 LLVMInst LI (Inst);
-                if (!IsEntryFunc (LI.GetCallee()))
+                if (!IsThreadCrt (LI.GetCallee()))
                 {
                     continue;
                 }
@@ -561,7 +573,7 @@ private:
         return;
     }
     
-    inline bool IsEntryFunc (Function *Callee)
+    inline bool IsThreadCrt (Function *Callee)
     {
         if (Callee == NULL)
         {
@@ -667,7 +679,7 @@ private:
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
         {
             Argument *Formal = &(*Ita);
-            if (Formal->onlyReadsMemory ())
+            if (Formal->onlyReadsMemory () || !Formal->getType()->isPointerTy())
             {
                 continue;
             }
@@ -688,7 +700,7 @@ private:
         for (auto Ita = Func->arg_begin(); Ita != Func->arg_end(); Ita++, BitNo++) 
         {
             Argument *Formal = &(*Ita);
-            if (Formal->onlyReadsMemory ())
+            if (Formal->onlyReadsMemory () || !Formal->getType()->isPointerTy())
             {
                 continue;
             }
@@ -894,7 +906,7 @@ private:
     inline void ProcessCall (LLVMInst *LI, CSTaint *Cst, set<Value*> *LexSet)
     {
         Function *Callee = LI->GetCallee();
-        if (IsEntryFunc (Callee))
+        if (IsThreadCrt (Callee))
         {
             ProcEntry (LI->GetInst (), Cst, LexSet);
             return;            
@@ -1059,11 +1071,11 @@ private:
             Instruction *Inst = &*ItI;
 
             LLVMInst LI (Inst);          
-            if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable())
+            if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable() || LI.IsAlloca ())
             {    
                 continue;
             }
-            
+
             //DebugInfo (Func, &LI);
             
             /* check all use */
@@ -1109,7 +1121,7 @@ private:
                 unsigned TaintInstNum = m_InstSet.size ();
                 ProcessCall (&LI, Cst, LocalLexSet);
                 if (m_InstSet.size () > TaintInstNum &&
-                    !IsEntryFunc (LI.GetCallee ()))
+                    !IsThreadCrt (LI.GetCallee ()))
                 {
                     m_InstSet.insert (Inst);
                     Fd->InsertInst (Inst, InstID, 0);
@@ -1163,16 +1175,16 @@ private:
                             AddGlvUseEntry (Glv);
                         }
 
-                        if (LI.IsPHI ())
-                        {
-                            //continue;
-                        }
+                        //if (LI.IsPHI ())
+                        //{
+                        //    continue;
+                        //}
 
                         break;
                     }
                 }
 
-                if (IsEntryFunc (LI.GetCallee ()))
+                if (IsThreadCrt (LI.GetCallee ()))
                 {
                     continue;
                 }
@@ -1196,10 +1208,13 @@ private:
         set<Value*> LocalLexSet;
         FSda *Fd = GetFlda (Func);
 
-        unsigned Sds = Fd->GetSdsCache(InSds);
-        if (Sds != 0)
+        if (!IsEntryFunc (Func))
         {
-            return Sds;
+            unsigned Sds = Fd->GetSdsCache(InSds);
+            if (Sds != 0)
+            {
+                return Sds;
+            }
         }
 
         m_RunStack.insert (Func);

@@ -3,4 +3,5 @@ build.py
 -Dpytorch/torch/lib/python3.8
 -Dpytorch/.github
 -Dpytorch/third_party
--Dpytorch/tools/autograd
+-Dpytorch/tools
+-Dpytorch/caffe2/contrib/aten

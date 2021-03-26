@@ -120,6 +120,7 @@ VOID RunPasses (vector<string> &ModulePathVec)
         sda.AddEntry (*It);
     }
 
+    printf ("Start to compute SDA.........\r\n");
     sda.Compute ();
     //printf("Total Memory usage:%u (K)\r\n", Stat::GetPhyMemUse ());
 

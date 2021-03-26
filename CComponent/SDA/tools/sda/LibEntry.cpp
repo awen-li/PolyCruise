@@ -63,7 +63,7 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
         mxml_node_t *Local = mxmlFindElement(XmlNode, tree, "local", NULL, NULL, MXML_DESCEND_FIRST);
 
         const char *FuncName = mxmlGetText(Func, 0);
-        printf("[%u]function:%s, return:%s, local:%s \r\n", No, FuncName, mxmlGetText(Ret, 0), mxmlGetText(Local, 0));
+        //printf("[%u]function:%s, return:%s, local:%s \r\n", No, FuncName, mxmlGetText(Ret, 0), mxmlGetText(Local, 0));
 
         XmlNode = mxmlFindElement(XmlNode, tree, "criterion", NULL, NULL, MXML_DESCEND);
         No++;
@@ -147,9 +147,10 @@ VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */)
 
 
 
-static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
+static inline unsigned GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
 { 
     Fts  Fts (Mm);
+    unsigned FuncNum = 0;
     for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
     {
         Function *Func  = *It;
@@ -158,6 +159,7 @@ static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
             continue;
         }
 
+        FuncNum++;
         for (inst_iterator itr = inst_begin(*Func), ite = inst_end(*Func); itr != ite; ++itr) 
         {
             Instruction *Inst = &*itr.getInstructionIterator();
@@ -191,7 +193,7 @@ static inline void GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledFunc)
         }
     }
     
-    return;
+    return FuncNum;
 }
 
 
@@ -200,7 +202,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
     set <Function*> CalledFunc;
     set <Function*> DeclFunc;
 
-    GetCalledFunc (Mm, &CalledFunc);
+    unsigned FuncNum = GetCalledFunc (Mm, &CalledFunc);
     for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
     {
         Function *Func  = *It;
@@ -224,7 +226,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
         Entry->insert (Func);
         //errs()<<"Add entry function: "<<Func->getName ()<<"\r\n";
     }
-    printf ("GetLibEntry: %u \r\n", (DWORD)Entry->size ());
+    printf ("GetLibEntry: %u / %u \r\n", (DWORD)Entry->size (), FuncNum);
     return;
 }
 

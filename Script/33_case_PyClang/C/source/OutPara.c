@@ -14,7 +14,7 @@ void Pass (S *st, char *Store)
     char *tmp = Store;
 
     strcpy (tmp, st->p);
-    printf (Store);
+    printf ("%s\r\n", Store);
     return;
 }
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <function_sds>
-  
+
+<!-- numpy -->   
 <sds> <function>numpy_lapack_lite_s_cmp</function> <in>0110000</in> <out>00000000</out> </sds>
 <sds> <function>numpy_lapack_lite_s_cat</function> <in>0011000</in> <out>01000000</out> </sds>
 <sds> <function>numpy_lapack_lite_s_wsfe</function> <in>0100000</in> <out>00000000</out> </sds>
@@ -163,5 +164,9 @@
 <sds> <function>SHORT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
 <sds> <function>UBYTE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
 <sds> <function>BYTE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+
+<!-- pytorch --> 
+<sds> <function>__clang_call_terminate</function> <in>01000000</in> <out>00100000</out> </sds>
+
 
 </function_sds>

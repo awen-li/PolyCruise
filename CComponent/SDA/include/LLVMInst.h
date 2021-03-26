@@ -63,6 +63,11 @@ public:
     {
         return m_Inst;
     }
+
+    inline bool IsAlloca ()
+    {
+        return (m_InstOp == Instruction::Alloca);
+    }
     
     inline bool IsRet ()
     {
