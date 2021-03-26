@@ -4,6 +4,7 @@ setup-lda.py
 setup-instm.py
 pavement.py
 versioneer.py
+version.py
 -Dnumpy/doc
 -Dnumpy/numpy/distutils
 -Dnumpy/numpy/compat

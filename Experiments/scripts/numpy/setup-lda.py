@@ -53,7 +53,7 @@ builtins.__NUMPY_SETUP__ = True
 # Needed for backwards code compatibility below and in some CI scripts.
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
-FULLVERSION = versioneer.get_version()
+FULLVERSION = "1.21.0.dev0+1010.g29d8d9339" # wen hard-code
 ISRELEASED = 'dev' not in FULLVERSION
 MAJOR, MINOR, MICRO = FULLVERSION.split('.')[:3]
 VERSION = '{}.{}.{}'.format(MAJOR, MINOR, MICRO)

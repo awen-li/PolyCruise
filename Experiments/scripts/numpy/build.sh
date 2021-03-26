@@ -55,7 +55,7 @@ cp criterion.xml $CASE_PATH/
 cp $SCRIPTS/setup-*.py $CASE_PATH/
 cp $SCRIPTS/site.cfg-lda $CASE_PATH/site.cfg
 cd $CASE_PATH
-#rm -rf build
+rm -rf build
 python setup-lda.py build_ext --inplace
 
 SdaAnalysis
