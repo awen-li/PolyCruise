@@ -6,7 +6,7 @@
 extern char *g;
 char pwd[128] = "default";
 
-char* cmp ()
+char* cmp (void)
 {
     if (strncmp (pwd, g, strlen(g)) != 0)
     {

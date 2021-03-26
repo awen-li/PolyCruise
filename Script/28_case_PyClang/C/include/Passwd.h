@@ -2,7 +2,8 @@
 #define _GETPASSWD_H_
 
 
-char* Getpasswd ();
+char* Getpasswd (void);
+
 
 
 #endif 

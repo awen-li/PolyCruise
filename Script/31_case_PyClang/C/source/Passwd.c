@@ -3,15 +3,15 @@
 
 char *g;
 
-void Retrive ()
+void Retrive (void)
 {
     g = getenv("CASE1");
 }
 
-char* cmp ();
+char* cmp (void);
 
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
     Retrive ();
 

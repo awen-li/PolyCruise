@@ -6,12 +6,12 @@ char *g;
 char * Return (char *ctx);
 
 
-void Retrive ()
+void Retrive (void)
 {
     g = getenv("CASE1");
 }
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
     Retrive ();
 

@@ -17,7 +17,7 @@ char* Pass (S *st)
     return st->p;
 }
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
     S st;
 	Retrive (&st);

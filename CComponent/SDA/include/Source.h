@@ -152,14 +152,14 @@ private:
                 continue;
             }
 
-            errs()<<*Inst<<"=========> ";
+            //errs()<<*Inst<<"=========> ";
 
             unsigned BitNo = RET_NO;
             if (IS_TAINTED (TaintBit, BitNo))
             {
                 m_Criterion.insert (LI.GetDef ());
                 m_SInsts.insert (Inst);
-                errs()<<"Ret "<<BitNo;
+                //errs()<<"Ret "<<BitNo;
             }
 
             BitNo++;
@@ -168,7 +168,7 @@ private:
                 Value *U = *It;
                 if (IS_TAINTED (TaintBit, BitNo))
                 {
-                    errs()<<" Para:"<<BitNo;
+                    //errs()<<" Para:"<<BitNo;
                     m_Criterion.insert(U);
                     m_SInsts.insert (Inst);
                 }
@@ -176,7 +176,7 @@ private:
                 BitNo++;                        
             }
 
-            errs()<<"\r\n";
+            //errs()<<"\r\n";
         }
     }
 };

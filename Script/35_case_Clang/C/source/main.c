@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned Getpasswd ();
+unsigned Getpasswd (void);
 void Trace (unsigned *ptr);
 
 int main(int argc, char ** argv) 

@@ -23,6 +23,7 @@
 <sds> <function>numpy_lapack_lite_pow_ci</function> <in>0011000</in> <out>01000000</out> </sds>
 <sds> <function>numpy_lapack_lite_r_lg10</function> <in>0100000</in> <out>10000000</out> </sds>
 <sds> <function>numpy_lapack_lite_r_sign</function> <in>0110000</in> <out>10000000</out> </sds>
+<sds> <function>numpy_lapack_lite_c_div</function> <in>0011000</in> <out>01000000</out> </sds>
 
 
 <sds> <function>lsame_64_</function> <in>0110000</in> <out>00000000</out> </sds>
@@ -139,6 +140,28 @@
 <sds> <function>CFLOAT_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
 <sds> <function>CDOUBLE_slogdet</function> <in>0011000</in> <out>01000000</out> </sds>
 
-
+<sds> <function>HALF_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>LONGDOUBLE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>TIMEDELTA_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>DATETIME_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>VOID_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>UNICODE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>INT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>USHORT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>CLONGDOUBLE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>CDOUBLE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>CFLOAT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>DOUBLE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>STRING_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>OBJECT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>FLOAT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>ULONGLONG_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>LONGLONG_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>ULONG_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>LONG_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>UINT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>SHORT_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>UBYTE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
+<sds> <function>BYTE_to_VOID</function> <in>01000000</in> <out>00100000</out> </sds>
 
 </function_sds>

@@ -72,6 +72,7 @@ private:
     map <Instruction*, CSTaint> m_CallSite2Cst;
     map <Instruction*, unsigned long> m_TaintInsts2ID;
     map <BasicBlock*, unsigned> m_BB2Id;
+    map <unsigned, unsigned> m_SdsCache;
 
 public:
     FSda (unsigned FuncId, Function *Func)
@@ -92,9 +93,37 @@ public:
 
     }
     
-    inline void IncreaseExe ()
+    inline unsigned GetSdsCache (unsigned InSds)
     {
         m_ExeNum++;
+        if (m_ExeNum < 64)
+        {
+            return 0;
+        }
+
+        auto It = m_SdsCache.find (InSds);
+        if (It == m_SdsCache.end ())
+        {
+            return 0;
+        }
+
+        //printf ("SdsCache hit!!!  InSds:%x -----> OutSds:%x\r\n", InSds, It->second);
+        return It->second;
+    }
+
+    inline void UpdateSdsCache (unsigned InSds, unsigned OutSds)
+    {
+        auto It = m_SdsCache.find (InSds);
+        if (It == m_SdsCache.end ())
+        {
+            m_SdsCache [InSds] = OutSds;
+        }
+        else
+        {
+            unsigned Sds = It->second;
+            m_SdsCache [InSds] = Sds | OutSds;
+        }
+  
         return;
     }
 
@@ -328,9 +357,10 @@ public:
             {
                 continue;
             }
-            
-            
-            printf("[%u]=====================> [%u]Process Entery Function:%s <====================\r\n", Index, m_EntryFQ.Size(), m_CurEntry->getName ().data());         
+
+            //printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
+            //        Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);        
+          
             unsigned TaintBits = GetEntryTaintbits (m_CurEntry);
             //printf ("IN TaintBits = %x\r\n", TaintBits);
             
@@ -342,8 +372,9 @@ public:
             //printf ("OUT TaintBits = %x\r\n", TaintBits);
             Index++;
 
-            printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
-                    Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);
+            //if (m_FuncExeNum > 512)
+            //    printf("[%u]=====================> [%u]Process Entery Function:%s --- ExeFunc[%u] <==================== \r\n", 
+            //            Index, m_EntryFQ.Size(), m_CurEntry->getName ().data(), m_FuncExeNum);
         }
 
         Dump ();
@@ -1159,23 +1190,29 @@ private:
     }
 
 
-    inline unsigned ComputeFlda (Function *Func, unsigned FTaintBits)
+    inline unsigned ComputeFlda (Function *Func, unsigned InSds)
     {
         unsigned Count = 0;
         set<Value*> LocalLexSet;
         FSda *Fd = GetFlda (Func);
-        Fd->IncreaseExe();
+
+        unsigned Sds = Fd->GetSdsCache(InSds);
+        if (Sds != 0)
+        {
+            return Sds;
+        }
 
         m_RunStack.insert (Func);
+        unsigned OutSds = InSds;
         //Stat::StartTime(Func->getName().data());
         while (1)
         {            
             /* forward execution */
-            FTaintBits = ForwardDeduce (Fd, FTaintBits, &LocalLexSet); 
+            OutSds = ForwardDeduce (Fd, OutSds, &LocalLexSet); 
             unsigned FWTaintedNum = m_InstSet.size ();
                     
             /* deduce backward information */
-            FTaintBits = BackwardDeduce (Fd, FTaintBits, &LocalLexSet);
+            OutSds = BackwardDeduce (Fd, OutSds, &LocalLexSet);
             if (m_InstSet.size () == FWTaintedNum)
             {
                 break;                
@@ -1187,7 +1224,9 @@ private:
 
         m_FuncExeNum++;
         m_RunStack.erase (Func);
-        return FTaintBits;
+        Fd->UpdateSdsCache(InSds, OutSds);
+        
+        return OutSds;
     }
 
 

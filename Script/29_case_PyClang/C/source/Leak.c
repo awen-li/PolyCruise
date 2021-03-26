@@ -7,12 +7,12 @@ extern char *g;
 char ctx[128];
 
 
-void Trans ()
+void Trans (void)
 {
     strcpy (ctx, g);
 }
 
-void Leak ()
+void Leak (void)
 {
     char curctx[128];
     

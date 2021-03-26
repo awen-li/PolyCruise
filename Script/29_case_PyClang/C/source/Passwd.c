@@ -6,16 +6,16 @@
 char *g;
 extern char ctx[128];
 
-void Retrive ()
+void Retrive (void)
 {
     g = getenv("CASE1");
 }
 
-void Trans ();
-void Leak ();
+void Trans (void);
+void Leak (void);
 
 
-char* Getpasswd ()
+char* Getpasswd (void)
 { 
     Retrive ();
 

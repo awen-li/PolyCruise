@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
 	char *Value = getenv("CASE1");
 	

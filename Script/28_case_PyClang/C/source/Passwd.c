@@ -11,7 +11,7 @@ void Retrive ()
     strcat (g, P);
 }
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
     strcpy (g, "pwd:");
     
