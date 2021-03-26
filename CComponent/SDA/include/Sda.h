@@ -1258,17 +1258,30 @@ private:
     /////////////////////////////////////////////////////////////////////
     ///  unsigned FuncNum;
 	//   FldaBin[]
-	//            char FuncName[F_NAME_LEN];
+	//            unsigned NameLen;
+	//            unsigned FuncId;
 	//            unsigned TaintInstNum;
 	//            unsigned TaintCINum;
+	//            char FuncName[NameLen];
 	//            unsigned InstID[]
 	//            unsigned TaintCI[] 
 	//                              unsigned InstID;
 	//                              unsigned InTaintBits;
 	//                              unsigned OutTaintBits;
 	//                              unsigned CalleeNum;
-	//                              char FuncName[F_NAME_LEN][]
+	//                              char FuncName[NameLen][]
 	/////////////////////////////////////////////////////////////////////
+    inline unsigned Align4 (unsigned Length)
+    {
+        if (Length & 0x03)
+        {
+            return (((Length>>2) + 1)<<2);
+        }
+        else
+        {
+            return Length;
+        }
+    }
 
     inline void Dump ()
     {
@@ -1326,6 +1339,7 @@ private:
         }
 
         unsigned TaintInstNum = 0;
+        char NameBuf[1024];
         for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
         {
             FSda *Fd = &(It->second);
@@ -1334,16 +1348,17 @@ private:
             
             FldaBin Fdb = {0};
             char *FdName = Fd->GetName();
-            if (strlen (FdName) >= F_NAME_LEN)
-            {
-                printf ("@Waring: Max-lenggth = %u, but the name length is %u/%s \r\n", 
-                        F_NAME_LEN, (unsigned)strlen (FdName), FdName);
-            }
-            strncpy (Fdb.FuncName, FdName, sizeof (Fdb.FuncName));
+            Fdb.NameLen      = Align4(strlen (FdName));
+            assert (Fdb.NameLen != 0 && Fdb.NameLen < sizeof (NameBuf));
             Fdb.FuncId       = Fd->GetFID ();
             Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);
+            
+            memset (NameBuf, 0, Fdb.NameLen);
+            strncpy (NameBuf, FdName, Fdb.NameLen);
+            fwrite (NameBuf, Fdb.NameLen, 1, Bf);
+            
             fprintf (BfTxt, "Function[%u, %s]: TaintInstNum:%u \r\n", 
                      Fd->GetFID (), Fd->GetName (), Fd->GetTaintInstNum ());
             //printf ("Function[%u, %s]: TaintInstNum:%u \r\n", 
@@ -1358,7 +1373,7 @@ private:
                 //errs ()<<"["<<(unsigned)R_EID2IID(Iit->second)<<"]"<<*Iit->first<<"\r\n";
             }
             fwrite (IID, sizeof(unsigned long), Index, Bf);
-            delete IID;
+            delete[] IID;
 
             for (auto Cit = Fd->ic_begin (); Cit != Fd->ic_end (); Cit++)
             {
@@ -1373,9 +1388,14 @@ private:
 
                 for (auto Fit = Cst->m_Callees.begin(); Fit != Cst->m_Callees.end(); Fit++)
                 {
-                    char CalleeName[F_NAME_LEN] = {0};
-                    strcpy (CalleeName, (*Fit)->getName().data());
-                    fwrite (CalleeName, sizeof(CalleeName), 1, Bf);
+                    const char *CalleeName = (*Fit)->getName().data();
+                    unsigned Length = Align4(strlen (CalleeName));
+                    assert (Length != 0 && Length < sizeof (NameBuf));
+
+                    fwrite (&Length, sizeof (Length), 1, Bf);
+                    memset (NameBuf, 0, Length);
+                    strncpy (NameBuf, CalleeName, Length);
+                    fwrite (NameBuf, Length, 1, Bf);
                     fprintf (BfTxt, "\tCall %s: TaintBits[in, out]=[%x, %x] \r\n", 
                              CalleeName, Cst->m_InTaintBits, Cst->m_OutTaintBits);
                 }
@@ -1384,7 +1404,8 @@ private:
 
         fclose (Bf);
         fclose (BfTxt);
-        printf ("@@@@@@@@@ Instrumentation rate: %0.2f [%u/%u]\r\n", 
+        printf ("@@@@@@@@@[%u] Instrumentation rate: %0.2f [%u/%u]\r\n",
+                (unsigned)m_Func2Fsda.size(),
                 TaintInstNum*1.0/m_TotalInstNum, TaintInstNum, m_TotalInstNum);
 
         const char *ExeNum = getenv ("ExeNum");

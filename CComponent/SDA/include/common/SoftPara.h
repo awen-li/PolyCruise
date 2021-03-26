@@ -63,7 +63,7 @@ public:
         if (m_SoftPara != NULL)
         {
             delete m_SoftPara;
-            m_SoftPara == NULL;
+            m_SoftPara = NULL;
         }       
     }
     

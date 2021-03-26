@@ -407,16 +407,19 @@ private:
         {
             printf ("LoadLdaBin: read ldabin error...\r\n");
             exit (0);
-        }
-        
+        }   
 
+        char NameBuf[1024];
         for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
         {
             printf ("Load Flda number = %u/%u \r", Fid, Lb.FuncNum);
             FldaBin Fdb = {0};
             N = fread (&Fdb, sizeof(Fdb), 1, Bf);
             assert (N == 1);
-            FSda *Fd = AddFlda (Fdb.FuncName, Fdb.FuncId);
+            N = fread (NameBuf, Fdb.NameLen, 1, Bf);
+            NameBuf[Fdb.NameLen] = 0;
+            assert (N == 1);
+            FSda *Fd = AddFlda (NameBuf, Fdb.FuncId);
 
             //printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
@@ -424,6 +427,7 @@ private:
                 unsigned long Id = 0;
                 N = fread (&Id, sizeof(Id), 1, Bf);
                 assert (N == 1);
+                
                 Fd->AddInstID (Id);
                 //printf ("\tTaintInst:[%u] %lx\r\n", R_EID2IID (Id), Id);
             }        
@@ -437,13 +441,17 @@ private:
                 CSTaint *Cst = Fd->AddCst (Cstb.InstID);
                 Cst->m_InTaintBits  = Cstb.InTaintBits;
                 Cst->m_OutTaintBits = Cstb.OutTaintBits;
-                
+
+                unsigned NameLen = 0;
                 for (unsigned Fid = 0; Fid < Cstb.CalleeNum; Fid++)
                 {
-                    char CalleeName[F_NAME_LEN] = {0};
-                    N = fread (CalleeName, sizeof(CalleeName), 1, Bf);
+                    N = fread (&NameLen, sizeof(NameLen), 1, Bf);
+                    assert (N == 1 && NameLen != 0 && NameLen < sizeof (NameBuf));
+                    
+                    N = fread (NameBuf, NameLen, 1, Bf);
                     assert (N == 1);
-                    Cst->m_Callees.insert (CalleeName);
+                    NameBuf [NameLen] = 0;
+                    Cst->m_Callees.insert (NameBuf);
                 }
             }
         }

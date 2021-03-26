@@ -16,7 +16,7 @@ void Retrive (S *st)
 
 void Pass (S *st, char *Store);
 
-char* Getpasswd ()
+char* Getpasswd (void)
 {
     char *Store = (char*) malloc (128);
     assert (Store != NULL);

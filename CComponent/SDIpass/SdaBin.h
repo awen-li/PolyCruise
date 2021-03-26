@@ -14,32 +14,32 @@
 #include <set>
 #include "llvm/ADT/DenseMap.h"
 
-#define F_NAME_LEN  (132)
-
 struct CSTaintBin
 {
-	unsigned long InstID;
-	unsigned InTaintBits;
-	unsigned OutTaintBits;
-	unsigned CalleeNum;
-	//char FuncName[F_NAME_LEN][]
+    unsigned long InstID;
+    unsigned InTaintBits;
+    unsigned OutTaintBits;
+    unsigned CalleeNum;
+    //unsigned NameLen;
+    //char FuncName[NameLen]
 };
 
 struct FldaBin
 {
-    char FuncName[F_NAME_LEN];
+    unsigned NameLen; 
     unsigned FuncId;
-	unsigned TaintInstNum;
-	unsigned TaintCINum;
-	//unsigned long InstID[]
-	//unsigned TaintCI[] 
+    unsigned TaintInstNum;
+    unsigned TaintCINum;
+    //char FuncName[NameLen];
+    //unsigned long InstID[]
+    //unsigned TaintCI[] 
 };
 
 struct LdaBin
 {
     unsigned Version;
-	unsigned FuncNum;
-	//FldaBin[]
+    unsigned FuncNum;
+    //FldaBin[]
 };
 
 #endif // LLVM_LIB_TRANSFORMS_INSTRUMENTATION_LDABIN_H
