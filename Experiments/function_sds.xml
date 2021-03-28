@@ -173,5 +173,11 @@
 <sds> <function>_ZN5Xbyak4util3CpuC2Ev</function> <in>11111111</in> <out>00000000</out> </sds>
 <sds> <function>_ZN5Xbyak4util3Cpu17setCacheHierarchyEv</function> <in>11111111</in> <out>00000000</out> </sds>
 <sds> <function>_ZN4dnnl4impl3cpu3x6420get_max_cpu_isa_maskEb</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZNK3c106IValue23reportToTensorTypeErrorEv</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak6RegExpC2ERKNS_3RegEi</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZNK5Xbyak12AddressFrameixERKNS_6RegExpE</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak6RegExpC2ERKNS_3RegEi</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZNK5Xbyak12AddressFrameixERKNS_6RegExpE</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>__tls_init</function> <in>11111111</in> <out>00000000</out> </sds>
 
 </function_sds>
