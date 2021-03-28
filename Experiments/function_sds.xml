@@ -167,6 +167,11 @@
 
 <!-- pytorch --> 
 <sds> <function>__clang_call_terminate</function> <in>01000000</in> <out>00100000</out> </sds>
-
+<!-- torchInternalAssertFail -->
+<sds> <function>_ZN3c106detail23torchInternalAssertFailEPKcS2_jS2_NS0_22CompileTimeEmptyStringE</function> <in>00000100</in> <out>00000000</out> </sds>
+<sds> <function>_ZN4dnnl4impl3cpu3x6420get_max_cpu_isa_maskEb</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak4util3CpuC2Ev</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak4util3Cpu17setCacheHierarchyEv</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN4dnnl4impl3cpu3x6420get_max_cpu_isa_maskEb</function> <in>11111111</in> <out>00000000</out> </sds>
 
 </function_sds>
