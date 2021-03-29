@@ -6,7 +6,7 @@ PolyCruise is an extensible dynamic analysis framework targeting multilingual pr
 
 # Installation
 ## requiremtns
-Our framework is tested on Ubuntu18.04, LLVM7.0 and Python3.6.
+Our framework is tested on Ubuntu18.04, LLVM7.0 and Python3.7.
 before build the framework, corresponding versions of LLVM and Python need to be installed.
 
 ## build the framework
