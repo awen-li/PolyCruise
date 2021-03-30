@@ -179,5 +179,15 @@
 <sds> <function>_ZN5Xbyak6RegExpC2ERKNS_3RegEi</function> <in>11111111</in> <out>00000000</out> </sds>
 <sds> <function>_ZNK5Xbyak12AddressFrameixERKNS_6RegExpE</function> <in>11111111</in> <out>00000000</out> </sds>
 <sds> <function>__tls_init</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZNSt6vectorIN3c106IValueESaIS1_EE8_M_eraseEN9__gnu_cxx17__normal_iteratorIPS1_S3_EES7_</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN3c108ArgumentD2Ev</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN3c1010Dispatcher13realSingletonEv</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak13CodeGenerator5opVexERKNS_3RegEPKNS_7OperandERS5_iii</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN4dnnl4impl3cpu3x6412_GLOBAL__N_17mayiuseENS2_9cpu_isa_tEb</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak13CodeGenerator5opVexERKNS_3RegEPKNS_7OperandERS5_iii</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN4dnnl4impl3cpu3x6412_GLOBAL__N_17mayiuseENS2_9cpu_isa_tEb.2387</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN4dnnl4impl3cpu3x6412_GLOBAL__N_17mayiuseENS2_9cpu_isa_tEb.90242</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5torch11CppFunctionD2Ev</function> <in>11111111</in> <out>00000000</out> </sds>
+<sds> <function>_ZN5Xbyak13CodeGenerator6opRM_IERKNS_7OperandEjii</function> <in>11111111</in> <out>00000000</out> </sds>
 
 </function_sds>

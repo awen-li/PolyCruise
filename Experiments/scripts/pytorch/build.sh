@@ -50,7 +50,6 @@ CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
 python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-exit 0
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
@@ -63,7 +62,8 @@ export LDSHARED="clang -flto -shared -pthread -lm"
 export RANLIB=/bin/true
 python setup.py develop
 
-#SdaAnalysis
+SdaAnalysis
+
 
 # 3. build again and install the instrumented software
 rm -rf build

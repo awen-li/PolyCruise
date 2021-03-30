@@ -56,10 +56,10 @@ cp $SCRIPTS/setup-*.py $CASE_PATH/
 cp $SCRIPTS/site.cfg-lda $CASE_PATH/site.cfg
 cd $CASE_PATH
 rm -rf build
+rm -rf /tmp/difg/LdaBin*
 python setup-lda.py build_ext --inplace
 
 SdaAnalysis
-exit 0
 
 # 3. build again and install the instrumented software
 rm -rf build
@@ -71,20 +71,13 @@ python setup-instm.py build_ext --inplace
 #GenMap $SCRIPTS $CASE_PATH $target
 
 # 5. run the cases
-TestCase=()
-CaseNum=${#TestCase[*]}
-Index=1
-for Case in ${TestCase[@]}
-do
-	echo "[$Index/$CaseNum]======================= Execute the case $Case ======================="
+Analyze ()
+{
+	Case=$1
 	DelShareMem
 	difaEngine &
-	
-	python -m pyinspect -C ../../criterion.xml -t $Case &
-	sleep 60
-	let Index++
-	
-	killall python     2> /dev/null
-	killall difaEngine 2> /dev/null
-	sleep 15
-done
+	python runtests.py -v -m full
+}
+
+Analyze
+

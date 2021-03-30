@@ -27,6 +27,9 @@ echo "@@@@@@@@@@@@@@@ build CComponent:SDA @@@@@@@@@@@@@@@"
 cd $SDI_PATH/CComponent/SDA
 ./build.sh
 cp build/bin/sda /usr/bin
+if [ -d "~/.local/bin" ]; then
+	cp build/bin/sda ~/.local/bin/
+fi
 
 
 #2. build LDIpass
@@ -56,6 +59,9 @@ cp libDynA* /usr/lib/
 make clean && make
 killall difaEngine
 cp difaEngine /usr/bin/
+if [ -d "~/.local/bin" ]; then
+	cp difaEngine ~/.local/bin/
+fi
 
 cd $SDI_PATH
 cp Experiments/function_sds.xml $DATA_DIR/
