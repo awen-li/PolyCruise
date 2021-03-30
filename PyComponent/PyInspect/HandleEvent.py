@@ -52,6 +52,8 @@ class LineEvent (PyEvent):
         Statement  = self.Statement
         MethodName = 'LE_' + Statement.__class__.__name__.lower()
         LeMethod   = getattr(self, MethodName, self.Default)
+        if MethodName != LeMethod.__name__:
+            print ("Get method fail ---> ", MethodName)
         LeMethod(Statement)
         return
 
@@ -206,6 +208,9 @@ class LineEvent (PyEvent):
         pass
         
     def LE_classdef(self, Statement):
+        pass
+
+    def LE_try(self, Statement):
         pass
       
     def LE_if(self, Statement):
