@@ -84,12 +84,6 @@ class LineEvent (PyEvent):
             self.SetRealUse (Value.id)
         elif isinstance(Value, Call):
             self.LE_call (Statement)
-        elif isinstance(Value, List):
-            for Use in Value.elts:
-                if isinstance(Use, Name):
-                    self.SetRealUse (Use.id)
-                else:
-                    print ("!!!!!!!!! unknown type. => ", ast.dump (Statement))
         elif isinstance(Value, Num):
             self.SetRealUse (Value.n)
         elif isinstance(Value, BinOp):
@@ -109,24 +103,40 @@ class LineEvent (PyEvent):
                 Class = self.GetClassType (Use)
                 Use = Class + "." + Value.attr
             self.LiveObj.SetUse (Use)
-        elif isinstance(Value, Dict):
-            dValue = Value.values
-            if len (dValue) != 0:
-                self.SetRealUse (dValue[0].id)
         elif isinstance(Value, NameConstant):
             pass
         elif isinstance(Value, UnaryOp):
             pass
         elif isinstance(Value, Subscript):
             self.SetRealUse (Value.value.id)
+        elif isinstance(Value, Bytes):
+            self.SetRealUse (Value.s)
+        elif isinstance(Value, Dict):
+            dValue = Value.values
+            if len (dValue) != 0:
+                Val = dValue[0]
+                if not isinstance(Val, NameConstant):
+                    self.SetRealUse (Val.id)
+        elif isinstance(Value, List):
+            for Use in Value.elts:
+                if isinstance(Use, Name):
+                    self.SetRealUse (Use.id)
+                else:
+                    #print ("!!!!!!!!! unknown type. => ", ast.dump (Statement))
+                    pass
         elif isinstance(Value, Tuple):
             Elemts = Value.elts
             for elm in Elemts:
                 if not isinstance (elm, Name):
                     continue
                 self.SetRealUse (elm.id)
-        elif isinstance(Value, Bytes):
-            self.SetRealUse (Value.s)
+        elif isinstance(Value, Set):
+            for Use in Value.elts:
+                if isinstance(Use, Name):
+                    self.SetRealUse (Use.id)
+                else:
+                    #print ("!!!!!!!!! unknown type. => ", ast.dump (Statement))
+                    pass
         else:
             print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
