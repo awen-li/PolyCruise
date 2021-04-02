@@ -7,9 +7,9 @@ from ast import *
 from copy import deepcopy, copy
 
 class ASTWalk(NodeVisitor):
-
     def __init__(self):
-
+        pass
+    
     def visit(self, node):
         """Visit a node."""
         if node is None:

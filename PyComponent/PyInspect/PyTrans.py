@@ -3,8 +3,10 @@
 import os
 import sys, getopt
 import marshal
+from ast import parse
 from .Inspector import Inspector
 from .ModRewriter import PyRecompile, RelatPath
+from .AstVisit import ASTWalk
 from os.path import join, abspath, splitext, realpath
 
 ROOTDIR = "Temp"
@@ -67,6 +69,24 @@ def PyTranslate (PyDir, ExpList=None):
     with open(PYLIST, "w") as File:
         for Py in PyLists:
             File.write(Py + "\n")
-    
     return
 
+def PyGenSource (PyDir):
+    PyLists = []
+    PyDirs = os.walk(PyDir) 
+    for Path, Dirs, Pys in PyDirs:
+        for py in Pys:
+            _, Ext = os.path.splitext(py)
+            if Ext != ".py":
+                continue
+            
+            if py[0:5] != "test_":
+                continue
+            
+            PyFile = os.path.join(Path, py)
+            print (PyFile)
+            
+            with open(PyFile) as PyF:
+                Ast = parse(PyF.read(), PyFile, 'exec')
+                Visitor= ASTWalk()
+                Visitor.visit(Ast)
