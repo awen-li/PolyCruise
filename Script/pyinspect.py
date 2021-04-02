@@ -125,6 +125,8 @@ def InitArgument (parser):
                      help='the configure file for elimiate unnecesssay py files')
     grp.add_argument('-M', '--maping',
                      help='maping the installed source py files')
+    grp.add_argument('-g', '--gen_source',
+                     help='generate possible sources')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -174,7 +176,9 @@ def main():
     InitArgument (parser)
 
     opts = parser.parse_args()
-    if opts.maping != None:
+    if opts.gen_source != None:
+        print ("Start generate possible sources")
+    elif opts.maping != None:
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')
         PyMaping (opts.maping, opts.filename)
