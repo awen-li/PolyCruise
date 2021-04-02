@@ -8,6 +8,8 @@ from .Inspector import Inspector
 from .ModRewriter import PyRecompile, RelatPath
 from .AstVisit import ASTWalk
 from os.path import join, abspath, splitext, realpath
+from xml.dom.minidom import Document
+
 
 ROOTDIR = "Temp"
 
@@ -71,7 +73,19 @@ def PyTranslate (PyDir, ExpList=None):
             File.write(Py + "\n")
     return
 
+def _AddChildNode (Doc, Parent, Child, Value=None):
+    CNode = Doc.createElement(Child)
+    Parent.appendChild(CNode)
+    if Value != None:
+        Val = Doc.createTextNode(Value)
+        CNode.appendChild(Val)
+    return CNode
+    
+
 def PyGenSource (PyDir):
+    doc = Document()  
+    Crit = _AddChildNode (doc, doc, "criterions")
+
     PyLists = []
     PyDirs = os.walk(PyDir) 
     for Path, Dirs, Pys in PyDirs:
@@ -90,3 +104,14 @@ def PyGenSource (PyDir):
                 Ast = parse(PyF.read(), PyFile, 'exec')
                 Visitor= ASTWalk()
                 Visitor.visit(Ast)
+
+                FuncDef = Visitor.FuncDef
+                for FuncName, Tag in FuncDef.items ():
+                    Src = _AddChildNode (doc, Crit, "criterion")
+                    _AddChildNode (doc, Src, "function", FuncName)
+                    _AddChildNode (doc, Src, "return", "False")
+                    _AddChildNode (doc, Src, "local", "11111111")
+    
+    f = open("gen_criterion.xml", "w")
+    f.write(doc.toprettyxml(indent="  "))
+    f.close()
