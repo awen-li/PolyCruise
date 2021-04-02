@@ -172,12 +172,20 @@ class Inspector:
             return TaintedFormal, CallSiteObj.Callee
         FCalleeDef.View ()
 
+        # query from Criterion
+        DefCrit = self.Crtn.GetSrcArgs (CallSiteObj.Callee)
+
         Index = 0
         ParaNum = 0
         for use in CallSiteObj.Uses:
-            if not self.IsInTainted(use):
-                Index += 1
-                continue
+            if DefCrit == None:
+                if not self.IsInTainted(use):
+                    Index += 1
+                    continue
+            else:
+                if DefCrit[Index] != '1':
+                    Index += 1
+                    continue
             TaintedFormal.append(FCalleeDef.Paras[Index])
             Index += 1  
 
@@ -217,7 +225,7 @@ class Inspector:
         CallSiteObj = self.CurCtx.CalleeLo
         TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
 
-        IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee, None)
+        IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee)
         if IsSource != False:
             self.InsertSymb (CallSiteObj.Def)
                     
@@ -246,7 +254,7 @@ class Inspector:
         return
 
     def Propogate (self, LiveObj):
-        IsSource = self.Crtn.IsCriterion (self.CurCtx.Func, LiveObj.Def)
+        IsSource = self.Crtn.IsCriterion (self.CurCtx.Func)
         if IsSource:
             self.IsTaint = True
             self.IsSource = True
@@ -280,7 +288,7 @@ class Inspector:
                 self.SetCallCtx (LiveObj)
             else:
                 self.CallCtx = None
-                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee, None)
+                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee)
                 if IsCrn != False:
                     self.InsertSymb (LiveObj.Def)
                     self.IsTaint = True

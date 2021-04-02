@@ -668,6 +668,10 @@ static inline Node* IsGlvAccess (Variable *Glv)
     DbAck Ack;
 
     ULONG GlvAddr  = GetBaseAddr (Glv);
+    if (GlvAddr == 0)
+    {
+        return NULL;
+    }
     DEBUG ("USE global variable: %s - %lx \r\n", Glv->Name, GlvAddr);
 
     Req.dwDataType = DifA.GlvHandle;

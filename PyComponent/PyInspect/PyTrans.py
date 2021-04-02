@@ -86,7 +86,7 @@ def PyGenSource (PyDir):
     doc = Document()  
     Crit = _AddChildNode (doc, doc, "criterions")
 
-    PyLists = []
+    FuncList = {}
     PyDirs = os.walk(PyDir) 
     for Path, Dirs, Pys in PyDirs:
         for py in Pys:
@@ -104,13 +104,15 @@ def PyGenSource (PyDir):
                 Ast = parse(PyF.read(), PyFile, 'exec')
                 Visitor= ASTWalk()
                 Visitor.visit(Ast)
-
                 FuncDef = Visitor.FuncDef
                 for FuncName, Tag in FuncDef.items ():
-                    Src = _AddChildNode (doc, Crit, "criterion")
-                    _AddChildNode (doc, Src, "function", FuncName)
-                    _AddChildNode (doc, Src, "return", "False")
-                    _AddChildNode (doc, Src, "local", "11111111")
+                    FuncList[FuncName] = Tag
+
+    for FuncName, Tag in FuncList.items ():
+        Src = _AddChildNode (doc, Crit, "criterion")
+        _AddChildNode (doc, Src, "function", FuncName)
+        _AddChildNode (doc, Src, "return", "False")
+        _AddChildNode (doc, Src, "local", "11111111")
     
     f = open("gen_criterion.xml", "w")
     f.write(doc.toprettyxml(indent="  "))

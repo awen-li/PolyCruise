@@ -6,7 +6,7 @@ import argparse
 import xml.dom.minidom
 from xml.dom.minidom import parse
 from PyInspect import Inspector 
-from PyInspect import PyTranslate, PyTranslateFile
+from PyInspect import PyTranslate, PyTranslateFile, PyGenSource
 from PyInspect import Criterion
 
 PY_MAPING = "Pymap.ini"
@@ -178,6 +178,7 @@ def main():
     opts = parser.parse_args()
     if opts.gen_source != None:
         print ("Start generate possible sources")
+        PyGenSource (opts.gen_source)
     elif opts.maping != None:
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')

@@ -3,32 +3,33 @@
 import sys
 
 class CrnF ():
-    def __init__(self, Name, Return, Local):
-        self.Name       = Name
-        self.Return     = Return
-        self.Local      = Local
+    def __init__(self, Name, Return, Args):
+        self.Name    = Name
+        self.Return  = Return
+        self.Args    = Args
 
 class Criterion ():
     def __init__(self):
         self.Criterions = {}
 
-    def Insert (self, Function,  Return, Local):
-        self.Criterions[Function] = CrnF (Function, Return, Local) 
+    def Insert (self, Function,  Return, Args):
+        self.Criterions[Function] = CrnF (Function, Return, Args)
 
-    def IsCriterion (self, FuncName, Def=None):
+    def GetSrcArgs (self, FuncName):
+        crnF = self.Criterions.get (FuncName)
+        if crnF == None or crnF.Args == "None":
+            return None
+        else:
+            return crnF.Args
+
+    def IsCriterion (self, FuncName):
         crnF = self.Criterions.get (FuncName)
         if crnF == None:
             return False
         else:
-            if Def == None:      
-                if crnF.Return != 'False':
-                    return True
-                else:
-                    return False
+            if crnF.Return != 'False':
+                return True
             else:
-                if crnF.Local == Def:
-                    return True
-                else:
-                    return False
+                return False
 
         

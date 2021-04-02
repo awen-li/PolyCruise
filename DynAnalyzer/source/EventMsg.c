@@ -168,13 +168,17 @@ static inline VOID DeCallEvent (EventMsg *EM, char *Msg)
         while (*Pos != MSG_FP_R && 
                *Pos != 0)
         {
-            DWORD NameLen = GetVarName (Pos);
+            NameLen = GetVarName (Pos);
             assert (NameLen != 0);
-        
-            Variable *V = AllotVariable (Pos, NameLen, VT_FPARA);
+
+            V = AllotVariable (Pos, NameLen, VT_FPARA);
             ListInsert (&EM->Def, V);
 
             Pos += NameLen+2;
+            if (*Pos == ',')
+            {
+                Pos++;
+            }
         }
         Pos++;
     }

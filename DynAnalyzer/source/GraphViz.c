@@ -271,7 +271,7 @@ VOID WiteGraph (char *GName)
     WriteHeader(F, GName);
 
     DWORD NodeNum = GetGraphNodeNum ();
-    DEBUG ("NodeNum => %u \r\n", NodeNum);
+    printf("Graph nodeNum => %u \r\n", NodeNum);
 
     DWORD NodeId = 1;
     while (NodeId <= NodeNum)
