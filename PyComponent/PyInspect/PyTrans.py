@@ -82,7 +82,7 @@ def _AddChildNode (Doc, Parent, Child, Value=None):
     return CNode
     
 
-def PyGenSource (PyDir):
+def PyGenSource (PyDir, ExpList=None):
     doc = Document()  
     Crit = _AddChildNode (doc, doc, "criterions")
 
@@ -98,11 +98,13 @@ def PyGenSource (PyDir):
                 continue
             
             PyFile = os.path.join(Path, py)
+            if IsInExpList (py, PyFile, ExpList) == True:
+                continue  
             print (PyFile)
             
             with open(PyFile) as PyF:
                 Ast = parse(PyF.read(), PyFile, 'exec')
-                Visitor= ASTWalk()
+                Visitor= ASTWalk(PyDir)
                 Visitor.visit(Ast)
                 FuncDef = Visitor.FuncDef
                 for FuncName, Tag in FuncDef.items ():
@@ -114,6 +116,6 @@ def PyGenSource (PyDir):
         _AddChildNode (doc, Src, "return", "False")
         _AddChildNode (doc, Src, "local", "11111111")
     
-    f = open("gen_criterion.xml", "w")
+    f = open(PyDir+"_gen_criterion.xml", "w")
     f.write(doc.toprettyxml(indent="  "))
     f.close()

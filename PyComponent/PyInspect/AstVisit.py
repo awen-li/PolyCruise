@@ -7,7 +7,8 @@ from ast import *
 from copy import deepcopy, copy
 
 class ASTWalk(NodeVisitor):
-    def __init__(self):
+    def __init__(self, LibName):
+        self.LibName = LibName
         self.FuncDef = {}
     
     def visit(self, node):
@@ -31,17 +32,21 @@ class ASTWalk(NodeVisitor):
     #      args=[Name(id='v5613', ctx=Load())], keywords=[])
     def _ProcCall(self, Caller, Stmt):
         #print ("\tcall -->", Caller, ": ", ast.dump (Stmt))
-        NameMap = {"np":"numpy"}
+        NameMap = {"numpy":"numpy", "np":"numpy", "torch":"torch"}
         Func = Stmt.func
         if not isinstance (Func, Attribute):
             return
         if not isinstance (Func.value, Name):
             return
-        if Func.value.id != "np":
+        
+        FuncName = NameMap.get (Func.value.id)
+        if FuncName == None or self.LibName.find (FuncName) == -1:
             return
+        
         if hasattr (Func, "attr") != True:
             return
-        FuncName = NameMap[Func.value.id] + "." + Func.attr
+            
+        FuncName = FuncName + "." + Func.attr
         self.FuncDef[FuncName] = True     
 
     def visit_functiondef(self, node):
