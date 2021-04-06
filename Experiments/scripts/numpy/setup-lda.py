@@ -31,7 +31,7 @@ import builtins
 #os.environ["LDSHARED"] = "clang -flto -pthread -shared -lDynAnalyze"
 os.environ["CC"]  = "clang"
 os.environ["CXX"] = "clang"
-os.environ["CFLAGS"] = "-v -emit-llvm"
+os.environ["CFLAGS"] = "-emit-llvm"
 os.environ["LDFLAGS"] = "-flto -shared"
 os.environ["LDSHARED"] = "clang"
 

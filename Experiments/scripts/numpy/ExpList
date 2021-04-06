@@ -5,6 +5,9 @@ setup-instm.py
 pavement.py
 versioneer.py
 version.py
+conftest.py
+runtests.py
+_pytesttester.py
 -Dnumpy/doc
 -Dnumpy/numpy/distutils
 -Dnumpy/numpy/compat
