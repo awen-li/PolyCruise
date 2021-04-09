@@ -85,7 +85,7 @@ class PyEvent(metaclass=abc.ABCMeta):
     def Self2Obj (self, Val):
         import numpy as np
         Obj = self.GetLiveObject(Val)
-        if type(Obj) is np.ndarray or Obj == None:
+        if type(Obj) is np.ndarray or Obj is None:
             return Val
         return Obj
 
