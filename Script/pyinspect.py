@@ -178,13 +178,16 @@ def main():
     opts = parser.parse_args()
     if opts.gen_source != None:
         print ("Start generate possible sources")
-        PyGenSource (opts.gen_source)
+        ExpList = None
+        if opts.exceptfile != None:
+            ExpList = ParseExpList (opts.exceptfile)
+        PyGenSource (opts.gen_source, ExpList)
     elif opts.maping != None:
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')
         PyMaping (opts.maping, opts.filename)
     elif opts.compile == True:
-        ExpList=["setup.py", "__init__.py", "build.py"]
+        ExpList=None
         if opts.exceptfile != None:
             ExpList = ParseExpList (opts.exceptfile)
 
