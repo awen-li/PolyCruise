@@ -4,7 +4,6 @@ import sys
 import abc
 import ast
 from ast import *
-import numpy as np
 
 class LiveObject ():
     RET_CALLER = 2
@@ -84,6 +83,7 @@ class PyEvent(metaclass=abc.ABCMeta):
         return Type.__name__
 
     def Self2Obj (self, Val):
+        import numpy as np
         Obj = self.GetLiveObject(Val)
         if type(Obj) is np.ndarray or Obj == None:
             return Val
