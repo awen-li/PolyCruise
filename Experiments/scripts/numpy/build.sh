@@ -52,8 +52,6 @@ python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
-cp $SCRIPTS/setup-*.py $CASE_PATH/
-cp $SCRIPTS/site.cfg-lda $CASE_PATH/site.cfg
 cd $CASE_PATH
 rm -rf build
 rm -rf /tmp/difg/LdaBin*
@@ -63,7 +61,6 @@ SdaAnalysis
 
 # 3. build again and install the instrumented software
 rm -rf build
-cp $SCRIPTS/site.cfg-instm $CASE_PATH/site.cfg
 python setup-instm.py build_ext --inplace
 
 

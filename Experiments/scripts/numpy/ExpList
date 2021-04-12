@@ -7,6 +7,8 @@ versioneer.py
 version.py
 conftest.py
 runtests.py
+test_warnings.py
+numpy_support.py
 _pytesttester.py
 -Dnumpy/doc
 -Dnumpy/numpy/distutils
