@@ -98,7 +98,7 @@ QNode* InQueue ()
 {
     if (g_Queue == NULL)
     {
-        InitQueue (4096);
+        InitQueue (QUEUE_SIZE);
     }
     
     Queue* Q = g_Queue;

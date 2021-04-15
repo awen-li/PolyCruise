@@ -10,6 +10,8 @@
 #define _QUEUE_H_
 #include "MacroDef.h"
 
+#define  QUEUE_SIZE (256 * 1024)
+
 
 #define  BUF_SIZE  (256)
 

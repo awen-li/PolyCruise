@@ -15,12 +15,11 @@ VOID CheckCases (char *Cases);
 
 void *EventProcess (void* Arg)
 {
-    while (1)
+    while (!QueueGetExit())
     {        
         QNode *QN = FrontQueue ();
         if (QN == NULL || QN->Flag == FALSE)
         {
-            sleep (2);
             continue;
         }
         
@@ -63,7 +62,7 @@ void DynInit ()
     DWORD Ret;
     pthread_t Tid;
 
-    InitQueue (4096);
+    InitQueue (QUEUE_SIZE);
 
     InitDif ();
    
