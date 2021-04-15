@@ -1,4 +1,18 @@
 
+Wait ()
+{
+	process=$1
+	while true
+	do
+		count=`ps -ef | grep $process | grep -v "grep" | wc -l`
+		if [ 0 == $count ];then
+			break
+		else
+			sleep 1
+		fi
+	done
+	sleep 1
+}
 
 SdaAnalysis ()
 {
@@ -32,7 +46,7 @@ GenMap ()
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+    	INSTALL_PATH=$PWD"/build/testenv/lib/python3.7/site-packages/numpy"
         find $INSTALL_PATH -name "*.py" > "$target.ini"
         python -m pyinspect -M "$target.ini" pyList	
     fi
@@ -65,15 +79,22 @@ python setup-instm.py build_ext --inplace
 
 
 # 4. generate file maping
-#GenMap $SCRIPTS $CASE_PATH $target
+GenMap $SCRIPTS $CASE_PATH $target
 
 # 5. run the cases
 Analyze ()
 {
-	Case=$1
-	DelShareMem
-	difaEngine &
-	python runtests.py -v -m full
+	CaseList=`cat case_list.txt`
+	for curcase in $CaseList
+	do
+	    DelShareMem
+	    difaEngine &
+		echo ".......................run case $curcase......................."
+		export case_name=$curcase
+		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full
+		
+		Wait difaEngine
+	done
 }
 
 Analyze

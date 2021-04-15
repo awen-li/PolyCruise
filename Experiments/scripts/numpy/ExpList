@@ -8,6 +8,7 @@ version.py
 conftest.py
 runtests.py
 test_warnings.py
+test_typing.py
 numpy_support.py
 _pytesttester.py
 -Dnumpy/doc
