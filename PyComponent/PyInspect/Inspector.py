@@ -77,8 +77,15 @@ class Inspector:
         self.IsTaint = False
         self.Scripts = ["pyinspect.py", "pyinspect.py", "Inspector.py"]
 
+        self.TracedStmts = 0
+        self.SetUp = False
+        if os.environ.get ("case_name") == None:
+            self.IsSingleCase = False
+        else:
+            self.IsSingleCase = True
+
     def __enter__(self):
-        print ("----> __enter__................")
+        print ("----> __enter__................IsSingleCase->", self.IsSingleCase)
         PyTraceInit ()
 
         #Entry msg
@@ -96,7 +103,7 @@ class Inspector:
             print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
             PyTrace (self.CacheEvent, self.CacheMsg)
             self.CacheMsg = None
-        print ("----> __exit__................")
+        print ("----> __exit__................, TracedStmts = ", self.TracedStmts)
         _unsettrace()
         PyTraceExit ()
 
@@ -347,7 +354,15 @@ class Inspector:
 
         return True
 
-    def Tracing(self, Frame, Event, Arg):        
+    def Tracing(self, Frame, Event, Arg):
+        if self.IsSingleCase and self.SetUp == False:
+            Step = os.environ.get ("case_step")
+            if Step == "setup":
+                self.SetUp = True
+            else:
+                return self.Tracing
+        
+        self.TracedStmts += 1
         Code = Frame.f_code
 
         if self.CacheMsg != None:

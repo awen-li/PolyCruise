@@ -199,7 +199,7 @@ class LineEvent (PyEvent):
                 self.SetRealUse (arg.id)
             else:
                 print ("!!!!!!!!! unsupport type in CALL. => ", type(arg), "   -ast-> ", ast.dump (Statement))
-                assert (0), "!!!!!!!!! unsupport tyep in CALL."
+                #assert (0), "!!!!!!!!! unsupport tyep in CALL."
             
         return
         
