@@ -176,11 +176,13 @@ class LineEvent (PyEvent):
             #print (ast.dump (Statement))
             AttrValue = Func.value
             Class = None
-            if isinstance (AttrValue, Bytes):
-                CallFunc = Func.attr
-            else:
+            CallFunc = Func.attr
+            if not isinstance (AttrValue, Bytes):
                 Class  = self.GetClassType (AttrValue.id)
-                CallFunc = Class + "." + Func.attr
+                if Class == 'module':
+                    Class = None
+                else:
+                    CallFunc = Class + "." + Func.attr
             self.LiveObj.SetCallee (CallFunc, Class)
             #oo, add the object as the first parameter
             self.LiveObj.SetUse (Class)
@@ -197,8 +199,10 @@ class LineEvent (PyEvent):
             elif isinstance (arg, Starred):
                 arg = arg.value
                 self.SetRealUse (arg.id)
+            elif isinstance (arg, JoinedStr):
+                pass
             else:
-                print ("!!!!!!!!! unsupport type in CALL. => ", type(arg), "   -ast-> ", ast.dump (Statement))
+                print ("!!!!!!!!! unsupport type in CALL. => ", type(arg), "   -ast-> ", ast.dump (Callee))
                 #assert (0), "!!!!!!!!! unsupport tyep in CALL."
             
         return

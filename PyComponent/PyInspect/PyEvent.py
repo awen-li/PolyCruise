@@ -79,14 +79,8 @@ class PyEvent(metaclass=abc.ABCMeta):
 
     def GetClassType (self, Val):
         Obj = self.Self2Obj (Val)
-        Name = Val
-        if hasattr (Obj, "__name__"):
-            Name = Obj.__name__
-        else:
-            Type = type (Obj)
-            Name = Type.__name__
-        #print ("\t\tGetClassType -> Val = ", Val, ", Obj = ", Obj, ", Class = ", Name)
-        return Name
+        Type = type (Obj)
+        return Type.__name__
 
     def Self2Obj (self, Val):
         import numpy as np

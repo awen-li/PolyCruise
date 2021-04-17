@@ -66,8 +66,10 @@ class PyMaping ():
                 if len (Prefix) > len (Max):
                     Max = Prefix
                     MaxSrc = src
-            print (ini, " -> ", MaxSrc)
-            PyMap[ini] = MaxSrc
+            DirList = MaxSrc.split("/")
+            if len (DirList) >= 2 and ini.find (DirList[-2]) != -1:
+                print (ini, " -> ", MaxSrc)
+                PyMap[ini] = MaxSrc
         return PyMap
 
 class xmlParse ():
@@ -79,7 +81,7 @@ class xmlParse ():
         self.Parse (CriteCfg)
 
     def InitCrite (self, Func, Return, Local):
-        print ("Init critesion: %s:%s:%s" %(Func, Return, Local))
+        #print ("Init critesion: %s:%s:%s" %(Func, Return, Local))
         self.Critn.Insert (Func, Return, Local)
 
     def ParseCrite (self, Crite):

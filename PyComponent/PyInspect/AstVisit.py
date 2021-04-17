@@ -46,7 +46,7 @@ class ASTWalk(NodeVisitor):
         if hasattr (Func, "attr") != True:
             return
             
-        FuncName = FuncName + "." + Func.attr
+        FuncName = Func.attr
         self.FuncDef[FuncName] = True     
 
     def visit_functiondef(self, node):
