@@ -55,6 +55,7 @@ GenMap ()
 }
 
 target=numpy
+Action=$1
 
 # 1. build and translate python modules
 cd ../../
@@ -62,21 +63,26 @@ ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
-python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+if [ "$Action" == "build" ]; then
+	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+fi
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
-rm -rf build
-rm -rf /tmp/difg/LdaBin*
-python setup-lda.py build_ext --inplace
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	rm -rf /tmp/difg/LdaBin*
+	python setup-lda.py build_ext --inplace
 
-SdaAnalysis
+	SdaAnalysis
+fi
 
 # 3. build again and install the instrumented software
-rm -rf build
-python setup-instm.py build_ext --inplace
-
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	python setup-instm.py build_ext --inplace
+fi
 
 # 4. generate file maping
 GenMap $SCRIPTS $CASE_PATH $target
@@ -84,16 +90,19 @@ GenMap $SCRIPTS $CASE_PATH $target
 # 5. run the cases
 Analyze ()
 {
+	Index=1
 	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
 	do
 	    DelShareMem
 	    difaEngine &
-		echo ".......................run case $curcase......................."
+		echo "[$Index].......................run case $curcase......................."
 		export case_name=$curcase
 		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full
 		
 		Wait difaEngine
+		break
+		let Index++
 	done
 }
 
