@@ -201,6 +201,8 @@ class Inspector:
     
     def PushCtx (self, CalleeFunc):
         if self.CallCtx == None:
+            self.CurCtx = Context (CalleeFunc, [])
+            self.CtxStack.append (self.CurCtx)
             return
 
         # actual -> formal
@@ -230,8 +232,10 @@ class Inspector:
 
         #trace the call-site
         CallSiteObj = self.CurCtx.CalleeLo
+        if CallSiteObj == None:
+            return
+        
         TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
-
         IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee)
         if IsSource != False:
             self.InsertSymb (CallSiteObj.Def)
