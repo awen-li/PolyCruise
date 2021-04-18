@@ -22,8 +22,10 @@ static inline DWORD Align4 (DWORD V)
 
 static inline Variable *AllotVariable (char *Msg, DWORD NameLen, BYTE Type)
 {
-    Variable *V = (Variable *)malloc (sizeof (Variable) + Align4(NameLen+1));
+    DWORD VLen = sizeof (Variable) + Align4(NameLen+1);
+    Variable *V = (Variable *)malloc (VLen);
     assert (V != NULL);
+    memset (V, 0, VLen);
     
     V->Type = Type;
     V->Name = (char*) (V + 1);
@@ -122,7 +124,7 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
         assert (Type != 0);
 
         Variable *V = AllotVariable (Pos, NameLen, Type);
-        if (IsDef || Type == VT_FUNCTION)
+        if (IsDef)
         {
             ListInsert (&EM->Def, V);
         }
@@ -131,19 +133,12 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
             ListInsert (&EM->Use, V);
         }
 
-        if (Type != VT_FUNCTION)
-        {
-            Pos += NameLen+2;
-        }
-        else
-        {
-            Pos += NameLen;
-        }
-        
+        Pos += NameLen+2;
         if (*Pos == MSG_DF)
         {
             IsDef = FALSE;
         }
+        
         Pos++;
     }
 

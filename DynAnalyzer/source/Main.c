@@ -8,7 +8,7 @@
 #include <signal.h>
 #include "Queue.h"
 
-void DynInit ();
+void DynStart ();
 void DynExit (char *CaseResult);
 
 
@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
         }
     }
 
-    DynInit ();
+    DynStart ();
 
     DynExit (CaseResult);
 

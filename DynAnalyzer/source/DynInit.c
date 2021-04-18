@@ -13,9 +13,11 @@
 
 VOID CheckCases (char *Cases);
 
-void *EventProcess (void* Arg)
+void EventProcess ()
 {
-    while (!QueueGetExit())
+    DEBUG ("@@@@@ EventProcess entry..!\r\n");
+    
+    while (!QueueGetExit() || QueueSize () != 0)
     {        
         QNode *QN = FrontQueue ();
         if (QN == NULL || QN->Flag == FALSE)
@@ -26,8 +28,11 @@ void *EventProcess (void* Arg)
         DifEngine (QN->EventId, QN->ThreadId, QN->QBuf);       
         OutQueue ();
     }
+
+
+    DEBUG ("Exiting -> ExitFlag: %u, QueueSize: %u\r\n", QueueGetExit(), QueueSize ());
     
-    return NULL;
+    return;
 }
 
 static DWORD GetPhyMemUse ()
@@ -57,7 +62,7 @@ static DWORD GetPhyMemUse ()
     return MemSize;
 }
 
-void DynInit ()
+void DynStart ()
 {
     DWORD Ret;
     pthread_t Tid;
@@ -66,32 +71,15 @@ void DynInit ()
 
     InitDif ();
    
-    Ret = pthread_create(&Tid, NULL, EventProcess, NULL);
-    assert (Ret == 0);
+    EventProcess ();
 
-    DEBUG ("@@@@@ DIFA engine init success!\r\n");
     return;
 }
 
 
 void DynExit (char *CaseResult)
 {
-    DWORD Exit;
-    while (!(Exit = QueueGetExit()))
-    {
-        //printf ("......\tWait for exit[%u]...\r\n", Exit);
-        sleep (5);
-    }
-
-    DWORD Qsize;
-    while ((Qsize = QueueSize ()) != 0)
-    {
-        printf ("......\tWait for event process[%u]...\r\n", Qsize);
-        sleep (1);    
-    }
-
     printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
-    sleep (2);
 
     CheckCases (CaseResult);
     WiteGraph ("DIFG");

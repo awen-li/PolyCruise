@@ -115,7 +115,7 @@ QNode* InQueue ()
             Q->Tindex = 0;
         }
     }
-    DEBUG ("InQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
+    //DEBUG ("InQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
     process_unlock(&Q->InLock);
     
     return Node;
@@ -135,7 +135,7 @@ QNode* FrontQueue ()
     {
         Node = (Q_2_NODELIST(Q) + Q->Hindex);
     }
-    DEBUG ("FrontQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex,Q->Tindex, Q->NodeNum);
+    //DEBUG ("FrontQueue: [%p][%u, %u]/%u \r\n", Q, Q->Hindex,Q->Tindex, Q->NodeNum);
     process_unlock(&Q->InLock);
    
     return Node;
@@ -152,7 +152,7 @@ void OutQueue ()
     }
 
     process_lock(&Q->InLock);
-    DEBUG ("OutQueue:[%p] [%u, %u]/%u\r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
+    //DEBUG ("OutQueue:[%p] [%u, %u]/%u\r\n", Q, Q->Hindex, Q->Tindex, Q->NodeNum);
     
     Q->Hindex++;
     if (Q->Hindex >= Q->NodeNum)

@@ -37,8 +37,9 @@ EVENT_GEP    = 7
 EVENT_STORE  = 8
 
 class Context:
-    def __init__(self, CurFunc, TaintInPara, Ret=None):
+    def __init__(self, CurFunc, FuncDef, TaintInPara, Ret=None):
         self.Func = CurFunc
+        self.FuncDef = FuncDef
         self.TaintSymbs  = {}
         self.TaintInpara = TaintInPara
         self.Ret = Ret
@@ -69,9 +70,10 @@ class Inspector:
 
         # init main ctx
         self.CallCtx = None
+        self.CoName  = None
         
         FuncDef = self.Analyzer.GetFuncDef (EntryFunc)
-        self.CurCtx  = Context (EntryFunc, [])       
+        self.CurCtx  = Context (EntryFunc, FuncDef, [])       
         self.CtxStack.append (self.CurCtx)
 
         self.IsTaint = False
@@ -92,7 +94,7 @@ class Inspector:
         FuncDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
         EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, 0)
         Msg = "{"+ self.CurCtx.Func + "}"
-        print ("Python---> %lx %s" %(EventId, Msg))
+        #print ("Python---> %lx %s" %(EventId, Msg))
         PyTrace (EventId, Msg)
 
         _settrace(self.Tracing)
@@ -160,9 +162,9 @@ class Inspector:
             self.GlobalTaintSymbs[Symb] = True
         return
         
-    def SetCallCtx (self, LiveObj):
+    def SetCallCtx (self, LiveObj, FuncDef):
         TaintSet = self.GetTaintedParas (LiveObj)
-        self.CallCtx = Context (LiveObj.Callee, TaintSet, LiveObj.Def)
+        self.CallCtx = Context (LiveObj.Callee, FuncDef, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
         #print ("\t@@@@@", self.CurCtx.Func, TaintSet, " Cache Callee: ", end="")
         #LiveObj.View ()
@@ -173,14 +175,17 @@ class Inspector:
         
         if CallSiteObj == None:
             return TaintedFormal, None
-            
+
         FCalleeDef = self.Analyzer.GetFuncDef (CallSiteObj.Callee)
         if len (FCalleeDef.Paras) == 0:
             return TaintedFormal, CallSiteObj.Callee
-        FCalleeDef.View ()
+        #FCalleeDef.View ()
 
-        # query from Criterion
+        # query from Criterion       
         DefCrit = self.Crtn.GetSrcArgs (CallSiteObj.Callee)
+        if not DefCrit is None:
+            #print ("Get into source : ", CallSiteObj.Callee, ", args -> ", DefCrit)
+            pass
 
         Index = 0
         ParaNum = 0
@@ -201,7 +206,8 @@ class Inspector:
     
     def PushCtx (self, CalleeFunc):
         if self.CallCtx == None:
-            self.CurCtx = Context (CalleeFunc, [])
+            FuncDef = self.Analyzer.GetFuncDef (CalleeFunc)
+            self.CurCtx = Context (CalleeFunc, FuncDef, [])
             self.CtxStack.append (self.CurCtx)
             return
 
@@ -240,7 +246,7 @@ class Inspector:
         if IsSource != False:
             self.InsertSymb (CallSiteObj.Def)
                     
-        FCallerDef = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+        FCallerDef = self.CurCtx.FuncDef
         EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, IsSource)
 
         Msg = "{" + Callee + "("           
@@ -291,35 +297,49 @@ class Inspector:
         else:
             return False, None
 
-    def TaintAnalysis (self, Event, LiveObj):
+    def SdaAnalysis (self, Event, LiveObj):
         self.IsSource = False
         self.IsTaint  = False
-        if Event == "line" and LiveObj.Callee != None: 
-            if self.Analyzer.GetFuncDef (LiveObj.Callee) != None:                
-                self.SetCallCtx (LiveObj)
+        if Event == "line":
+            if LiveObj.Callee != None:
+                FuncDef = self.Analyzer.GetFuncDef (LiveObj.Callee)
+                if FuncDef != None:
+                    self.SetCallCtx (LiveObj, FuncDef)
+                    #print ("---> FuncDef = LineCall: ", LiveObj.Callee, ", CallCtx = ", self.CallCtx)
+                else:
+                    self.CallCtx = None
+                    IsCrn = self.Crtn.IsCriterion (LiveObj.Callee)
+                    if IsCrn != False:
+                        self.InsertSymb (LiveObj.Def)
+                        self.IsTaint = True
+                        self.IsSource = True
+                        print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)  
+                    self.Propogate (LiveObj)
+                return EVENT_CALL
+            elif LiveObj.Ret == LiveObject.RET_VALUE:
+                Ret = None
+                if len (LiveObj.Uses) != 0:
+                    Taint, Ret = self.Ret2Callsite (LiveObj)
+                    self.IsTaint = Taint
+                    self.CurCtx.RetTaint = Taint
+                return EVENT_RET
             else:
-                self.CallCtx = None
-                IsCrn = self.Crtn.IsCriterion (LiveObj.Callee)
-                if IsCrn != False:
-                    self.InsertSymb (LiveObj.Def)
-                    self.IsTaint = True
-                    self.IsSource = True
-                    print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)  
-                self.Propogate (LiveObj)
-            return EVENT_CALL
-        
+                # in some cases of runtime, no explicit 'call' statement, mannually change the context...
+                if self.CallCtx != None and self.CoName == self.CurCtx.CalleeLo.Callee and self.CoName != self.CurCtx.Func:
+                    print ("implicit 'call' statement process....", self.CoName)
+                    # 1. first push the context to stack
+                    self.PushCtx (self.CoName)
+                    # 2. trace a entry event
+                    FuncDef = self.CurCtx.FuncDef
+                    EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, self.IsSource)
+                    PyTrace (EventId, '{'+self.CoName+'}')
+                    # 3. trace current event
+                    # -> go to other statement tracing
         elif Event == "call" and LiveObj.Callee != None:
             self.PushCtx (LiveObj.Callee)
             return EVENT_FENTRY
-        
-        elif LiveObj.Ret == LiveObject.RET_VALUE:
-            Ret = None
-            if len (LiveObj.Uses) != 0:
-                Taint, Ret = self.Ret2Callsite (LiveObj)
-                self.IsTaint = Taint
-                self.CurCtx.RetTaint = Taint
-            return EVENT_RET
 
+        # other statement tracing
         self.Propogate (LiveObj)
         if LiveObj.Br == True:
             return EVENT_BR
@@ -368,6 +388,7 @@ class Inspector:
         
         self.TracedStmts += 1
         Code = Frame.f_code
+        self.CoName = Code.co_name
 
         if self.CacheMsg != None:
             #print ("Python---> %lx %s" %(self.CacheEvent, self.CacheMsg))
@@ -397,12 +418,13 @@ class Inspector:
                 #print ("****************<> Ret Taint: ", Ret)      
             return self.Tracing
  
-        EventTy  = self.TaintAnalysis (Event, LiveObj)
+        EventTy  = self.SdaAnalysis (Event, LiveObj)
         if self.IsTaint == False:
             return self.Tracing
 
-        FuncDef  = self.Analyzer.GetFuncDef (self.CurCtx.Func)
+        FuncDef = self.CurCtx.FuncDef
         if FuncDef == None:
+            print ("Warning ---> FuncDef == None where function = ", self.CurCtx.Func)
             return self.Tracing
         
         EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, self.IsSource)     
