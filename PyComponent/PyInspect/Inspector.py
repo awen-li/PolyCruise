@@ -245,6 +245,10 @@ class Inspector:
         IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee)
         if IsSource != False:
             self.InsertSymb (CallSiteObj.Def)
+        else:
+            if self.Crtn.GetSrcArgs (CallSiteObj.Callee) != None:
+                IsSource = True
+                print ("****************<> Add source with Args: ", CallSiteObj.Callee)
                     
         FCallerDef = self.CurCtx.FuncDef
         EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, IsSource)
