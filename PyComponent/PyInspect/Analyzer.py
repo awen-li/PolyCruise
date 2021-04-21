@@ -203,7 +203,6 @@ class Analyzer ():
     def GetMod (self, ScriptName):
         Mod = self.AstInfo.get(ScriptName)
         if Mod == LOAD_ONDEMAND:
-            print ("====> LOAD_ONDEMAND")
             return self.LoadPlkOnDemand(ScriptName)
         else:
             return Mod
