@@ -6,10 +6,22 @@ import ast
 from ast import *
 from copy import deepcopy, copy
 
+class FuncDef ():
+    def __init__(self, Cls, FName, Fid, FormalParas):
+        self.Cls   = Cls
+        self.Id    = Fid
+        self.Name  = FName
+        self.Paras = FormalParas
+
+    def View (self):
+        print ("FuncDef: Id = ", self.Id, " Name = ", self.Name, " Paras = ", self.Paras)
+
 class ASTWalk(NodeVisitor):
     def __init__(self, LibName):
         self.LibName = LibName
-        self.FuncDef = {}
+        self.SrcApiDef = {}
+        self.FuncDef   = {}
+        self.FId = 1
     
     def visit(self, node):
         """Visit a node."""
@@ -27,6 +39,18 @@ class ASTWalk(NodeVisitor):
                 continue
             ArgList.append (arg.arg)
         return ArgList
+
+    
+    def _GetFuncDef (self, Stmt, ClfName=None):
+        Fid = self.FId
+        self.FId += 1
+        
+        ArgList = self._GetArgs (Stmt)
+        if ClfName == None:
+            return FuncDef ("", Stmt.name, Fid, ArgList)
+        else:
+            FullName = ClfName + "." + Stmt.name
+            return FuncDef (ClfName, FullName, Fid, ArgList)
 
     # Call(func=Attribute(value=Name(id='np', ctx=Load()), attr='array', ctx=Load()), 
     #      args=[Name(id='v5613', ctx=Load())], keywords=[])
@@ -47,13 +71,14 @@ class ASTWalk(NodeVisitor):
             return
             
         FuncName = Func.attr
-        self.FuncDef[FuncName] = True     
+        self.SrcApiDef[FuncName] = True     
 
     def visit_functiondef(self, node):
         FuncName = node.name
+        self.FuncDef [FuncName] = self._GetFuncDef (node)
+
         if FuncName[0:5] != "test_":
             return
-        ArgList  = self._GetArgs (node)
 
         Body = node.body
         for Stmt in Body:
@@ -66,5 +91,13 @@ class ASTWalk(NodeVisitor):
                 continue
         return
 
+    def visit_classdef(self, node):
+        Body = node.body
+        for Fdef in Body:
+            if not isinstance (Fdef, FunctionDef):
+                continue
+            Def = self._GetFuncDef (Fdef, node.name)
+            self.FuncDef[Def.Name]  = Def 
+        return
 
     

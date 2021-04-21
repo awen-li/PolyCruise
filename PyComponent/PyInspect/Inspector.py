@@ -330,7 +330,7 @@ class Inspector:
             else:
                 # in some cases of runtime, no explicit 'call' statement, mannually change the context...
                 if self.CallCtx != None and self.CoName == self.CurCtx.CalleeLo.Callee and self.CoName != self.CurCtx.Func:
-                    print ("implicit 'call' statement process....", self.CoName)
+                    #print ("implicit 'call' statement process....", self.CoName)
                     # 1. first push the context to stack
                     self.PushCtx (self.CoName)
                     # 2. trace a entry event

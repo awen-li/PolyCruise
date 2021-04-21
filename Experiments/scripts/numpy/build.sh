@@ -64,6 +64,11 @@ CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
 if [ "$Action" == "build" ]; then
+	rm -rf $CASE_PATH
+	if [ ! -f "$target/function_def.pkl" ]; then
+		python -m pyinspect -g $target
+		cp -f function_def.pkl $target/
+	fi
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 fi
 
@@ -90,17 +95,24 @@ GenMap $SCRIPTS $CASE_PATH $target
 # 5. run the cases
 Analyze ()
 {
+	echo "" > $SCRIPTS/build.log
 	Index=1
 	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
 	do
 	    DelShareMem
 	    difaEngine &
+	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
+		echo "[$Index].......................run case $curcase.......................">> $SCRIPTS/build.log
 		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full
+		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full >> $SCRIPTS/build.log &
 		
 		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		
 		break
 		let Index++
 	done

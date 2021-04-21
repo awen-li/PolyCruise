@@ -3,6 +3,7 @@
 import os
 import sys, getopt
 import argparse
+import time
 import xml.dom.minidom
 from xml.dom.minidom import parse
 from PyInspect import Inspector 
@@ -10,6 +11,12 @@ from PyInspect import PyTranslate, PyTranslateFile, PyGenSource
 from PyInspect import Criterion
 
 PY_MAPING = "Pymap.ini"
+
+ 
+InitTicks = time.time()
+
+def TIME_COST (Name):
+    print ("@@@@ ", Name, " time cost: ", str (time.time() - InitTicks))
 
 class PyMaping ():  
     def __init__(self, IniSet="*.ini", SrcSet="pyList"):
@@ -96,7 +103,7 @@ class xmlParse ():
 
         self.Directory   = CriteDoc.getAttribute("code_directory")
         self.EntryScript = CriteDoc.getAttribute("entry_script")
-        print ("[xml]", self.Directory, ":", self.EntryScript)
+        #print ("[xml]", self.Directory, ":", self.EntryScript)
          
         # iterate all criterions
         AllCrites = CriteDoc.getElementsByTagName("criterion")
@@ -140,6 +147,7 @@ def RunCtx(Cmd, globals=None, locals=None):
     if locals == None: 
         locals = {}
     exec(Cmd, globals, locals)
+    #TIME_COST ("RunCtx")
     
 
 def Recompile (Dir, ExpList=None):
@@ -153,10 +161,13 @@ def Recompile (Dir, ExpList=None):
 
 def DynTrace (EntryScript, CriteCfg):
     XP = xmlParse (CriteCfg)
+    #TIME_COST ("Inspect-xmlParse")
     
     try:
         with open(EntryScript) as fp:
             code = compile(fp.read(), EntryScript, 'exec')
+
+        #TIME_COST ("Inspect-Compile")
         # try to emulate __main__ namespace as much as possible
         globs = {
             '__file__': EntryScript,
@@ -166,6 +177,7 @@ def DynTrace (EntryScript, CriteCfg):
         }
         
         with Inspector ("pyList", XP.Critn, PY_MAPING):
+            #TIME_COST ("Inspect-Init")
             RunCtx(code, globs, globs)
         
     except OSError as err:

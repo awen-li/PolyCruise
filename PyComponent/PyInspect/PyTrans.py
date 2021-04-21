@@ -9,7 +9,7 @@ from .ModRewriter import PyRecompile, RelatPath
 from .AstVisit import ASTWalk
 from os.path import join, abspath, splitext, realpath
 from xml.dom.minidom import Document
-
+import pickle
 
 ROOTDIR = "Temp"
 
@@ -86,31 +86,37 @@ def PyGenSource (PyDir, ExpList=None):
     doc = Document()  
     Crit = _AddChildNode (doc, doc, "criterions")
 
-    FuncList = {}
+    SrcApiList = {}
+    FuncDefList = {}
+    
     PyDirs = os.walk(PyDir) 
     for Path, Dirs, Pys in PyDirs:
         for py in Pys:
             _, Ext = os.path.splitext(py)
             if Ext != ".py":
                 continue
-            
-            if py[0:5] != "test_":
-                continue
-            
+         
             PyFile = os.path.join(Path, py)
             if IsInExpList (py, PyFile, ExpList) == True:
                 continue  
-            print (PyFile)
-            
+
+            Prefix = py[0:5]
             with open(PyFile) as PyF:
                 Ast = parse(PyF.read(), PyFile, 'exec')
                 Visitor= ASTWalk(PyDir)
                 Visitor.visit(Ast)
+                # source api retrieve
+                if Prefix == "test_":
+                    SrcApi = Visitor.SrcApiDef
+                    for FuncName, Tag in SrcApi.items ():
+                        SrcApiList[FuncName] = Tag
+                # function definition retrieve
                 FuncDef = Visitor.FuncDef
-                for FuncName, Tag in FuncDef.items ():
-                    FuncList[FuncName] = Tag
+                for FuncName, FDef in FuncDef.items ():
+                    FDef.Id = len (FuncDefList)+2
+                    FuncDefList[FuncName] = FDef
 
-    for FuncName, Tag in FuncList.items ():
+    for FuncName, Tag in SrcApiList.items ():
         Src = _AddChildNode (doc, Crit, "criterion")
         _AddChildNode (doc, Src, "function", FuncName)
         _AddChildNode (doc, Src, "return", "False")
@@ -119,3 +125,10 @@ def PyGenSource (PyDir, ExpList=None):
     f = open(PyDir+"_gen_criterion.xml", "w")
     f.write(doc.toprettyxml(indent="  "))
     f.close()
+    print ("SrcApiList size = ", len (SrcApiList))
+
+    # write function def
+    FDefPkl = "function_def.pkl"
+    with open(FDefPkl, 'wb') as Pkl:
+        pickle.dump(FuncDefList, Pkl)
+        print ("FuncDefList size = ", len (FuncDefList))
