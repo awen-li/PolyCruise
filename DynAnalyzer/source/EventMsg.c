@@ -118,6 +118,11 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
            *Pos != 0)
     {
         DWORD NameLen = GetVarName (Pos);
+        if (NameLen == 0)
+        {
+            Pos++;
+            continue;
+        }
         assert (NameLen != 0);
 
         BYTE Type = GetVarType (Pos+NameLen);

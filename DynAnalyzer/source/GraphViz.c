@@ -272,6 +272,10 @@ VOID WiteGraph (char *GName)
 
     DWORD NodeNum = GetGraphNodeNum ();
     printf("Graph nodeNum => %u \r\n", NodeNum);
+    if (NodeNum > 100)
+    {
+        return;
+    }
 
     DWORD NodeId = 1;
     while (NodeId <= NodeNum)
