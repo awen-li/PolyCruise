@@ -96,8 +96,11 @@ class ASTWalk(NodeVisitor):
         for Fdef in Body:
             if not isinstance (Fdef, FunctionDef):
                 continue
+            
             Def = self._GetFuncDef (Fdef, node.name)
-            self.FuncDef[Def.Name]  = Def 
+            self.FuncDef[Def.Name]  = Def
+            
+            self.visit_functiondef (Fdef)
         return
 
     
