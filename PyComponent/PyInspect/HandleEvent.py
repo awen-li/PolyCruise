@@ -87,8 +87,8 @@ class LineEvent (PyEvent):
         elif isinstance(Value, Num):
             self.SetRealUse (Value.n)
         elif isinstance(Value, BinOp):
-            self.SetRealUse (Value.left.id)
-            self.SetRealUse (Value.right.id)
+            self.SetUse (Value.left, Statement)
+            self.SetUse (Value.right, Statement)
         elif isinstance(Value, Str):
             pass
         elif isinstance(Value, Compare):
@@ -98,7 +98,7 @@ class LineEvent (PyEvent):
                 self.SetRealUse (Cmp.id)
         elif isinstance(Value, Attribute):
             Use = Value.value.id
-            self.LiveObj.SetUse (Use)
+            self.LiveObj.SetUse (Use, Statement)
             if hasattr (Value, "attr") == True:
                 Class = self.GetClassType (Use)
                 Use = Class + "." + Value.attr
@@ -108,7 +108,7 @@ class LineEvent (PyEvent):
         elif isinstance(Value, UnaryOp):
             pass
         elif isinstance(Value, Subscript):
-            self.SetRealUse (Value.value.id)
+            self.SetUse (Value.value, Statement)
         elif isinstance(Value, Bytes):
             self.SetRealUse (Value.s)
         elif isinstance(Value, Dict):
