@@ -1,4 +1,18 @@
 
+Wait ()
+{
+	process=$1
+	while true
+	do
+		count=`ps -ef | grep $process | grep -v "grep" | wc -l`
+		if [ 0 == $count ];then
+			break
+		else
+			sleep 1
+		fi
+	done
+	sleep 1
+}
 
 SdaAnalysis ()
 {
@@ -42,6 +56,7 @@ GenMap ()
 }
 
 target=pytorch
+Action=$1
 
 # 1. build and translate python modules
 cd ../../
@@ -49,50 +64,68 @@ ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
-python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+if [ "$Action" == "build" ]; then
+	rm -rf $CASE_PATH
+	if [ ! -f "$target/function_def.pkl" ]; then
+		python -m pyinspect -E $SCRIPTS/ExpList -g $target
+		cp -f function_def.pkl $target/
+	fi
+	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+fi
 
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
-rm -rf build
-export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
-export CC="clang -emit-llvm -flto -pthread"
-export CXX="clang++ -emit-llvm -flto -pthread"
-export LDSHARED="clang -flto -shared -pthread -lm"
-export RANLIB=/bin/true
-python setup.py develop
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+	export CC="clang -emit-llvm -flto -pthread"
+	export CXX="clang++ -emit-llvm -flto -pthread"
+	export LDSHARED="clang -flto -shared -pthread -lm"
+	export RANLIB=/bin/true
+	python setup.py develop
 
-SdaAnalysis
+	SdaAnalysis
+fi
 
 
 # 3. build again and install the instrumented software
-rm -rf build
-export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
-export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
-export CXX="clang++ -emit-llvm -flto -pthread  -Xclang -load -Xclang llvmSDIpass.so"
-export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
-export RANLIB=/bin/true
-python setup.py develop
-
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+	export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	export CXX="clang++ -emit-llvm -flto -pthread  -Xclang -load -Xclang llvmSDIpass.so"
+	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
+	export RANLIB=/bin/true
+	python setup.py develop
+fi
 
 # 4. generate file maping
 #GenMap $SCRIPTS $CASE_PATH $target
 
 # 5. run the cases
-TestCase=()
-CaseNum=${#TestCase[*]}
-Index=1
-for Case in ${TestCase[@]}
-do
-	echo "[$Index/$CaseNum]======================= Execute the case $Case ======================="
-	DelShareMem
-	difaEngine &
-	
-	python -m pyinspect -C ../../criterion.xml -t $Case &
-	sleep 60
-	let Index++
-	
-	killall python     2> /dev/null
-	killall difaEngine 2> /dev/null
-	sleep 15
-done
+Analyze ()
+{
+	echo "" > $SCRIPTS/build.log
+	Index=1
+	CaseList1=`find ./ -name "test*py"` 
+	CaseList2=`find ./ -name "*test.py"`
+	CaseList=$CaseList1" "$CaseList2
+	for curcase in $CaseList
+	do	
+	    DelShareMem
+	    difaEngine &
+	    StartTime=`date '+%s'`
+		echo "[$Index].......................run case $curcase......................."
+		echo "[$Index].......................run case $curcase.......................">> $SCRIPTS/build.log
+		python -m pyinspect -C ./gen_criterion.xml -t $curcase &#>> $SCRIPTS/build.log
+		
+		#Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		break
+		let Index++
+	done
+}
+Analyze
