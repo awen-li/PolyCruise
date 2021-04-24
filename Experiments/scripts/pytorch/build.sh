@@ -17,14 +17,23 @@ Wait ()
 SdaAnalysis ()
 {
 	rm -rf /tmp/difg/LdaBin*
+	Target=$1
 	
 	sda -dir ./ -pre=1
 	BC_FILES=`find ./ -name *.preopt.bc`
-	BC_LIST=()
+	Index=1
 	for bc in $BC_FILES
-	do
-		echo ".......................sda -file $bc......................."
-		sda -file $bc -criterion ../../criterion.xml
+	do		
+		#result=$(echo $bc | grep "[tT]est")
+		result=$(echo $bc | grep $Target)
+		if [[ "$result" == "" ]]; then
+		    let Index++
+    		continue
+		fi
+		
+		echo "@@@@@ [$Index].......................sda -file $bc......................."
+		sda -file $bc -criterion ../../criterion.xml	
+		let Index++
 	done
 }
 
@@ -85,7 +94,7 @@ if [ "$Action" == "build" ]; then
 	export RANLIB=/bin/true
 	python setup.py develop
 
-	SdaAnalysis
+	SdaAnalysis basic.0.0.preopt.bc
 fi
 
 
@@ -94,7 +103,7 @@ if [ "$Action" == "build" ]; then
 	rm -rf build
 	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 	export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
-	export CXX="clang++ -emit-llvm -flto -pthread  -Xclang -load -Xclang llvmSDIpass.so"
+	export CXX="clang++ -emit-llvm -flto -pthread -lDynAnalyze -Xclang -load -Xclang llvmSDIpass.so"
 	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
 	export RANLIB=/bin/true
 	python setup.py develop

@@ -412,7 +412,7 @@ private:
         char NameBuf[1024];
         for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
         {
-            printf ("Load Flda number = %u/%u \r", Fid, Lb.FuncNum);
+            //printf ("Load Flda number = %u/%u \r", Fid, Lb.FuncNum);
             FldaBin Fdb = {0};
             N = fread (&Fdb, sizeof(Fdb), 1, Bf);
             assert (N == 1);
@@ -577,7 +577,7 @@ private:
             case Type::ArrayTyID:
             default:
             {
-                printf ("Type=>%u, Not support\r\n", VType);
+                //printf ("Type=>%u, Not support\r\n", VType);
                 //assert (0);
             }
         }

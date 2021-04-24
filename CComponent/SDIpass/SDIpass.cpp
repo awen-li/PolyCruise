@@ -37,20 +37,51 @@ using namespace std;
 struct SDIpass : public ModulePass 
 {
     static char ID;
+    set<string> ExpList;
     
     SDIpass() : ModulePass(ID)
     {
+        ExpList.insert ("third_party/");
+        ExpList.insert ("tools/");
+        ExpList.insert ("caffe2/contrib/aten/");
+        ExpList.insert ("test/");
+        ExpList.insert ("c10/");
+        ExpList.insert ("aten/");    
     }
-	    
+    
     StringRef getPassName() const override 
     {
         return StringRef("SDIpass");
     }
-	  	
+
+    inline bool IsInExp (string MName)
+    {
+        if (MName.find ("test") != MName.npos)
+        {
+             return true;
+        }
+        
+        for (auto It = ExpList.begin (); It != ExpList.end (); It++)
+        {
+            string Name = *It;
+            if (MName.find (Name) != MName.npos)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     bool runOnModule(Module &M) override 
     {
+        const char *ModuleName = M.getName().data ();
+        if (IsInExp (ModuleName))
+        {
+            return false;
+        }
+        
         Instrumenter Instrm (&M);
-
         Instrm.RunInstrm();
 
         errs()<<"instrument module: " <<M.getName()<<"\r\n";

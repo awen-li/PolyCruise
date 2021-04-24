@@ -314,9 +314,10 @@ VOID ModuleSet::loadModules(const vector<string> &ModulePathVec)
     }
     else
     {
-        InitModuleSet();        
+        InitModuleSet();
+        printf("---> Load Module: function number = %u\n", m_FuncSet.Size());
     }
-    printf("---> Load Module: function number = %u\n", m_FuncSet.Size());
+    
     return;
 }
 

@@ -1298,6 +1298,77 @@ private:
         }
     }
 
+    inline void LoadFuncSet (const char *BinFile, set <string> *FuncSet)
+    {
+        size_t N;
+        FILE *Bf = fopen (BinFile, "rb");
+        assert (Bf != NULL);
+        
+        LdaBin Lb;
+        N = fread (&Lb, sizeof(Lb), 1, Bf);
+        if (N == 0)
+        {
+            printf ("LoadLdaBin: read ldabin error...\r\n");
+            exit (0);
+        }   
+
+        char NameBuf[1024];
+        for (unsigned Fid = 0; Fid < Lb.FuncNum; Fid++)
+        {
+            FldaBin Fdb;
+            N = fread (&Fdb, sizeof(Fdb), 1, Bf);
+            assert (N == 1);
+            N = fread (NameBuf, Fdb.NameLen, 1, Bf);
+            NameBuf[Fdb.NameLen] = 0;
+            assert (N == 1);
+            FuncSet->insert (NameBuf);
+
+            //printf ("\t--Load Function: %s, FID = %u, TaintInstNum:%u\r\n", NameBuf, Fdb.FuncId, Fdb.TaintInstNum);
+            for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
+            {
+                unsigned long Id = 0;
+                N = fread (&Id, sizeof(Id), 1, Bf);
+                assert (N == 1);
+            }        
+
+            for (unsigned Cid = 0; Cid < Fdb.TaintCINum; Cid++)
+            {
+                CSTaintBin Cstb;
+                N = fread (&Cstb, sizeof(Cstb), 1, Bf);
+                assert (N == 1);
+                unsigned NameLen = 0;
+                for (unsigned Fid = 0; Fid < Cstb.CalleeNum; Fid++)
+                {
+                    N = fread (&NameLen, sizeof(NameLen), 1, Bf);
+                    assert (N == 1 && NameLen != 0 && NameLen < sizeof (NameBuf));                   
+                    N = fread (NameBuf, NameLen, 1, Bf);
+                    assert (N == 1);
+                }
+            }
+        }
+
+        printf ("@@@@ PreLoad Flda number = %u / %u \r\n", Lb.FuncNum, (DWORD)FuncSet->size());
+
+        fclose (Bf);
+    }
+
+
+    inline DWORD GetFuncNum (set <string> *FuncSet)
+    {
+        DWORD FuncNum = 0;
+        for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
+        {
+            FSda *Fd = &(It->second);
+            auto IsExist = FuncSet->find (Fd->GetName());
+            if (IsExist == FuncSet->end ())
+            {
+                FuncNum++;
+            }
+        }
+
+        return FuncNum;
+    }
+
     inline void Dump ()
     {
         #define VERSION (1)
@@ -1310,18 +1381,23 @@ private:
         printf ("Start dump tainted instructions ...... \r\n");
         printf ("************************************************************************\r\n");
 
+        set <string> FuncSet;
+
         FILE *Bf;
         FILE *BfTxt;
         if (access (LDA_BIN, R_OK|W_OK) == 0)
         {
             rename (LDA_BIN, LDA_BIN_TMP);
+            LoadFuncSet (LDA_BIN_TMP, &FuncSet);
+            
             FILE *OldBf  = fopen (LDA_BIN_TMP, "r");
             assert (OldBf != NULL);
 
             LdaBin Lb;
             size_t N = fread (&Lb, sizeof (LdaBin), 1, OldBf);
             assert (N == 1 && Lb.Version == VERSION);
-            Lb.FuncNum += m_Func2Fsda.size();
+            Lb.FuncNum += GetFuncNum (&FuncSet);
+            printf ("@@@@ Lb.FuncNum = %u \r\n", Lb.FuncNum);
 
             Bf = fopen (LDA_BIN, "wb");
             assert (Bf != NULL);
@@ -1358,6 +1434,12 @@ private:
         for (auto It = m_Func2Fsda.begin (); It != m_Func2Fsda.end(); It++)
         {
             FSda *Fd = &(It->second);
+            auto IsExist = FuncSet.find (Fd->GetName());
+            if (IsExist != FuncSet.end ())
+            {
+                //printf ("\t--Function: %s exists, continue\r\n", Fd->GetName());
+                continue;                
+            }
 
             TaintInstNum += Fd->GetTaintInstNum ();
             
