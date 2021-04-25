@@ -1,6 +1,7 @@
 
 Wait ()
 {
+	second=1
 	process=$1
 	while true
 	do
@@ -10,6 +11,12 @@ Wait ()
 		else
 			sleep 1
 		fi
+		
+		let second++
+		if [ $second == 30 ]; then
+			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			break
+		fi	
 	done
 	sleep 1
 }
@@ -100,21 +107,24 @@ Analyze ()
 	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
 	do
+		if [ $Index != $INDEX ]; then
+			let Index++
+			continue
+		fi	
 	    DelShareMem
 	    difaEngine &
 	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
-		echo "[$Index].......................run case $curcase.......................">> $SCRIPTS/build.log
 		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full >> $SCRIPTS/build.log &
+		python -m pyinspect -C ./gen_criterion.xml -t runtests.py -v -m full &
 		
 		Wait difaEngine
 		EndTime=`date '+%s'`
 		TimeCost=`expr $EndTime - $StartTime`
 		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
 		
-		break
 		let Index++
+		export INDEX=$Index
 	done
 }
 

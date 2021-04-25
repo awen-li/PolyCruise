@@ -198,6 +198,8 @@ class Inspector:
                 if DefCrit[Index] != '1':
                     Index += 1
                     continue
+            if Index >= len (FCalleeDef.Paras):
+                break
             TaintedFormal.append(FCalleeDef.Paras[Index])
             Index += 1  
 
@@ -213,7 +215,7 @@ class Inspector:
 
         # actual -> formal
         CallSiteObj = self.CurCtx.CalleeLo
-        if CalleeFunc != CallSiteObj.Callee:
+        if CallSiteObj != None and CalleeFunc != CallSiteObj.Callee:
             print ("@@ Warning: Callee-<", CallSiteObj.Callee, " -> ", CalleeFunc, "> not consistent!!!!")
             return
         TaintedFormal, _ = self.Actual2Formal (CallSiteObj)
@@ -329,7 +331,7 @@ class Inspector:
                 return EVENT_RET
             else:
                 # in some cases of runtime, no explicit 'call' statement, mannually change the context...
-                if self.CallCtx != None and self.CoName == self.CurCtx.CalleeLo.Callee and self.CoName != self.CurCtx.Func:
+                if self.CallCtx != None and self.CurCtx.CalleeLo != None and self.CoName == self.CurCtx.CalleeLo.Callee and self.CoName != self.CurCtx.Func:
                     #print ("implicit 'call' statement process....", self.CoName)
                     # 1. first push the context to stack
                     self.PushCtx (self.CoName)

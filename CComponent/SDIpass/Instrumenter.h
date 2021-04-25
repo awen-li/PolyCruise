@@ -1062,6 +1062,11 @@ private:
                         {
                             InstrumentSite = Fd->GetFirstNonPHI(CurInst->getParent ());
                         }
+
+                        if (isa<LandingPadInst>(InstrumentSite))
+                        {
+                            continue;
+                        }
                     }
     
                     //errs ()<<"\r\nINST: "<<*CurInst<<"\r\n";            

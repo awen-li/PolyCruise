@@ -197,7 +197,7 @@ List* InstallPlugins ()
         Pgn->DbAddr     = GetDbAddr();
         Pgn->PluginInit (Pgn);
         ListInsert (&PluginList, Pgn);
-        printf ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
+        DEBUG ("InstallPlugin [%u][%s]%s->%s(%p), Active=%u\r\n", 
                  Pgn->DataHandle, Pgn->Name, Pgn->Module, Pgn->Init, Pgn->PluginInit, Pgn->Active);
     }
 
