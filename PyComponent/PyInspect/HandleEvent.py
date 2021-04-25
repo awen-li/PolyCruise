@@ -92,7 +92,7 @@ class LineEvent (PyEvent):
         elif isinstance(Value, Str):
             pass
         elif isinstance(Value, Compare):
-            self.SetRealUse(Value.left.id)
+            self.SetUse(Value.left)
             Cmp = Value.comparators[0]
             if not isinstance(Cmp, NameConstant):
                 self.SetRealUse (Cmp.id)
