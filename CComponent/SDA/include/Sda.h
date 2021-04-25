@@ -140,6 +140,11 @@ public:
         return m_InstNum;
     }
 
+    inline unsigned GetBlockNum ()
+    {
+        return (unsigned)m_BB2Id.size();
+    }
+
     inline char* GetName ()
     {
         return (char*)m_CurFunc->getName ().data();
@@ -1388,7 +1393,7 @@ private:
         if (access (LDA_BIN, R_OK|W_OK) == 0)
         {
             rename (LDA_BIN, LDA_BIN_TMP);
-            LoadFuncSet (LDA_BIN_TMP, &FuncSet);
+            //LoadFuncSet (LDA_BIN_TMP, &FuncSet);
             
             FILE *OldBf  = fopen (LDA_BIN_TMP, "r");
             assert (OldBf != NULL);
@@ -1448,6 +1453,8 @@ private:
             Fdb.NameLen      = Align4(strlen (FdName));
             assert (Fdb.NameLen != 0 && Fdb.NameLen < sizeof (NameBuf));
             Fdb.FuncId       = Fd->GetFID ();
+            Fdb.TotalInstNum = Fd->GetInstNum();
+            Fdb.BlockNum     = Fd->GetBlockNum();
             Fdb.TaintCINum   = Fd->GetCINum ();
             Fdb.TaintInstNum = Fd->GetTaintInstNum ();
             fwrite (&Fdb, sizeof(Fdb), 1, Bf);

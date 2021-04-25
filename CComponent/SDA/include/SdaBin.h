@@ -28,6 +28,8 @@ struct FldaBin
 {
     unsigned NameLen;  
     unsigned FuncId;
+    unsigned TotalInstNum;
+    unsigned BlockNum;
     unsigned TaintInstNum;
     unsigned TaintCINum;
     //char FuncName[NameLen];

@@ -145,6 +145,8 @@ class FSda
 private:
     string m_FuncName;
     unsigned m_Id;
+    unsigned m_InstNum;
+    unsigned m_BlockNum;
 
     map <unsigned long, CSTaint> m_CsID2Cst;
     map <unsigned, unsigned long> m_TaintInstID2EventID;
@@ -154,9 +156,12 @@ private:
     set <unsigned> m_ThrCInstIDs;
 
 public:
-    FSda (string FuncName)
+    FSda (string FuncName, unsigned Id, unsigned InstNum, unsigned BlockNum)
     {
         m_FuncName = FuncName;
+        m_Id       = Id;
+        m_InstNum  = InstNum;
+        m_BlockNum = BlockNum;
     }
 
     ~FSda ()
@@ -186,9 +191,14 @@ public:
         return m_Id;
     }
 
-    inline void SetId (unsigned Id)
+    inline unsigned GetInstNum ()
     {
-        m_Id = Id;
+        return m_InstNum;
+    }
+
+    inline unsigned GetBBNum ()
+    {
+        return m_BlockNum;
     }
 
     inline string GetName ()
@@ -379,17 +389,15 @@ private:
         }
     }
 
-    inline FSda* AddFlda (string Fname, unsigned Id)
+    inline FSda* AddFlda (string Fname, unsigned Id, unsigned InstNum, unsigned BlockNum)
     {
         FSda* Fd = GetFlda (Fname);
         if (Fd == NULL)
         {
-            auto Pit = m_Fname2Flda.insert (make_pair(Fname, FSda (Fname)));
+            auto Pit = m_Fname2Flda.insert (make_pair(Fname, FSda (Fname, Id, InstNum, BlockNum)));
             assert (Pit.second == true);
 
             Fd = &(Pit.first->second);
-
-            Fd->SetId (Id);
         }
 
         return Fd;
@@ -419,7 +427,7 @@ private:
             N = fread (NameBuf, Fdb.NameLen, 1, Bf);
             NameBuf[Fdb.NameLen] = 0;
             assert (N == 1);
-            FSda *Fd = AddFlda (NameBuf, Fdb.FuncId);
+            FSda *Fd = AddFlda (NameBuf, Fdb.FuncId, Fdb.TotalInstNum, Fdb.BlockNum);
 
             //printf ("Load Function: %s, FID = %u, TaintInstNum:%u\r\n", Fdb.FuncName, Fdb.FuncId, Fdb.TaintInstNum);
             for (unsigned Iid = 0; Iid < Fdb.TaintInstNum; Iid++)
@@ -1008,6 +1016,23 @@ private:
 
         return;
     }
+
+    inline bool ValidCheck (FSda *Fd, Function *Func)
+    {   
+        unsigned InstNum = 0;
+        for (auto ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI, InstNum++){}
+        unsigned BBNum = 0;
+        for (Function::iterator BB = Func->begin(); BB != Func->end(); ++BB, BBNum++){} 
+
+        if (Fd->GetInstNum() != InstNum || Fd->GetBBNum() != BBNum)
+        {
+            printf ("Warning - Function mismatch Inst (%u, %u), BB (%u, %u) \r\n", 
+                    Fd->GetInstNum(), InstNum, Fd->GetBBNum(), BBNum);
+            return false;
+        }
+                
+        return true;
+    }
     
     inline void VisitFunction ()
     {
@@ -1021,7 +1046,7 @@ private:
             }
 
             FSda *Fd = GetFlda (Func->getName ().data());
-            if (Fd == NULL)
+            if (Fd == NULL || !ValidCheck (Fd, Func))
             {
                 continue;
             }
