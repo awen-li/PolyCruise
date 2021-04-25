@@ -92,13 +92,13 @@ class LineEvent (PyEvent):
         elif isinstance(Value, Str):
             pass
         elif isinstance(Value, Compare):
-            self.SetUse(Value.left)
+            self.SetUse(Value.left, Statement)
             Cmp = Value.comparators[0]
             if not isinstance(Cmp, NameConstant):
                 self.SetRealUse (Cmp.id)
         elif isinstance(Value, Attribute):
             Use = Value.value.id
-            self.LiveObj.SetUse (Use, Statement)
+            self.LiveObj.SetUse (Use)
             if hasattr (Value, "attr") == True:
                 Class = self.GetClassType (Use)
                 Use = Class + "." + Value.attr
