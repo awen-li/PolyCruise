@@ -138,7 +138,7 @@ Analyze ()
 	    difaEngine &
 	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
-		python -m pyinspect -C ./gen_criterion.xml -t $curcase &
+		python -m pyinspect -C ./gen_criterion.xml -t $curcase 
 		
 		Wait difaEngine
 		EndTime=`date '+%s'`
