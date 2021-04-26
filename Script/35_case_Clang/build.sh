@@ -10,7 +10,7 @@ DelShareMem ()
 }
 
 DelShareMem
-difaEngine -c CaseResults &
+difaEngine -c CaseResults -s &
 
 # 1. install C module of the case
 rm -rf /tmp/difg/LdaBin*

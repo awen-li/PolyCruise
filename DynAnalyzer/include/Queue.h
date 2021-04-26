@@ -29,19 +29,20 @@ typedef struct tag_Queue
     DWORD Hindex;
     DWORD Tindex;
     DWORD Exit;
+    DWORD MaxNodeNum;
 
     process_lock_t InLock;  
 }Queue;
 
 
 void InitQueue (unsigned QueueNum);
-QNode* InQueue ();
-QNode* FrontQueue ();
-void OutQueue ();
-DWORD QueueSize ();
-VOID DelQueue ();
-VOID QueueSetExit ();
-DWORD QueueGetExit ();
+QNode* InQueue (void);
+QNode* FrontQueue (void);
+void OutQueue (void);
+DWORD QueueSize (void);
+VOID DelQueue (void);
+VOID QueueSetExit (void);
+DWORD QueueGetExit (void);
 
 
 

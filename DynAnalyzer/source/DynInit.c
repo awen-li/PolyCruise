@@ -13,7 +13,7 @@
 
 VOID CheckCases (char *Cases);
 
-void EventProcess ()
+void EventProcess (DWORD CrossFlag)
 {
     DEBUG ("@@@@@ EventProcess entry..!\r\n");
     
@@ -24,8 +24,16 @@ void EventProcess ()
         {
             continue;
         }
-        
-        DifEngine (QN->EventId, QN->ThreadId, QN->QBuf);       
+
+        if (CrossFlag == FALSE)
+        {
+            CrossFlag = (DWORD)(R_EID2LANG(QN->EventId) == PYLANG_TY);
+        }
+
+        if (CrossFlag)
+        {
+            DifEngine (QN->EventId, QN->ThreadId, QN->QBuf);
+        }
         OutQueue ();
     }
 
@@ -62,7 +70,7 @@ static DWORD GetPhyMemUse ()
     return MemSize;
 }
 
-void DynStart ()
+void DynStart (DWORD CrossFlag)
 {
     DWORD Ret;
     pthread_t Tid;
@@ -71,7 +79,7 @@ void DynStart ()
 
     InitDif ();
    
-    EventProcess ();
+    EventProcess (CrossFlag);
 
     return;
 }

@@ -69,6 +69,8 @@ class Analyzer ():
                 self.PyMaping [ini] = src
 
     def GetPySrc (self, Src):
+        if Src[0:2] == "./":
+            Src = Src[2:]
         if len (self.PyMaping) == 0:
             return Src
         Ini = self.PyMaping.get (Src)

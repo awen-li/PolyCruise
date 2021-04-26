@@ -25,15 +25,21 @@ int main(int argc, char ** argv)
     signal(SIGTSTP, Exit);
 
     char ch;
+    DWORD CrossFlag = FALSE;
 
     char* CaseResult = NULL;
-    while((ch = getopt(argc, argv, "c:h")) != -1)
+    while((ch = getopt(argc, argv, "c:sh")) != -1)
     {
         switch(ch)
         {
             case 'c':
             {
                 CaseResult = optarg;
+                break;
+            }
+            case 's':
+            {
+                CrossFlag = TRUE;
                 break;
             }
             default:
@@ -43,7 +49,7 @@ int main(int argc, char ** argv)
         }
     }
 
-    DynStart ();
+    DynStart (CrossFlag);
 
     DynExit (CaseResult);
 

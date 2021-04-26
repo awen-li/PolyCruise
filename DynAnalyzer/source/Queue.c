@@ -64,9 +64,24 @@ static inline void* GetQueueMemory (DWORD IsShared, DWORD Size)
     return MemAddr;
 }
 
+static inline unsigned GetQueueCap (unsigned QueueNum)
+{
+    char *Cap = getenv("QUEUE_CAP");
+    if (Cap == NULL)
+    {
+        return QueueNum;
+    }
+    else
+    {
+        return (unsigned)atoi (Cap);
+    }
+}
+
 void InitQueue (unsigned QueueNum)
 {
     Queue* Q;
+
+    QueueNum = GetQueueCap (QueueNum);
 
     printf ("@@@@@ start InitQueue\r\n");
     if (g_Queue != NULL)
@@ -81,6 +96,7 @@ void InitQueue (unsigned QueueNum)
     {
         Q->NodeNum  = QueueNum;
         Q->Exit     = FALSE;
+        Q->MaxNodeNum = 0;
 
         pthread_rwlockattr_t LockAttr;
         pthread_rwlockattr_setpshared(&LockAttr, PTHREAD_PROCESS_SHARED);
@@ -175,6 +191,10 @@ DWORD QueueSize ()
 
     process_lock(&Q->InLock);
     DWORD Size = ((Q->Tindex + Q->NodeNum) - Q->Hindex)% Q->NodeNum;
+    if (Size > Q->MaxNodeNum)
+    {
+        Q->MaxNodeNum = Size;
+    }
     process_unlock(&Q->InLock);
 
     return Size;

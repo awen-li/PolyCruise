@@ -53,7 +53,7 @@ static PyObject *PyTrace(PyObject *self, PyObject *args)
 
 
 /* void TRC_init () */
-void TRC_init ();
+void TRC_init (void);
 static PyObject *PyTraceInit(PyObject *self, PyObject *args)
 {
     TRC_init ();
@@ -62,7 +62,7 @@ static PyObject *PyTraceInit(PyObject *self, PyObject *args)
 }
 
 /* void TRC_exit () */
-void TRC_exit ();
+void TRC_exit (void);
 static PyObject *PyTraceExit(PyObject *self, PyObject *args)
 {
     TRC_exit ();
