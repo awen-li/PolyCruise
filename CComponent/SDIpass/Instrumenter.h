@@ -1066,8 +1066,13 @@ private:
             {
                 unsigned InstID = IIt->first;
                 Instruction *CurInst = IIt->second;
-                DefSets.insert (CurInst);
 
+                if (CurInst->getOpcode() == Instruction::Invoke)
+                {
+                    continue;
+                }
+                
+                DefSets.insert (CurInst);
                 unsigned long EventId = Fd->GetEventID (InstID);
                 if (EventId == 0)
                 {

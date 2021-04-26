@@ -13,7 +13,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 30 ]; then
+		if [ $second == 60 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	
@@ -102,7 +102,6 @@ GenMap $SCRIPTS $CASE_PATH $target
 # 5. run the cases
 Analyze ()
 {
-	echo "" > $SCRIPTS/build.log
 	Index=1
 	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
