@@ -297,21 +297,15 @@ class ASTVisitor(NodeTransformer):
         self._add_to_lineno2ids(self._lineno, self._get_ids(tmp_assign))
 
     def visit_annassign(self, node):
-        tgt, val = node.target, node.value
-        if isinstance(tgt, (List, Tuple)):
-            val = self._cache_value(val)
-            if isinstance(val, (Tuple, List)):
-                t2v = zip(tgt.elts, val.elts)
-                for t, v in t2v:
-                    self.visit(Assign(targets=[t], value=v))
-            else:
-                for i, t in enumerate(tgt.elts):
-                    self.visit(Assign(targets=[t], value=Subscript(value=val, slice=Index(value=Num(n=i)), ctx=Load())))
-        else:
-            assign = Assign(targets=[self.visit(tgt)], value=self.visit(val), lineno=self._new_lineno(), col_offset=self._col_offset)
-            fix_missing_locations(assign)
-            self._add_to_codelist(assign)
-            self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
+        assign = AnnAssign(target=[self.visit(node.target)],
+                           annotation=self.visit(node.annotation),
+                           value=self.visit(node.value),
+                           simple=node.simple,
+                           lineno=self._new_lineno(), 
+                           col_offset=self._col_offset)
+        fix_missing_locations(assign)
+        self._add_to_codelist(assign)
+        self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
 
     def visit_importfrom(self, node):
         importfrom = ImportFrom(module=node.module,

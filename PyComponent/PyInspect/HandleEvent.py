@@ -150,6 +150,15 @@ class LineEvent (PyEvent):
         self.SetUse (Value, Statement);
         return
 
+    def LE_annassign(self, Statement):
+        Target = Statement.target
+        self.SetDef (Target, Statement)
+        
+        Value = Statement.value
+        if Value != None:
+            self.SetUse (Value, Statement);
+        return
+
     
     def LE_augassign(self, Statement):
         Target = Statement.target
