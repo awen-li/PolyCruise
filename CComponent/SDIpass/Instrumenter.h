@@ -1026,7 +1026,8 @@ private:
 
         if (Fd->GetInstNum() != InstNum || Fd->GetBBNum() != BBNum)
         {
-            printf ("Warning - Function mismatch Inst (%u, %u), BB (%u, %u) \r\n", 
+            printf ("Warning - Function[%s] mismatch Inst (%u, %u), BB (%u, %u) \r\n",
+                    Func->getName().data(),
                     Fd->GetInstNum(), InstNum, Fd->GetBBNum(), BBNum);
             return false;
         }
@@ -1036,6 +1037,7 @@ private:
     
     inline void VisitFunction ()
     {
+        unsigned InstrumNum = 0;
         set <Value*> DefSets;
         for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
         {
@@ -1055,6 +1057,7 @@ private:
             //errs()<<"Process Function: "<<Func->getName ()<<"\r\n";
 
             VisitInst (Func, Fd);
+            InstrumNum++;
 
             /* basic instrumentation */
             ParaFt Pf;
@@ -1117,6 +1120,7 @@ private:
         }
 
         //DumpInsts ();
+        printf ("@@@ Instrument function num: %u \r\n", InstrumNum);
         return;
     }
 
