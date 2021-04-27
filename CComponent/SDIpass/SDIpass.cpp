@@ -43,10 +43,12 @@ struct SDIpass : public ModulePass
     {
         ExpList.insert ("third_party/");
         ExpList.insert ("tools/");
-        ExpList.insert ("caffe2/contrib/aten/");
+        ExpList.insert ("caffe2/");
         ExpList.insert ("test/");
         ExpList.insert ("c10/");
-        ExpList.insert ("aten/");    
+        ExpList.insert ("aten/");
+        ExpList.insert ("benchmarks/");
+        ExpList.insert ("android/");
     }
     
     StringRef getPassName() const override 
