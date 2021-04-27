@@ -144,7 +144,13 @@ class LineEvent (PyEvent):
    
     def LE_assign(self, Statement):
         Target = Statement.targets[0]
-        self.SetDef (Target, Statement)
+        if isinstance(Target, (List, Tuple)):
+            for eml in Target.elts:
+                if not isinstance(eml, Starred):
+                    self.SetDef (eml, Statement)
+                    break
+        else:
+            self.SetDef (Target, Statement)
         
         Value = Statement.value
         self.SetUse (Value, Statement);

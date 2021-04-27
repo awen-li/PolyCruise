@@ -163,10 +163,29 @@ class ASTVisitor(NodeTransformer):
             self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
             return Name(id=assign.targets[0].id, ctx=Load())
 
+    def has_star (self, targets):
+        target = targets[0]
+        if not isinstance(target, (List, Tuple)):
+            return False
+        for eml in target.elts:
+            if isinstance(eml, Starred):
+                return True
+        return False
+    
     def visit_assign(self, node):
         #TODO: we need to handle the defect when assign is like:
         # x, y = (a for a in [1,2])
         # x, y = {1:2,3:4}.itervalues(), the right hand is an iterator
+        if self.has_star (node.targets):   
+            assign = Assign(targets=node.targets,
+                            value=node.value,
+                            lineno=self._new_lineno(),
+                            col_offset=self._col_offset)
+            fix_missing_locations(assign)
+            self._add_to_codelist(assign)
+            self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
+            return
+        
         if len(node.targets) > 1:
             val = self._cache_value(node.value)
             if not isinstance(val, Name):
