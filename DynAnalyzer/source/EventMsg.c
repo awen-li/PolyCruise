@@ -123,10 +123,13 @@ static inline VOID DeEvent (EventMsg *EM, char *Msg)
             Pos++;
             continue;
         }
-        assert (NameLen != 0);
 
         BYTE Type = GetVarType (Pos+NameLen);
-        assert (Type != 0);
+        if (Type == 0)
+        {
+            Pos++;
+            continue;
+        }
 
         Variable *V = AllotVariable (Pos, NameLen, Type);
         if (IsDef)
@@ -210,10 +213,18 @@ static inline VOID DeRETEvent (EventMsg *EM, char *Msg)
            *Pos != 0)
     {
         DWORD NameLen = GetVarName (Pos);
-        assert (NameLen != 0);
+        if (NameLen == 0)
+        {
+            Pos++;
+            continue;
+        }
 
         BYTE Type = GetVarType (Pos+NameLen);
-        assert (Type != 0);
+        if (Type == 0)
+        {
+            Pos++;
+            continue;
+        }
 
         Variable *V = AllotVariable (Pos, NameLen, Type);       
         ListInsert (&EM->Use, V);

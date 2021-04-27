@@ -2,6 +2,8 @@ setup.py
 build.py 
 run_test.py
 -Dpytorch/torch/lib/python3.8
+-Dpytorch/torch/package
+-Dpytorch/torch/cuda
 -Dpytorch/.github
 -Dpytorch/third_party
 -Dpytorch/tools
