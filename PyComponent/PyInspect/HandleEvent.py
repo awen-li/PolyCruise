@@ -157,7 +157,7 @@ class LineEvent (PyEvent):
         return
 
     def LE_annassign(self, Statement):
-        Target = Statement.target
+        Target = Statement.target[0]
         self.SetDef (Target, Statement)
         
         Value = Statement.value
