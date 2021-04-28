@@ -79,7 +79,7 @@ if [ "$Action" == "build" ]; then
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 fi
 
-# 2. build and instrument C modules
+# 2. build and SDA
 cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
 if [ "$Action" == "build" ]; then

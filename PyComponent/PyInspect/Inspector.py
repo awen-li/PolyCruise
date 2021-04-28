@@ -73,6 +73,8 @@ class Inspector:
         self.CoName  = None
         
         FuncDef = self.Analyzer.GetFuncDef (EntryFunc)
+        assert FuncDef != None
+        
         self.CurCtx  = Context (EntryFunc, FuncDef, [])       
         self.CtxStack.append (self.CurCtx)
 
@@ -164,6 +166,7 @@ class Inspector:
         
     def SetCallCtx (self, LiveObj, FuncDef):
         TaintSet = self.GetTaintedParas (LiveObj)
+        assert FuncDef != None
         self.CallCtx = Context (LiveObj.Callee, FuncDef, TaintSet, LiveObj.Def)
         self.CurCtx.CalleeLo = LiveObj
         #print ("\t@@@@@", self.CurCtx.Func, TaintSet, " Cache Callee: ", end="")
@@ -209,8 +212,9 @@ class Inspector:
     def PushCtx (self, CalleeFunc):
         if self.CallCtx == None:
             FuncDef = self.Analyzer.GetFuncDef (CalleeFunc)
-            self.CurCtx = Context (CalleeFunc, FuncDef, [])
-            self.CtxStack.append (self.CurCtx)
+            if FuncDef != None:
+                self.CurCtx = Context (CalleeFunc, FuncDef, [])
+                self.CtxStack.append (self.CurCtx)
             return
 
         # actual -> formal
