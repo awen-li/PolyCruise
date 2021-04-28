@@ -454,20 +454,6 @@ private:
         }
     }
 
-    inline bool IsConstStr (Value* Glv)
-    {
-        #define CONST_STR (".str")
-        const char *ValueName = Glv->getName ().data();
-        if (strncmp (CONST_STR, ValueName, sizeof(CONST_STR)-1) == 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     inline bool IsGlobalValue (Value *Val)
     {
         GlobalValue *GVal = dyn_cast<GlobalValue>(Val);
@@ -490,19 +476,21 @@ private:
 
     inline void InitGlv ()
     {
+        errs ()<<"@@@@ Start InitGlv....... \r\n";
+    
         /* global variables */
-        Value *Glv;
+        GlobalVariable *Glv;
         for (auto It = m_Ms->global_begin (); It != m_Ms->global_end (); It++) 
         {
             Glv = *It;
-            if (IsConstStr (Glv))
+
+            if (Glv->isConstant())
             {
                 continue;
             }
 
             m_GlvAlias[Glv] = Glv;
         }
-
 
         /* share variables */
         for (auto It = m_Ms->func_begin (); It != m_Ms->func_end (); It++)
@@ -516,7 +504,7 @@ private:
             m_TotalInstNum += Func->getInstructionCount();
             for (inst_iterator itr = inst_begin(*Func), ite = inst_end(*Func); itr != ite; ++itr) 
             {
-                Instruction *Inst = &*itr.getInstructionIterator();
+                Instruction *Inst = &*itr;
                 LLVMInst LI (Inst);
                 if (!IsThreadCrt (LI.GetCallee()))
                 {
@@ -527,6 +515,12 @@ private:
 
                 /* relate the actual and formal parameter, treat them as global variables */
                 Function *Entry = (Function *)Inst->getOperand (2);
+                if (!Entry->hasName())
+                {
+                    continue;
+                }
+                //errs ()<<"\t -> corresponding function:" <<*Entry<<"\r\n";
+                
                 Value *InPara = Inst->getOperand (3);
                 m_GlvAlias[InPara] = InPara;
                 //errs()<<"add actual para => "<<InPara<<"\r\n";
@@ -542,7 +536,7 @@ private:
             }
         }
 
-        //errs ()<<"Global Value Num: "<<m_GlvAlias.size()<<"\r\n";
+        errs ()<<"@@@@ Global and shared Value Num: "<<m_GlvAlias.size()<<"\r\n";
     }
 
     inline void AddGlvUseEntry (Value *Glv)
@@ -884,6 +878,10 @@ private:
     inline VOID ProcEntry (Instruction *CallInst, CSTaint *Cst, set<Value*> *LexSet)
     {
         Value *Ef = CallInst->getOperand (2);
+        if (!Ef->hasName ())
+        {
+            return;
+        } 
         assert (llvm::isa<llvm::Function>(Ef));
         
         Function *Entry = (Function *)Ef;

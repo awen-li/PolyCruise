@@ -73,8 +73,8 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
 
     mxmlDelete(tree);
 
-    printf ("LoadCriterion %s success [%u]\r\n", XmlDoc, No);
     TranslateSS (Mm, &SStr, SS);
+    printf ("LoadCriterion %s success [%u/%u]\r\n", XmlDoc, (unsigned)SS->size(), No);
     
     return;
 }

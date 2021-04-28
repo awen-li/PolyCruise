@@ -55,6 +55,7 @@ public:
 
     ~LLVMInst ()
     {
+        m_Use.clear ();
     }
 
 
