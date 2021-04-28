@@ -24,12 +24,20 @@ Wait ()
 SdaAnalysis ()
 {
 	rm -rf /tmp/difg/LdaBin*
+	Target=$1
 	
 	sda -dir ./ -pre=1
-	BC_FILES=`find ./ -name *.preopt.bc | grep torch`
+	BC_FILES=`find ./ -name *.preopt.bc`
 	Index=1
 	for bc in $BC_FILES
-	do	
+	do		
+		#result=$(echo $bc | grep "[tT]est")
+		result=$(echo $bc | grep $Target)
+		if [[ "$result" == "" ]]; then
+		    let Index++
+    		continue
+		fi
+		
 		echo "@@@@@ [$Index].......................sda -file $bc......................."
 		sda -file $bc -criterion ../../criterion.xml	
 		let Index++
@@ -93,7 +101,7 @@ if [ "$Action" == "build" ]; then
 	export RANLIB=/bin/true
 	python setup.py develop
 
-	SdaAnalysis
+	SdaAnalysis libtorch_python.so
 fi
 
 
