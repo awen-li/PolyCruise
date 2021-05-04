@@ -646,15 +646,15 @@ static inline void ViewVar (VOID *Data)
 }
 
 
-static inline VOID ShowPath (DWORD No, DWORD ThreadId, List *Path)
+static inline VOID ShowPath (DWORD No, CasesSinks *Cs, List *Path)
 {
-    printf ("\t[%u]S-S Path: ", No);
+    printf ("\t[%-2u][%s] Path: ", No, Cs->PluginName);
     LNode *Ln = Path->Tail;
     while (Ln != NULL)
     {
         DifNode *DstNode = (DifNode *)Ln->Data;
 
-        char *FuncName = GetFuncName (DstNode, ThreadId);
+        char *FuncName = GetFuncName (DstNode, Cs->ThreadId);
         if (Ln->Pre != NULL)
         {
             printf (" %s -> ", FuncName);
@@ -698,7 +698,7 @@ VOID GenSsPath ()
         ComputeSsPath (SrcNum, Cs->SinkNode, &Path);
         if (Path.Header != NULL)
         {
-            ShowPath(No, Cs->ThreadId, &Path);
+            ShowPath(No, Cs, &Path);
         }
 
         SsLn = SsLn->Nxt;
