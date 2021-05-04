@@ -646,9 +646,9 @@ static inline void ViewVar (VOID *Data)
 }
 
 
-static inline VOID ShowPath (DWORD ThreadId, List *Path)
+static inline VOID ShowPath (DWORD No, DWORD ThreadId, List *Path)
 {
-    printf ("@@@@@@ Path: ");
+    printf ("\t[%u]S-S Path: ", No);
     LNode *Ln = Path->Tail;
     while (Ln != NULL)
     {
@@ -685,6 +685,7 @@ VOID GenSsPath ()
         return;
     }
 
+    DWORD No = 1;
     LNode *SsLn = DetSinks.Header;
     while (SsLn != NULL)
     {
@@ -697,11 +698,12 @@ VOID GenSsPath ()
         ComputeSsPath (SrcNum, Cs->SinkNode, &Path);
         if (Path.Header != NULL)
         {
-            ShowPath(Cs->ThreadId, &Path);
+            ShowPath(No, Cs->ThreadId, &Path);
         }
 
         SsLn = SsLn->Nxt;
         ListDel(&Path, NULL);
+        No++;
     }
 
     return;
