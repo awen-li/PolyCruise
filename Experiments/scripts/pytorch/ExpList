@@ -8,3 +8,4 @@ run_test.py
 -Dpytorch/.github
 -Dpytorch/third_party
 -Dpytorch/tools
+-Dpytorch/torch/testing

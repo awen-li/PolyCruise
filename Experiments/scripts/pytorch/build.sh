@@ -27,7 +27,7 @@ SdaAnalysis ()
 	Target=$1
 	
 	sda -dir ./ -pre=1
-	BC_FILES=`find ./ -name *.preopt.bc`
+	BC_FILES=`find ./ -name "*.preopt.bc"`
 	Index=1
 	for bc in $BC_FILES
 	do		
@@ -94,6 +94,7 @@ cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
 if [ "$Action" == "build" ]; then
 	rm -rf build
+	git submodule update --init --recursive
 	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 	export CC="clang -emit-llvm -flto -pthread"
 	export CXX="clang++ -emit-llvm -flto -pthread"
