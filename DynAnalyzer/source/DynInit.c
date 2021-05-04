@@ -12,6 +12,8 @@
 #include "GraphViz.h"
 
 VOID CheckCases (char *Cases);
+VOID GenSsPath ();
+
 
 void EventProcess (DWORD CrossFlag)
 {
@@ -90,6 +92,8 @@ void DynExit (char *CaseResult)
     printf ("@@@@@ Ready to exit, total memory: %u (K)!\r\n", GetPhyMemUse ());
 
     CheckCases (CaseResult);
+    GenSsPath ();
+    
     WiteGraph ("DIFG");
     DelQueue ();
     DeInitDif ();

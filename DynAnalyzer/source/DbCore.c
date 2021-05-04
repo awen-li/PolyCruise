@@ -15,7 +15,11 @@ static DbTableManage *g_tTableManage = NULL;
 
 static inline VOID* db_Malloc(ULONG ulMemSize)
 {
-	return malloc (ulMemSize);
+    VOID *Mem = malloc (ulMemSize);
+    assert (Mem != NULL);
+    memset (Mem, 0, ulMemSize);
+    
+    return Mem;
 }
 
 static inline DWORD db_PailNum(DWORD dwDataNum)
@@ -725,7 +729,7 @@ VOID InitDb (VOID *Addr)
 {
     if (Addr == NULL)
     {
-        g_tTableManage = (DbTableManage *)malloc (sizeof (DbTableManage));
+        g_tTableManage = (DbTableManage *)db_Malloc (sizeof (DbTableManage));
         assert (g_tTableManage != NULL);
     }
     else

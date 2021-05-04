@@ -6,7 +6,7 @@ SOURCE_PATH  = source
 INCLUDE_PATH = include
 OBJ_PATH     = obj
 
-CFLAGS     = -fPIC -g -I$(INCLUDE_PATH)
+CFLAGS     = -fPIC -O3 -I$(INCLUDE_PATH)
 #CFLAGS    = -fPIC -g -I$(INCLUDE_PATH) -D__DEBUG__ 
 LD_CFLAGS  = -fPIC -shared -lpthread -ldl 
 

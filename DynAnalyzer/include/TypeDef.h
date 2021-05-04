@@ -19,6 +19,8 @@ typedef signed int       SDWORD;
 typedef signed short     SWORD;
 typedef void             VOID;
 typedef void             PRAVOID;
+typedef unsigned         BOOL;
+
 
 
 #endif

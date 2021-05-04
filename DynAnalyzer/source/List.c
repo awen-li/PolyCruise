@@ -150,6 +150,29 @@ VOID ListVisit (List *L, ProcData Proc)
 }
 
 
+BOOL ListSearch (List *L, CompData Proc, VOID *Data)
+{
+    if (L->NodeNum == 0)
+    {
+        return FALSE;
+    }
+
+    LNode *N = L->Header;
+    while (N != NULL)
+    {
+        if (Proc (N->Data, Data) == TRUE)
+        {
+            return TRUE;
+        }
+
+        N = N->Nxt;
+    }
+
+    return FALSE;
+}
+
+
+
 List* ListAllot ()
 {
     List *L = (List *) malloc (sizeof (List));

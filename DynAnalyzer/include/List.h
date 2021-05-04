@@ -29,11 +29,14 @@ VOID ListInsert (List *L, VOID *N);
 VOID ListRemove (List *L, LNode *N);
 List* ListAllot ();
 
+typedef BOOL (*CompData) (VOID *Ldata, VOID *Target);
 typedef VOID (*ProcData) (VOID *Data);
 typedef VOID (*DelData) (VOID *Data);
 
 VOID ListVisit (List *L, ProcData Proc);
 VOID ListDel (List *L, DelData Del);
+BOOL ListSearch (List *L, CompData Proc, VOID *Data);
+
 
 
 

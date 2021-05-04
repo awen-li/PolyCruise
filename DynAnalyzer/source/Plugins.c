@@ -14,8 +14,10 @@
 typedef struct tag_CasesSinks
 {
     char PluginName[32];
-    char FuncName[128];
+	char FuncName[128];
     DWORD InstId;
+    DifNode *SinkNode;
+    DWORD ThreadId;
 }CasesSinks;
 
 /////////////////////////////////////////////////////////////////
@@ -219,6 +221,8 @@ static inline VOID DelPlugin (Plugin *Pgn)
 VOID UnInstallPlugins ()
 {
     ListDel(&PluginList, (DelData)DelPlugin);
+
+    ListDel(&DetSinks, (DelData)free);
 }
 
 static inline DWORD SET_VISIT (DWORD Visit, DWORD Type)
@@ -342,7 +346,10 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
 
                 strncpy (Cs->FuncName, FuncName, sizeof (Cs->FuncName));
                 strncpy (Cs->PluginName, Plg->Name, sizeof (Cs->PluginName));
-                Cs->InstId = R_EID2IID(DstNode->EventId);
+                //Cs->LangType = R_EID2LANG(DstNode->EventId);
+                Cs->InstId   = R_EID2IID(DstNode->EventId);
+                Cs->SinkNode = DstNode;
+                Cs->ThreadId = ThreadId;
                 
                 printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u -- <Function:%s,  Inst:%u> \r\n", 
                         Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), FuncName, R_EID2IID(DstNode->EventId));
@@ -538,7 +545,165 @@ VOID CheckCases (char *Cases)
     }
 
     ListDel(&CaseList, (DelData)free);
-    ListDel(&DetSinks, (DelData)free);
-    return;
 
+    return;
 }
+
+
+static inline BOOL IsReachable (DifNode *DifN)
+{
+    DbReq Req;
+    DbAck Ack;
+
+    Req.dwDataType = DB_TYPE_DIF_SOURCES;
+    Req.dwKeyLen   = sizeof (DifN->EventId);
+    Req.pKeyCtx = (BYTE *)(&DifN->EventId);
+
+    Ack.dwDataId = 0;
+    (VOID)QueryDataByKey (&Req, &Ack);
+    if (Ack.dwDataId != 0)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+BOOL CompEvent (DifNode *Ldata, DifNode *Target)
+{
+    if (R_EID2FID(Ldata->EventId) == R_EID2FID(Target->EventId))
+    {
+        return TRUE;        
+    }
+
+    return FALSE;
+}
+
+
+static inline VOID AddPathNode (List *Path, DifNode *DifN)
+{
+    if (ListSearch(Path, (CompData)CompEvent, DifN) ==  TRUE)
+    {
+        return;
+    }
+
+    ListInsert(Path, DifN);
+    return;
+}
+
+static inline VOID ComputeSsPath (DWORD SrcNum, DifNode *Sink, List *Path)
+{
+    List LastVisit;
+    memset (&LastVisit, 0, sizeof (LastVisit));
+    
+    ListInsert(&LastVisit, DIFN_2_GN(Sink));
+
+    while (LastVisit.Header != NULL)
+    {
+        DWORD NodeNum = LastVisit.NodeNum;
+        LNode *Last   = LastVisit.Header;
+        while (NodeNum > 0)
+        {
+            Node *N = (Node *)Last->Data;
+            DifNode *Dst = GN_2_DIFN (N);
+                
+            List *InEdge = &N->InEdge;
+            LNode *LE = InEdge->Header;
+            while (LE != NULL)
+            {
+                Edge *E = (Edge *)LE->Data;
+                DifEdge *DE = GE_2_DIFE (E);
+                if (!(DE->EdgeType & EDGE_DIF))
+                {
+                    LE = LE->Nxt;
+                    continue;
+                }
+                Node *SrcNode = E->Src;
+
+                AddPathNode (Path, GN_2_DIFN(SrcNode));  
+
+                ListInsert(&LastVisit, SrcNode);
+                LE = LE->Nxt;
+            }
+
+            LNode *NxtNode = Last->Nxt;
+            ListRemove(&LastVisit, Last);
+            Last = NxtNode;
+            NodeNum--;
+        }
+    }
+}
+
+
+static inline void ViewVar (VOID *Data)
+{
+    Variable *V = (Variable *)Data;
+    printf ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
+
+    return;
+}
+
+
+static inline VOID ShowPath (DWORD ThreadId, List *Path)
+{
+    printf ("@@@@@@ Path: ");
+    LNode *Ln = Path->Tail;
+    while (Ln != NULL)
+    {
+        DifNode *DstNode = (DifNode *)Ln->Data;
+
+        char *FuncName = GetFuncName (DstNode, ThreadId);
+        if (Ln->Pre != NULL)
+        {
+            printf (" %s -> ", FuncName);
+        }
+        else
+        {
+            printf (" %s: ", FuncName);
+        }
+        
+        Ln = Ln->Pre;
+    }
+
+    LNode *Lhr = Path->Header;
+    DifNode *DstNode = (DifNode *)Lhr ->Data;
+    ListVisit (&DstNode->EMsg.Def, (ProcData)ViewVar);
+
+    printf ("\r\n");
+    return;    
+}
+
+
+VOID GenSsPath ()
+{    
+    DWORD SrcNum = QueryDataNum (DB_TYPE_DIF_SOURCES);
+    printf ("@@@@@ GenSsPath -> Souece[%u], Sink[%u]......\r\n", SrcNum, DetSinks.NodeNum);
+    if (SrcNum == 0)
+    {
+        return;
+    }
+
+    LNode *SsLn = DetSinks.Header;
+    while (SsLn != NULL)
+    {
+        List Path;
+        memset (&Path, 0, sizeof (Path));
+
+        CasesSinks *Cs = (CasesSinks *)SsLn->Data;
+        AddPathNode (&Path, Cs->SinkNode);
+        
+        ComputeSsPath (SrcNum, Cs->SinkNode, &Path);
+        if (Path.Header != NULL)
+        {
+            ShowPath(Cs->ThreadId, &Path);
+        }
+
+        SsLn = SsLn->Nxt;
+        ListDel(&Path, NULL);
+    }
+
+    return;
+}
+
