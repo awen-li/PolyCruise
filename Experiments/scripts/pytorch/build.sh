@@ -105,13 +105,13 @@ if [ "$Action" == "build" ]; then
 	SdaAnalysis libtorch_python.so
 fi
 
-
 # 3. build again and install the instrumented software
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 	export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
-	export CXX="clang++ -emit-llvm -flto -pthread -lDynAnalyze -Xclang -load -Xclang llvmSDIpass.so"
+	export CXX="clang++ -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	export LDFLAGS="-lDynAnalyze"
 	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
 	export RANLIB=/bin/true
 	python setup.py develop

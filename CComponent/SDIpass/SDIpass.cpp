@@ -84,11 +84,15 @@ struct SDIpass : public ModulePass
         }
         
         Instrumenter Instrm (&M);
-        Instrm.RunInstrm();
-
-        errs()<<"instrument module: " <<M.getName()<<"\r\n";
-            
-        return true;
+        if (Instrm.RunInstrm())
+        {
+            errs()<<"instrument module: " <<M.getName()<<"\r\n";
+            return true;
+        }
+        else
+        {
+            return false;
+        }
    }
 };
 

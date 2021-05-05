@@ -365,13 +365,16 @@ public:
         m_ThreadId = NULL;
     } 
 
-    void RunInstrm ()
+    unsigned RunInstrm ()
     {
+        unsigned InstNum = 0;
+        
         LoadLdaBin ();
  
-        VisitFunction ();
+        InstNum += VisitFunction ();
+        InstNum += InitInstrumenter ();
 
-        InitInstrumenter ();
+        return InstNum;
     }
     
 private:
@@ -1002,6 +1005,7 @@ private:
         {
             Instruction *Inst = &*ItI;
             Fd->AddInstMap (InstId, Inst);
+
             //errs ()<<"[*VisitInst*]-["<<InstId<<"] "<<*Inst<<"\r\n";
 
             if (IsThreadEntry (Inst))
@@ -1035,7 +1039,7 @@ private:
         return true;
     }
     
-    inline void VisitFunction ()
+    inline unsigned VisitFunction ()
     {
         unsigned InstrumNum = 0;
         set <Value*> DefSets;
@@ -1126,7 +1130,7 @@ private:
 
         //DumpInsts ();
         printf ("@@@ Instrument function num: %u \r\n", InstrumNum);
-        return;
+        return InstrumNum;
     }
 
     inline void GetTermInstofFunction(Function *Func) 
@@ -1166,12 +1170,12 @@ private:
         return;
     }
     
-    inline void InitInstrumenter ()
+    inline unsigned InitInstrumenter ()
     {
         Function *mainFunc = m_Module->getFunction("main");
         if (NULL == mainFunc)
         {
-            return;
+            return 0;
         }
                 
         BasicBlock *entryBlock = &mainFunc->front();
@@ -1184,7 +1188,8 @@ private:
             Instruction *Inst = *it;
             CallInst::Create(m_ExitFunc, "", Inst);
         }
-        return;
+        
+        return 1;
     }
 
 
