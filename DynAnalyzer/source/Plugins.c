@@ -353,7 +353,8 @@ static inline DWORD InvokePlugins (List* PluginList, DifNode *SrcNode, DifNode *
                 
                 printf ("\r\n@@@@@@@@@@@@@@@@@@@[%u][%s]Reach sink,  EventId = %u -- <Function:%s,  Inst:%u> \r\n", 
                         Plg->DataHandle, Plg->Name, R_EID2ETY(DstNode->EventId), FuncName, R_EID2IID(DstNode->EventId));
-                printf ("\t\t ---->case: %s %s %u \r\n", Plg->Name, FuncName, R_EID2IID(DstNode->EventId));
+                printf ("\t\t");ListVisit (&DstNode->EMsg.Use, (ProcData)PrintVar);
+                printf ("\r\n\t\t ---->case: %s %s %u \r\n", Plg->Name, FuncName, R_EID2IID(DstNode->EventId));
             }
 
             SINK |= IsSink;
@@ -622,6 +623,16 @@ static inline VOID ComputeSsPath (DWORD SrcNum, DifNode *Sink, List *Path)
                 }
                 Node *SrcNode = E->Src;
 
+                if (GET_VISIT(SrcNode->VisitBits, DB_TYPE_DIF_PATH_GEN))
+                {
+                    LE = LE->Nxt;
+                    continue;   
+                }
+                else
+                {
+                    SrcNode->VisitBits = SET_VISIT (SrcNode->VisitBits, DB_TYPE_DIF_PATH_GEN);
+                }
+
                 AddPathNode (Path, GN_2_DIFN(SrcNode));  
 
                 ListInsert(&LastVisit, SrcNode);
@@ -634,15 +645,6 @@ static inline VOID ComputeSsPath (DWORD SrcNum, DifNode *Sink, List *Path)
             NodeNum--;
         }
     }
-}
-
-
-static inline void ViewVar (VOID *Data)
-{
-    Variable *V = (Variable *)Data;
-    printf ("[%c (%s,%lx)] ", V->Type, V->Name, V->Addr);
-
-    return;
 }
 
 
@@ -669,7 +671,7 @@ static inline VOID ShowPath (DWORD No, CasesSinks *Cs, List *Path)
 
     LNode *Lhr = Path->Header;
     DifNode *DstNode = (DifNode *)Lhr ->Data;
-    ListVisit (&DstNode->EMsg.Def, (ProcData)ViewVar);
+    ListVisit (&DstNode->EMsg.Def, (ProcData)PrintVar);
 
     printf ("\r\n");
     return;    
@@ -706,6 +708,7 @@ VOID GenSsPath ()
         No++;
     }
 
+    printf ("@@@@@ GenSsPath done!!!\r\n");
     return;
 }
 
