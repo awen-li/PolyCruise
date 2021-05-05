@@ -10,6 +10,12 @@
 #define _LIST_H_
 #include "MacroDef.h"
 
+
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 typedef struct tag_LNode
 {
     VOID *Data;
@@ -38,7 +44,9 @@ VOID ListDel (List *L, DelData Del);
 BOOL ListSearch (List *L, CompData Proc, VOID *Data);
 
 
-
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif 

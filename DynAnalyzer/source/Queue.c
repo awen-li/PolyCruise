@@ -8,6 +8,9 @@
 #include <sys/shm.h>
 #include "Queue.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
 
 static Queue *g_Queue = NULL;
 static int g_SharedId = 0;
@@ -259,4 +262,7 @@ VOID DelQueue ()
     return;
 }
 
+#ifdef __cplusplus
+}
+#endif
 

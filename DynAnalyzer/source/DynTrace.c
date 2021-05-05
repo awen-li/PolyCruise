@@ -8,6 +8,12 @@
 #include <sys/syscall.h>
 #include "Queue.h"
 
+
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 void TRC_trace0 (ULONG EventId, const char* Msg)
 {
 	QNode *Node = InQueue ();
@@ -86,5 +92,8 @@ void TRC_exit ()
     QueueSetExit ();
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 

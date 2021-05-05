@@ -1,6 +1,10 @@
 
-CC = clang 
-LD = clang
+
+TARGET = libDynAnalyze.so
+ifeq ($(CC), clang++)
+	TARGET = libDynAnalyzeCpp.so
+endif
+LD = $(CC)
 
 SOURCE_PATH  = source
 INCLUDE_PATH = include
@@ -14,8 +18,6 @@ $SOURCE_FILES = $(wildcard $(SOURCE_PATH)/*.c)
 SOURCE_FILES  = source/Queue.c source/DynTrace.c source/DbCore.c source/List.c
 OBJ_FILES     = $(addprefix $(OBJ_PATH)/, $(addsuffix .o,$(notdir $(basename $(SOURCE_FILES)))))
 
-TARGET = libDynAnalyze.so
-
 .PHONY:all clean
 
 all: $(TARGET)
@@ -28,4 +30,4 @@ $(OBJ_PATH)/%.o: $(SOURCE_PATH)/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(OBJ_PATH) $(TARGET)
+	rm -rf $(OBJ_PATH)

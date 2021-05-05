@@ -10,6 +10,11 @@
 #define _DB_H_ 
 #include "MacroDef.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 enum DB_TYPE
 {
     DB_TYPE_BEGIN=1,
@@ -60,6 +65,10 @@ DWORD QueryDataNum (DWORD dwDataType);
 VOID DelDb ();
 VOID InitDb (VOID *Addr);
 VOID* GetDbAddr ();
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

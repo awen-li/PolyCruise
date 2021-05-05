@@ -9,6 +9,12 @@
 #define _DBTATBL_H_
 #include "MacroDef.h"
 
+
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 #define M_BASE_DATA_NUM        (4 * 1024)
 
 
@@ -91,5 +97,8 @@ typedef struct tag_DbTableManage
     DWORD TableNum;
 }DbTableManage;
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

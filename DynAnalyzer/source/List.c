@@ -7,6 +7,10 @@
 ************************************************************/
 #include "List.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
 
 VOID ListInsert (List *L, VOID *N)
 {
@@ -185,4 +189,7 @@ List* ListAllot ()
     return L;
 }
 
+#ifdef __cplusplus
+}
+#endif
 

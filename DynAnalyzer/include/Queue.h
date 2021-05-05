@@ -10,6 +10,11 @@
 #define _QUEUE_H_
 #include "MacroDef.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
+
 #define  QUEUE_SIZE (4024 * 1024)
 
 
@@ -45,5 +50,8 @@ VOID QueueSetExit (void);
 DWORD QueueGetExit (void);
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif 

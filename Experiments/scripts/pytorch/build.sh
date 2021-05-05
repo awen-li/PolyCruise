@@ -92,6 +92,7 @@ fi
 # 2. build and instrument C modules
 cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
+CAFFE2_LIB="caffe2_pybind11_state.cpython-37m-x86_64-linux-gnu.so"
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	git submodule update --init --recursive
@@ -103,6 +104,7 @@ if [ "$Action" == "build" ]; then
 	python setup.py develop
 
 	SdaAnalysis libtorch_python.so
+	cp caffe2/python/$CAFFE2_LIB ../
 fi
 
 # 3. build again and install the instrumented software
@@ -111,10 +113,11 @@ if [ "$Action" == "build" ]; then
 	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 	export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
 	export CXX="clang++ -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
-	export LDFLAGS="-lDynAnalyze"
-	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyze"
+	export LDFLAGS="-lDynAnalyzeCpp"
+	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyzeCpp"
 	export RANLIB=/bin/true
 	python setup.py develop
+	#mv ../$CAFFE2_LIB caffe2/python/$CAFFE2_LIB
 fi
 
 # 4. generate file maping

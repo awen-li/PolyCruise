@@ -8,6 +8,10 @@
 
 #ifndef _MACRODEF_H_
 #define _MACRODEF_H_ 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -53,6 +57,9 @@
 
 #define PLUGIN_INI             ("/tmp/difg/plugins.ini")
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -8,6 +8,9 @@
 #include "Db.h"
 #include "DbTable.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
 
 static DbTableManage *g_tTableManage = NULL;
 
@@ -782,5 +785,9 @@ DWORD QueryDataNum (DWORD dwDataType)
 
     return ptDataTable->tBusyDataTable.dwCurNodeNum;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 
