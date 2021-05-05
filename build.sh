@@ -54,7 +54,8 @@ echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build DynAnalyzer @@@@@@@@@@@@@@@"
 cd $SDI_PATH/DynAnalyzer
-make -f makefile.so clean && make -f makefile.so
+make -f makefile.so clean && make -f makefile.so CC=clang
+make -f makefile.so clean && make -f makefile.so CC=clang++
 cp libDynA* /usr/lib/
 make clean && make
 killall difaEngine
