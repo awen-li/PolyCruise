@@ -616,7 +616,7 @@ static inline VOID ComputeSsPath (DWORD SrcNum, DifNode *Sink, List *Path)
             {
                 Edge *E = (Edge *)LE->Data;
                 DifEdge *DE = GE_2_DIFE (E);
-                if (!(DE->EdgeType & EDGE_DIF))
+                if (!(DE->EdgeType & EDGE_DIF) && !(DE->EdgeType & EDGE_RET))
                 {
                     LE = LE->Nxt;
                     continue;
@@ -650,27 +650,38 @@ static inline VOID ComputeSsPath (DWORD SrcNum, DifNode *Sink, List *Path)
 
 static inline VOID ShowPath (DWORD No, CasesSinks *Cs, List *Path)
 {
-    printf ("\t[%-2u][%s] Path: ", No, Cs->PluginName);
+    LNode *SrcN = Path->Tail;
+    DifNode *DstNode = (DifNode *)SrcN ->Data;
+
+    printf ("[%-2u][%s] Path: ", No, Cs->PluginName);
+    ListVisit (&DstNode->EMsg.Def, (ProcData)PrintVar); printf ("\r\n");
+    
     LNode *Ln = Path->Tail;
     while (Ln != NULL)
     {
-        DifNode *DstNode = (DifNode *)Ln->Data;
+        DifNode *DstNode  = (DifNode *)Ln->Data;
+
+        char *LangType = "C";
+        if (R_EID2LANG(DstNode->EventId) == PYLANG_TY)
+        {
+            LangType = "PY";
+        }
 
         char *FuncName = GetFuncName (DstNode, Cs->ThreadId);
         if (Ln->Pre != NULL)
         {
-            printf (" %s -> ", FuncName);
+            printf ("\t\t[%s]%s -> \r\n", LangType, FuncName);
         }
         else
         {
-            printf (" %s: ", FuncName);
+            printf ("\t\t[%s]%s: ", LangType, FuncName);
         }
         
         Ln = Ln->Pre;
     }
 
-    LNode *Lhr = Path->Header;
-    DifNode *DstNode = (DifNode *)Lhr ->Data;
+    LNode *SinkN = Path->Header;
+    DstNode = (DifNode *)SinkN ->Data;
     ListVisit (&DstNode->EMsg.Def, (ProcData)PrintVar);
 
     printf ("\r\n");
