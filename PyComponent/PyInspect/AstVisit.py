@@ -55,23 +55,22 @@ class ASTWalk(NodeVisitor):
     # Call(func=Attribute(value=Name(id='np', ctx=Load()), attr='array', ctx=Load()), 
     #      args=[Name(id='v5613', ctx=Load())], keywords=[])
     def _ProcCall(self, Caller, Stmt):
-        #print ("\tcall -->", Caller, ": ", ast.dump (Stmt))
         NameMap = {"numpy":"numpy", "np":"numpy", "torch":"torch"}
         Func = Stmt.func
         if not isinstance (Func, Attribute):
             return
         if not isinstance (Func.value, Name):
             return
-        
+            
         FuncName = NameMap.get (Func.value.id)
-        if FuncName == None or self.LibName.find (FuncName) == -1:
-            return
-        
-        if hasattr (Func, "attr") != True:
+        if FuncName == None and self.LibName.find (Func.value.id) == -1:
             return
             
+        if hasattr (Func, "attr") != True:
+            return
+
         FuncName = Func.attr
-        self.SrcApiDef[FuncName] = True     
+        self.SrcApiDef[FuncName] = True
 
     def visit_functiondef(self, node):
         FuncName = node.name
