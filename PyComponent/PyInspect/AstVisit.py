@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # _*_ coding:utf-8 _*_
-
+import os
 import re
 import ast
 from ast import *
@@ -22,6 +22,13 @@ class ASTWalk(NodeVisitor):
         self.SrcApiDef = {}
         self.FuncDef   = {}
         self.FId = 1
+
+    def IsPrintCall (self):
+        Flag = os.environ.get ("print_call")
+        if Flag is None:
+            return False
+        else:
+            return True
     
     def visit(self, node):
         """Visit a node."""
@@ -57,6 +64,9 @@ class ASTWalk(NodeVisitor):
     def _ProcCall(self, Caller, Stmt):
         NameMap = {"numpy":"numpy", "np":"numpy", "torch":"torch"}
         Func = Stmt.func
+
+        if self.IsPrintCall ():
+            print ("\t", ast.dump (Stmt))
         if not isinstance (Func, Attribute):
             return
         if not isinstance (Func.value, Name):
@@ -78,12 +88,15 @@ class ASTWalk(NodeVisitor):
 
         if FuncName[0:5] != "test_":
             return
-
+        
+        if self.IsPrintCall ():
+            print ("Process -> ", FuncName)
+        
         Body = node.body
         for Stmt in Body:
-            if isinstance (Stmt, Assign):
+            if isinstance (Stmt, Assign) or isinstance (Stmt, Expr):
                 if isinstance (Stmt.value, Call):
-                    self._ProcCall (FuncName, Stmt.value) 
+                    self._ProcCall (FuncName, Stmt.value)
             elif isinstance (Stmt, Call):
                 self._ProcCall (FuncName, Stmt.value)
             else:
