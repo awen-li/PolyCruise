@@ -408,7 +408,9 @@ class Inspector:
         _, ScriptName = os.path.split(Code.co_filename) 
         if ScriptName in self.Scripts:
             return self.Tracing
-       
+            
+        #print (Code.co_filename, ":", Frame.f_lineno, ":", Event)
+            
         LineNo  = Frame.f_lineno
         LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
         if self.IsLiveObjValid (LiveObj, Event) == False:

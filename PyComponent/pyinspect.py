@@ -74,7 +74,7 @@ class PyMaping ():
                     Max = Prefix
                     MaxSrc = src
             DirList = MaxSrc.split("/")
-            if len (DirList) >= 2 and ini.find (DirList[-2]) != -1:
+            if len (DirList) >= 2 and ini.find (DirList[-2]) != -1 and ini.find (DirList[-1]) != -1:
                 print (ini, " -> ", MaxSrc)
                 PyMap[ini] = MaxSrc
         return PyMap

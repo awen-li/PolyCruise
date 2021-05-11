@@ -89,14 +89,14 @@ echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
 PYTHON_PATH=/usr/lib/python$PyVersion/
 if [ -d "$PYTHON_PATH" ]; then
-    cp $SDI_PATH/Script/pyinspect.py $PYTHON_PATH
+    cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH
 fi
 # anaconda environment
 Anaconda=`which anaconda`
 if [ -n "$Anaconda" ]; then
     PYTHON_PATH=/usr/lib/anaconda3/lib/python$PyVersion
     if [ -d "$PYTHON_PATH" ]; then
-    	cp $SDI_PATH/Script/pyinspect.py $PYTHON_PATH
+    	cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH
     fi
 fi
 
