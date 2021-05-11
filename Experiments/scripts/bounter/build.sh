@@ -99,7 +99,7 @@ GenMap $SCRIPTS $CASE_PATH $target
 Analyze ()
 {
 	Index=1
-	CaseList=`find tests/ -name "*.py"`
+	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
 	do
 		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
@@ -111,8 +111,8 @@ Analyze ()
 	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
 		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t $curcase
-		
+		python -m pyinspect -C ./gen_criterion.xml -t setup.py test
+	
 		Wait difaEngine
 		EndTime=`date '+%s'`
 		TimeCost=`expr $EndTime - $StartTime`
