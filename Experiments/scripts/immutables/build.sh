@@ -45,17 +45,30 @@ GenMap ()
     SCRIPTS=$1
     CASE_PATH=$2
     target=$3
+    INSTALL_PATH=$4
     
+    echo $INSTALL_PATH
     pyMap=$SCRIPTS/Pymap.ini
     if [ -f "$pyMap" ]; then
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
-        find $INSTALL_PATH -name "*.py" > "$target.ini"
-        python -m pyinspect -M "$target.ini" pyList	
+    	if [ ! -n "$INSTALL_PATH" ]; then
+    		INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+    		if [ ! -n "$INSTALL_PATH" ]; then
+    			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
+    			exit 0
+    		fi
+    	fi
+        find $INSTALL_PATH -name "*.py" > "$CASE_PATH/$target.ini"
+        
+        cd $CASE_PATH
+        python -m pyinspect -M "$target.ini" pyList
+        cd -
+        
+        cp $CASE_PATH/Pymap.ini $pyMap    
     fi
-    
+
     return
 }
 
@@ -75,6 +88,8 @@ if [ "$Action" == "build" ]; then
 		cp -f function_def.pkl $target/
 	fi
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+	
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 2. build and SDA
@@ -92,14 +107,11 @@ if [ "$Action" == "build" ]; then
 	python setup-instm.py install
 fi
 
-# 4. generate file maping
-GenMap $SCRIPTS $CASE_PATH $target
-
 # 5. run the cases
 Analyze ()
 {
 	Index=1
-	CaseList=`find tests/ -name "*.py"`
+	CaseList=`cat case_list.txt`
 	for curcase in $CaseList
 	do
 		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
@@ -111,8 +123,8 @@ Analyze ()
 	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
 		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t $curcase
-		
+		python -m pyinspect -C ./gen_criterion.xml -t setup.py test
+	
 		Wait difaEngine
 		EndTime=`date '+%s'`
 		TimeCost=`expr $EndTime - $StartTime`
@@ -120,7 +132,6 @@ Analyze ()
 		
 		let Index++
 		export INDEX=$Index
-		#exit 0
 	done
 }
 
