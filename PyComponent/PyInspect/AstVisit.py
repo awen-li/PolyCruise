@@ -17,10 +17,11 @@ class FuncDef ():
         print ("FuncDef: Id = ", self.Id, " Name = ", self.Name, " Paras = ", self.Paras)
 
 class ASTWalk(NodeVisitor):
-    def __init__(self, LibName):
+    def __init__(self, LibName, Names=None):
         self.LibName = LibName
         self.SrcApiDef = {}
         self.FuncDef   = {}
+        self.Names = Names
         self.FId = 1
 
     def IsPrintCall (self):
@@ -59,10 +60,18 @@ class ASTWalk(NodeVisitor):
             FullName = ClfName + "." + Stmt.name
             return FuncDef (ClfName, FullName, Fid, ArgList)
 
+    def IsApi (self, FuncName):
+        if self.LibName.find (FuncName) != -1:
+            return True
+        
+        if self.Names != None and FuncName in self.Names:
+            return True
+
+        return False
+
     # Call(func=Attribute(value=Name(id='np', ctx=Load()), attr='array', ctx=Load()), 
     #      args=[Name(id='v5613', ctx=Load())], keywords=[])
     def _ProcCall(self, Caller, Stmt):
-        NameMap = {"numpy":"numpy", "np":"numpy", "torch":"torch"}
         Func = Stmt.func
 
         if self.IsPrintCall ():
@@ -72,8 +81,7 @@ class ASTWalk(NodeVisitor):
         if not isinstance (Func.value, Name):
             return
             
-        FuncName = NameMap.get (Func.value.id)
-        if FuncName == None and self.LibName.find (Func.value.id) == -1:
+        if self.IsApi (Func.value.id) == False:
             return
             
         if hasattr (Func, "attr") != True:

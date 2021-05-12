@@ -111,12 +111,13 @@ class xmlParse ():
             Func, Return, Local = self.ParseCrite (Crite)
             self.InitCrite (Func, Return, Local)
 
-def ParseExpList (ExpFile):
-    ExpList = []
-    with open(ExpFile, 'r', encoding='latin1') as exfile:
-        for line in exfile:
-            ExpList = ExpList + list (line.split ())
-    return ExpList
+def ParseText (TxtFile):
+    Content = []
+    with open(TxtFile, 'r', encoding='latin1') as txfile:
+        for line in txfile:
+            Content = Content + list (line.split ())
+    return Content
+
 
 def InitArgument (parser):
     parser.add_argument('--version', action='version', version='trace 2.0')
@@ -136,6 +137,8 @@ def InitArgument (parser):
                      help='maping the installed source py files')
     grp.add_argument('-g', '--gen_source',
                      help='generate possible sources')
+    grp.add_argument('-n', '--name_modules',
+                     help='names of modules')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -193,9 +196,12 @@ def main():
     if opts.gen_source != None:
         print ("Start generate possible sources")
         ExpList = None
+        Names = None
         if opts.exceptfile != None:
-            ExpList = ParseExpList (opts.exceptfile)
-        PyGenSource (opts.gen_source, ExpList)
+            ExpList = ParseText (opts.exceptfile)
+        if opts.name_modules != None:
+            Names = ParseText (opts.name_modules)
+        PyGenSource (opts.gen_source, ExpList, Names)
     elif opts.maping != None:
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')

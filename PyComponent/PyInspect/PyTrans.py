@@ -82,7 +82,7 @@ def _AddChildNode (Doc, Parent, Child, Value=None):
     return CNode
     
 
-def PyGenSource (PyDir, ExpList=None):
+def PyGenSource (PyDir, ExpList=None, Names=None):
     doc = Document()  
     Crit = _AddChildNode (doc, doc, "criterions")
 
@@ -103,7 +103,7 @@ def PyGenSource (PyDir, ExpList=None):
             Prefix = py[0:5]
             with open(PyFile) as PyF:
                 Ast = parse(PyF.read(), PyFile, 'exec')
-                Visitor= ASTWalk(PyDir)
+                Visitor= ASTWalk(PyDir, Names)
                 Visitor.visit(Ast)
                 # source api retrieve
                 if Prefix == "test_":
@@ -132,3 +132,7 @@ def PyGenSource (PyDir, ExpList=None):
     with open(FDefPkl, 'wb') as Pkl:
         pickle.dump(FuncDefList, Pkl)
         print ("FuncDefList size = ", len (FuncDefList))
+    FDefPklTxt = "function_def.pkl.txt"
+    with open(FDefPklTxt, 'w') as PklTxt:
+        for Name, Def in FuncDefList.items ():
+            PklTxt.write(Name + "\n")
