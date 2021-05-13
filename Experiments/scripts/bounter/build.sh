@@ -12,7 +12,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 120 ]; then
+		if [ $second == 30 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	
@@ -54,7 +54,7 @@ GenMap ()
     else
         echo "...................start generating Pymap.ini ............................."
     	if [ ! -n "$INSTALL_PATH" ]; then
-    		INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
     			exit 0
@@ -132,7 +132,6 @@ Analyze ()
 		
 		let Index++
 		export INDEX=$Index
-		#exit 0
 	done
 }
 

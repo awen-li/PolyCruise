@@ -74,27 +74,23 @@ GenMap ()
 
 GenAllTestCases ()
 {
-	Target=$1
-	CaseDir=$2
+	CaseDir=$1
 	
-	cd $Target
 	export case_dump=case_list.txt
-	python -m unittest discover -s $1
+	python -m unittest discover -s $CaseDir
 	unset case_dump
-	cd -
 }
 
 GenOneTestCases ()
 {
-	Target=$1
-	Case=$2
+	Case=$1
 	
-	cd $Target
 	rm -rf case_list.txt
 	export case_dump=case_list.txt
+
 	python -m unittest $Case
 	unset case_dump
-	cd -
+
 }
 
 target=cvxopt
@@ -150,11 +146,12 @@ Analyze ()
 			continue
 		fi
 		
+		echo
 		echo "[$Index].......................run case $Case......................."
 		
-		GenOneTestCases $CASE_PATH $Case
+		GenOneTestCases $Case
 		CaseList=`cat case_list.txt`
-
+        
 		for curcase in $CaseList
 		do
 
@@ -162,9 +159,10 @@ Analyze ()
 		    difaEngine &
 		    StartTime=`date '+%s'`
 			
-			echo "\t => Execute sub-case: $curcase."
+			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
 			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			unset case_name
 		
 			Wait difaEngine
 			EndTime=`date '+%s'`
