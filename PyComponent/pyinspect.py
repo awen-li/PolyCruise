@@ -209,7 +209,7 @@ def main():
     elif opts.compile == True:
         ExpList=None
         if opts.exceptfile != None:
-            ExpList = ParseExpList (opts.exceptfile)
+            ExpList = ParseText (opts.exceptfile)
 
         if opts.directory != None:
             Recompile (opts.directory, ExpList)

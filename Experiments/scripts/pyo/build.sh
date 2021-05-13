@@ -12,7 +12,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 120 ]; then
+		if [ $second == 10 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	
@@ -45,15 +45,28 @@ GenMap ()
     SCRIPTS=$1
     CASE_PATH=$2
     target=$3
+    INSTALL_PATH=$4
     
+    echo $INSTALL_PATH
     pyMap=$SCRIPTS/Pymap.ini
     if [ -f "$pyMap" ]; then
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
-        find $INSTALL_PATH -name "*.py" > "$target.ini"
-        python -m pyinspect -M "$target.ini" pyList	
+    	if [ ! -n "$INSTALL_PATH" ]; then
+    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
+    		if [ ! -n "$INSTALL_PATH" ]; then
+    			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
+    			exit 0
+    		fi
+    	fi
+        find $INSTALL_PATH -name "*.py" > "$CASE_PATH/$target.ini"
+        
+        cd $CASE_PATH
+        python -m pyinspect -M "$target.ini" pyList
+        cd -
+        
+        cp $CASE_PATH/Pymap.ini $pyMap    
     fi
     
     return
@@ -90,16 +103,16 @@ fi
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
+	
+	GenMap $SCRIPTS $CASE_PATH $target
 fi
-
-# 4. generate file maping
-GenMap $SCRIPTS $CASE_PATH $target
 
 # 5. run the cases
 Analyze ()
 {
 	Index=1
-	CaseList=`find tests/ -name "*.py"`
+	Case1=`find tests/ -name "test*.py"`
+	CaseList=$Case1" "`find pyo/examples -name "*.py"`
 	for curcase in $CaseList
 	do
 		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
@@ -110,7 +123,6 @@ Analyze ()
 	    difaEngine &
 	    StartTime=`date '+%s'`
 		echo "[$Index].......................run case $curcase......................."
-		export case_name=$curcase
 		python -m pyinspect -C ./gen_criterion.xml -t $curcase
 		
 		Wait difaEngine
