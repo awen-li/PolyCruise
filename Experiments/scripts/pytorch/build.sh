@@ -13,7 +13,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 60 ]; then
+		if [ $second == 240 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	
@@ -57,17 +57,30 @@ GenMap ()
     SCRIPTS=$1
     CASE_PATH=$2
     target=$3
+    INSTALL_PATH=$4
     
+    echo $INSTALL_PATH
     pyMap=$SCRIPTS/Pymap.ini
     if [ -f "$pyMap" ]; then
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-    	INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
-        find $INSTALL_PATH -name "*.py" > "$target.ini"
-        python -m pyinspect -M "$target.ini" pyList	
+    	if [ ! -n "$INSTALL_PATH" ]; then
+    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
+    		if [ ! -n "$INSTALL_PATH" ]; then
+    			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
+    			exit 0
+    		fi
+    	fi
+        find $INSTALL_PATH -name "*.py" > "$CASE_PATH/$target.ini"
+        
+        cd $CASE_PATH
+        python -m pyinspect -M "$target.ini" pyList
+        cd -
+        
+        cp $CASE_PATH/Pymap.ini $pyMap    
     fi
-    
+
     return
 }
 
@@ -110,7 +123,7 @@ if [ "$Action" == "build" ]; then
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 fi
 
-# 2. build and instrument C modules
+# 2. build and SDA
 cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
 CAFFE2_LIB="caffe2_pybind11_state.cpython-37m-x86_64-linux-gnu.so"
@@ -180,7 +193,7 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			python -m pyinspect -C ./gen_criterion.xml -t $Case &
 			unset case_name
 		
 			Wait difaEngine
