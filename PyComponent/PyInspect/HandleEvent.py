@@ -137,6 +137,8 @@ class LineEvent (PyEvent):
                 else:
                     #print ("!!!!!!!!! unknown type. => ", ast.dump (Statement))
                     pass
+        elif isinstance (Value, JoinedStr):
+            pass
         else:
             print ("!!!!!!!!! unknown assignment. => ", ast.dump (Statement))
             assert (0), "!!!!!!!!! unknown assignment."
