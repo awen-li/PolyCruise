@@ -71,6 +71,27 @@ GenMap ()
     return
 }
 
+GenAllTestCases ()
+{
+	CaseDir=$1
+	
+	export case_dump=case_list.txt
+	python -m unittest discover -s $CaseDir
+	unset case_dump
+}
+
+GenOneTestCases ()
+{
+	Case=$1
+	
+	rm -rf case_list.txt
+	export case_dump=case_list.txt
+
+	python -m unittest $Case
+	unset case_dump
+
+}
+
 target=pytorch
 Action=$1
 
@@ -111,46 +132,67 @@ fi
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
-	export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
-	export CXX="clang++ -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	#export CC="clang -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	#export CXX="clang++ -emit-llvm -flto -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	#export LDFLAGS="-lDynAnalyzeCpp"
+	#export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyzeCpp"
+	export CC="clang -pthread -Xclang -load -Xclang llvmSDIpass.so"
+	export CXX="clang++ -pthread -Xclang -load -Xclang llvmSDIpass.so"
 	export LDFLAGS="-lDynAnalyzeCpp"
-	export LDSHARED="clang -flto -shared -pthread -lm -lDynAnalyzeCpp"
+	export LDSHARED="clang -shared -pthread -lm -lDynAnalyzeCpp"
 	export RANLIB=/bin/true
 	python setup.py develop
 	#mv ../$CAFFE2_LIB caffe2/python/$CAFFE2_LIB
+	
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
-
-# 4. generate file maping
-#GenMap $SCRIPTS $CASE_PATH $target
 
 # 5. run the cases
 Analyze ()
 {
-	echo "" > $SCRIPTS/build.log
 	Index=1
-	CaseList1=`find ./ -name "test*py"` 
-	CaseList2=`find ./ -name "*test.py"`
-	CaseList=$CaseList1" "$CaseList2
-	for curcase in $CaseList
-	do	
+	if [ ! -n "$INDEX" ]; then
+		export INDEX=$Index
+	fi
+	
+	CaseDir=test
+	ALL_TESTS=`find $CaseDir -name "test*.py"`
+	
+	for Case in $ALL_TESTS
+	do
 		if [ $Index != $INDEX ]; then
 			let Index++
 			continue
-		fi	
+		fi
 		
-	    DelShareMem
-	    difaEngine &
-	    StartTime=`date '+%s'`
-		echo "[$Index].......................run case $curcase......................."
-		python -m pyinspect -C ./gen_criterion.xml -t $curcase 
+		echo
+		echo "[$Index].......................run case $Case......................."
 		
-		Wait difaEngine
-		EndTime=`date '+%s'`
-		TimeCost=`expr $EndTime - $StartTime`
-		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		GenOneTestCases $Case
+		CaseList=`cat case_list.txt`
+        
+		for curcase in $CaseList
+		do
 
+		    DelShareMem
+		    difaEngine &
+		    StartTime=`date '+%s'`
+			
+			echo "              => Execute sub-case: $curcase."
+			export case_name=$curcase
+			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			unset case_name
+		
+			Wait difaEngine
+			EndTime=`date '+%s'`
+			TimeCost=`expr $EndTime - $StartTime`
+			echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		done
+		
 		let Index++
 		export INDEX=$Index
+		#exit 0
 	done
 }
+
 Analyze
