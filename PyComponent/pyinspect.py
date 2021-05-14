@@ -6,7 +6,8 @@ import argparse
 import time
 import xml.dom.minidom
 from xml.dom.minidom import parse
-from PyInspect import Inspector 
+from PyInspect import Inspector
+from PyInspect import Trace
 from PyInspect import PyTranslate, PyTranslateFile, PyGenSource
 from PyInspect import Criterion
 
@@ -139,6 +140,8 @@ def InitArgument (parser):
                      help='generate possible sources')
     grp.add_argument('-n', '--name_modules',
                      help='names of modules')
+    grp.add_argument('-p', '--print_trace', action='store_true',
+                     help='print the traces')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -188,6 +191,29 @@ def DynTrace (EntryScript, CriteCfg):
     except SystemExit:
         sys.exit("except SystemExit")
 
+def PrintTrace (EntryScript, Module):
+    try:
+        with open(EntryScript) as fp:
+            code = compile(fp.read(), EntryScript, 'exec')
+
+        #TIME_COST ("Inspect-Compile")
+        # try to emulate __main__ namespace as much as possible
+        globs = {
+            '__file__': EntryScript,
+            '__name__': '__main__',
+            '__package__': None,
+            '__cached__': None,
+        }
+        
+        with Trace (Module):
+            exec(code, globs, globs)
+        
+    except OSError as err:
+        sys.exit("Cannot run file %r because: %s" % (sys.argv[0], err))
+    except SystemExit:
+        sys.exit("except SystemExit")
+
+
 def main():
     parser = argparse.ArgumentParser()
     InitArgument (parser)
@@ -219,7 +245,7 @@ def main():
             Recompile (opts.filename)
     elif opts.trace == True:
         sys.argv = [opts.filename, *opts.arguments]
-        sys.path[0] = os.path.dirname(opts.filename)
+        sys.path.insert (0, os.path.abspath(r"."))
 
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')
@@ -227,6 +253,15 @@ def main():
             parser.error('critefion xml is missing: required with the main options')
         
         DynTrace (opts.filename, opts.criterion)
+    elif opts.print_trace == True:
+        sys.argv = [opts.filename, *opts.arguments]
+        sys.path.insert (0, os.path.abspath(r"."))
+
+        if opts.filename is None:
+            parser.error('filename is missing: required with the main options')
+        if opts.name_modules is None:
+            parser.error('needs the name of the module')
+        PrintTrace (opts.filename, opts.name_modules)
     else:
         print ("do nothing?") 
 

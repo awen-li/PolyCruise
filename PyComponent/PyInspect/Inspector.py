@@ -436,7 +436,7 @@ class Inspector:
 
         FuncDef = self.CurCtx.FuncDef
         if FuncDef == None:
-            print ("Warning ---> FuncDef == None where function = ", self.CurCtx.Func)
+            #print ("Warning ---> FuncDef == None where function = ", self.CurCtx.Func)
             return self.Tracing
         
         EventId  = PyEventTy (FuncDef.Id, LineNo, EventTy, self.IsSource)     
