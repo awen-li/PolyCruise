@@ -220,7 +220,7 @@ class Inspector:
         # actual -> formal
         CallSiteObj = self.CurCtx.CalleeLo
         if CallSiteObj != None and CalleeFunc.find(CallSiteObj.Callee) == -1 and CallSiteObj.Callee.find (CalleeFunc) == -1:
-            print ("@@ Warning: Callee-<", CallSiteObj.Callee, " -> ", CalleeFunc, "> not consistent!!!!")
+            #print ("@@ Warning: Callee-<", CallSiteObj.Callee, " -> ", CalleeFunc, "> not consistent!!!!")
             return
         TaintedFormal, _ = self.Actual2Formal (CallSiteObj)
         
@@ -254,7 +254,7 @@ class Inspector:
         else:
             if self.Crtn.GetSrcArgs (CallSiteObj.Callee) != None:
                 IsSource = True
-                print ("****************<> Add source with Args: ", CallSiteObj.Callee)
+                #print ("****************<> Add source with Args: ", CallSiteObj.Callee)
                     
         FCallerDef = self.CurCtx.FuncDef
         EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, IsSource)
@@ -323,7 +323,7 @@ class Inspector:
                         self.InsertSymb (LiveObj.Def)
                         self.IsTaint = True
                         self.IsSource = True
-                        print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)  
+                        #print ("****************<> Add source: ", LiveObj.Def, " = ", LiveObj.Callee)  
                     self.Propogate (LiveObj)
                 return EVENT_CALL
             elif LiveObj.Ret == LiveObject.RET_VALUE:

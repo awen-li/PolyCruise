@@ -116,7 +116,7 @@ class LineEvent (PyEvent):
             if len (dValue) != 0:
                 Val = dValue[0]
                 if not isinstance(Val, NameConstant):
-                    self.SetRealUse (Val.id)
+                    self.SetUse (Val, Statement)
         elif isinstance(Value, List):
             for Use in Value.elts:
                 if isinstance(Use, Name):

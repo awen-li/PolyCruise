@@ -14,6 +14,7 @@ Wait ()
 		let second++
 		if [ $second == 120 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			ps -ef | grep python | awk '{print $2}' | xargs kill -9
 			break
 		fi	
 	done
@@ -107,10 +108,9 @@ if [ "$Action" == "build" ]; then
 	if [ ! -f "$target/function_def.pkl" ]; then
 		python -m pyinspect -g $target
 		cp -f function_def.pkl $target/
+		#cp -f $target"_gen_criterion.xml" $target/gen_criterion.xml
 	fi
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-	
-	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 2. build and SDA
@@ -126,6 +126,8 @@ fi
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
+	
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 5. run the cases

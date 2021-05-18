@@ -13,8 +13,9 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 240 ]; then
+		if [ $second == 300 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			ps -ef | grep python | awk '{print $2}' | xargs kill -9
 			break
 		fi	
 	done
@@ -119,6 +120,7 @@ if [ "$Action" == "build" ]; then
 	if [ ! -f "$target/function_def.pkl" ]; then
 		python -m pyinspect -E $SCRIPTS/ExpList -g $target
 		cp -f function_def.pkl $target/
+		cp -f $target"_gen_criterion.xml" $target/gen_criterion.xml
 	fi
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 fi
