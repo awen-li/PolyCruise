@@ -137,7 +137,7 @@ Analyze ()
 		export INDEX=$Index
 	fi
 	
-	CaseDir=tests
+	CaseDir=test
 	ALL_TESTS=`find $CaseDir -name "test_*.py"`
 	
 	for Case in $ALL_TESTS

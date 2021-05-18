@@ -219,7 +219,7 @@ class Inspector:
 
         # actual -> formal
         CallSiteObj = self.CurCtx.CalleeLo
-        if CallSiteObj != None and CalleeFunc != CallSiteObj.Callee:
+        if CallSiteObj != None and CalleeFunc.find(CallSiteObj.Callee) == -1 and CallSiteObj.Callee.find (CalleeFunc) == -1:
             print ("@@ Warning: Callee-<", CallSiteObj.Callee, " -> ", CalleeFunc, "> not consistent!!!!")
             return
         TaintedFormal, _ = self.Actual2Formal (CallSiteObj)
