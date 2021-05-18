@@ -15,6 +15,7 @@ llvm.memmove.p0i8.p0i8.i32
 llvm.memmove.i64
 llvm.memmove.p0i8.p0i8.i64
 llvm.memset.p0i8.i64
-llvm.memset.p0i8.i32 
+llvm.memset.p0i8.i32
+malloc
 
 
