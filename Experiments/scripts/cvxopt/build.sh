@@ -163,7 +163,7 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			python -m pyinspect -C ./gen_criterion.xml -t $Case &
 			unset case_name
 		
 			Wait difaEngine

@@ -12,8 +12,9 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 10 ]; then
+		if [ $second == 180 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			ps -ef | grep python | awk '{print $2}' | xargs kill -9
 			break
 		fi	
 	done

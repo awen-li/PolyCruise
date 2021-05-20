@@ -12,8 +12,9 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 10 ]; then
+		if [ $second == 180 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			ps -ef | grep python | awk '{print $2}' | xargs kill -9
 			break
 		fi	
 	done
@@ -126,7 +127,7 @@ if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
 	
-	GenMap $SCRIPTS $CASE_PATH $target
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 5. run the cases
@@ -149,7 +150,6 @@ Analyze ()
 		
 		echo
 		echo "[$Index].......................run case $Case......................."
-		continue
 		
 		GenOneTestCases $Case
 		CaseList=`cat case_list.txt`
@@ -163,7 +163,7 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			python -m pyinspect -C ./gen_criterion.xml -t $Case &
 			unset case_name
 		
 			Wait difaEngine

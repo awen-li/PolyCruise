@@ -12,8 +12,9 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 10 ]; then
+		if [ $second == 180 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
+			ps -ef | grep python | awk '{print $2}' | xargs kill -9
 			break
 		fi	
 	done
@@ -162,7 +163,7 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case
+			python -m pyinspect -C ./gen_criterion.xml -t $Case &
 			unset case_name
 		
 			Wait difaEngine

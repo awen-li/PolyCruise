@@ -28,6 +28,7 @@ void TRC_trace0 (ULONG EventId, const char* Msg)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
+    assert (strlen(Node->QBuf) < BUF_SIZE);
     DEBUG ("[TRC_trace0][T:%u]%lx:[%u]%s\r\n", Node->ThreadId, EventId, (unsigned)strlen(Node->QBuf), Node->QBuf);
 
     return;   
@@ -54,6 +55,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
     Node->EventId  = EventId;
     Node->Flag     = TRUE;
 
+    assert (strlen(Node->QBuf) < BUF_SIZE);
     DEBUG ("[TRC_trace][T:%u]%lx:[%u]%s\r\n", Node->ThreadId, EventId, (unsigned)strlen(Node->QBuf), Node->QBuf);
 
     return;   

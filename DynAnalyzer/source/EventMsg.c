@@ -38,7 +38,11 @@ static inline Variable *AllotVariable (char *Msg, DWORD NameLen, BYTE Type)
 static inline VOID DeFEvent (EventMsg *EM, char *Msg)
 {
     DWORD Len = strlen (Msg);
-    assert (Len > 2);
+    if (Len < 2)
+    {
+        printf ("Msg = %s \r\n", Msg);
+        assert (Len > 2);
+    }
 
     Variable *V = AllotVariable (Msg, Len-1, VT_FUNCTION);
     ListInsert (&EM->Def, V);

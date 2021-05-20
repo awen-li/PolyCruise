@@ -13,7 +13,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 120 ]; then
+		if [ $second == 200 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	

@@ -18,7 +18,7 @@ extern "C"{
 #define  QUEUE_SIZE (4024 * 1024)
 
 
-#define  BUF_SIZE  (256)
+#define  BUF_SIZE  (272)
 
 typedef struct tag_QNode
 {
