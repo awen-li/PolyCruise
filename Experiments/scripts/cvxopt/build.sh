@@ -102,6 +102,11 @@ cd ../../
 ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
+if [ ! -d "$ROOT/SuiteSparse" ]; then
+    wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
+    tar -xf SuiteSparse-4.5.3.tar.gz
+fi
+export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
 
 if [ "$Action" == "build" ]; then
 	rm -rf $CASE_PATH
