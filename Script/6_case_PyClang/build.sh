@@ -36,5 +36,5 @@ export CMD1="/bin/ls"
 export CMD2="echo hello world"
 cd Temp/$CASE/
 cp CPython/build/lib.linux-x86_64-3.7/DemoTrace.cpython-37m-x86_64-linux-gnu.so Python/PyDemo.so
-python -m pyinspect -C criterion.xml -t Python/Demo.py
+python -m pyinspect -C criterion.xml -i Python -t Python/Demo.py
 
