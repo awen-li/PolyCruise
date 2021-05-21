@@ -55,7 +55,7 @@ GenMap ()
     else
         echo "...................start generating Pymap.ini ............................."
     	if [ ! -n "$INSTALL_PATH" ]; then
-    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
+    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name tables`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
     			exit 0
@@ -127,7 +127,7 @@ if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
 	
-	GenMap $SCRIPTS $CASE_PATH $target
+	GenMap $SCRIPTS $CASE_PATH
 fi
 
 # 5. run the cases
