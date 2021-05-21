@@ -142,6 +142,8 @@ def InitArgument (parser):
                      help='names of modules')
     grp.add_argument('-p', '--print_trace', action='store_true',
                      help='print the traces')
+    grp.add_argument('-i', '--include_path',
+                     help='the installation path of the target')
                      
     parser.add_argument('filename', nargs='?', help='file to run as main program')
     parser.add_argument('arguments', nargs=argparse.REMAINDER, help='arguments to the program')
@@ -245,7 +247,13 @@ def main():
             Recompile (opts.filename)
     elif opts.trace == True:
         sys.argv = [opts.filename, *opts.arguments]
-        sys.path.insert (0, os.path.abspath(r"."))
+        if opts.include_path is None:
+            default_path = os.path.abspath(r".")
+            sys.path.insert (0, default_path)
+            print ("@@@ add default sys path:", default_path)     
+        else:
+            sys.path.insert (0, opts.include_path)
+            print ("@@@ add sys path:", opts.include_path)
 
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')
@@ -255,7 +263,14 @@ def main():
         DynTrace (opts.filename, opts.criterion)
     elif opts.print_trace == True:
         sys.argv = [opts.filename, *opts.arguments]
-        sys.path.insert (0, os.path.abspath(r"."))
+
+        if opts.include_path is None:
+            default_path = os.path.abspath(r".")
+            sys.path.insert (0, default_path)
+            print ("@@@ add default sys path:", default_path)     
+        else:
+            sys.path.insert (0, opts.include_path)
+            print ("@@@ add sys path:", opts.include_path)
 
         if opts.filename is None:
             parser.error('filename is missing: required with the main options')

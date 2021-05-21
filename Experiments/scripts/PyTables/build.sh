@@ -89,7 +89,7 @@ GenOneTestCases ()
 	rm -rf case_list.txt
 	export case_dump=case_list.txt
 
-	python -m unittest $Case
+	python -m tables.tests.test_all
 	unset case_dump
 
 }
@@ -163,7 +163,7 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case &
+			python -m pyinspect -C ./gen_criterion.xml -i /usr/lib/anaconda3/lib/python3.7/site-packages -t $Case &
 			unset case_name
 		
 			Wait difaEngine
