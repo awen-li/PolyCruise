@@ -78,7 +78,7 @@ GenAllTestCases ()
 	CaseDir=$1
 	
 	export case_dump=case_list.txt
-	python -m unittest discover -s $CaseDir
+	python -m tables.tests.test_all
 	unset case_dump
 }
 
@@ -89,7 +89,7 @@ GenOneTestCases ()
 	rm -rf case_list.txt
 	export case_dump=case_list.txt
 
-	python -m tables.tests.test_all
+	python -m pyinspect -n NULL -i /usr/lib/anaconda3/lib/python3.7/site-packages -p $Case
 	unset case_dump
 
 }
@@ -138,7 +138,7 @@ Analyze ()
 		export INDEX=$Index
 	fi
 	
-	CaseDir=tests
+	CaseDir=tables/tests
 	ALL_TESTS=`find $CaseDir -name "test_*.py"`
 	
 	for Case in $ALL_TESTS
