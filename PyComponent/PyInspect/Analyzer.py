@@ -93,7 +93,9 @@ class Analyzer ():
     def ParseFuncDef (self, Stmt, ClfName=None):
         Fid = len (self.FuncDef)+1
         Paras = self.GetFuncParas (Stmt)
-        if ClfName == None:
+        if ClfName is None:
+            if 'self' in Paras:
+                return None
             return FuncDef ("", Stmt.name, Fid, Paras)
         else:
             FullName = ClfName + "." + Stmt.name
@@ -108,6 +110,8 @@ class Analyzer ():
                 continue
             Cls.AddFunc (Fdef.name) 
             Def = self.ParseFuncDef (Fdef, Stmt.name)
+            if Def is None:
+                continue
             self.FuncDef[Def.Name]  = Def 
             self.Stmt2FuncDef[Fdef] = Def
         return Cls
@@ -117,7 +121,10 @@ class Analyzer ():
             #print ("\r\n", ast.dump (Stmt))
             Type= Stmt.__class__.__name__
             if Type == "FunctionDef":
-                self.FuncDef[Stmt.name] = self.ParseFuncDef (Stmt)
+                Def = self.ParseFuncDef (Stmt)
+                if Def is None:
+                    continue
+                self.FuncDef[Stmt.name] = Def
             elif Type == "ClassDef":
                 self.ClassDef[Stmt.name] = self.ParseClsDef (Stmt)
 

@@ -55,6 +55,8 @@ class ASTWalk(NodeVisitor):
         
         ArgList = self._GetArgs (Stmt)
         if ClfName == None:
+            if 'self' in ArgList:
+                return None
             return FuncDef ("", Stmt.name, Fid, ArgList)
         else:
             FullName = ClfName + "." + Stmt.name
@@ -92,7 +94,9 @@ class ASTWalk(NodeVisitor):
 
     def visit_functiondef(self, node):
         FuncName = node.name
-        self.FuncDef [FuncName] = self._GetFuncDef (node)
+        Def = self._GetFuncDef (node)
+        if Def != None:
+            self.FuncDef [FuncName] = Def
 
         if FuncName[0:5] != "test_":
             return
