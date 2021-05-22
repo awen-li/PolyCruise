@@ -95,7 +95,7 @@ class LineEvent (PyEvent):
             self.SetUse(Value.left, Statement)
             Cmp = Value.comparators[0]
             if not isinstance(Cmp, NameConstant):
-                self.SetRealUse (Cmp.id)
+                self.SetUse (Cmp, Statement)
         elif isinstance(Value, Attribute):
             Use = Value.value.id
             self.LiveObj.SetUse (Use)
