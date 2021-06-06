@@ -12,7 +12,7 @@ Wait ()
 		fi
 		
 		let second++
-		if [ $second == 30 ]; then
+		if [ $second == 10 ]; then
 			ps -ef | grep difaEngine | awk '{print $2}' | xargs kill -9
 			break
 		fi	
@@ -54,7 +54,7 @@ GenMap ()
     else
         echo "...................start generating Pymap.ini ............................."
     	if [ ! -n "$INSTALL_PATH" ]; then
-    		INSTALL_PATH=`find /usr/local/lib/python3.7/ -name $target`
+    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
     			exit 0
@@ -70,6 +70,39 @@ GenMap ()
     fi
 
     return
+}
+
+Analyze ()
+{
+	Type=$1
+	Index=1
+	CaseList=`cat case_list.txt`
+	for curcase in $CaseList
+	do
+		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
+			let Index++
+			continue
+		fi	
+	    DelShareMem
+	    difaEngine &
+	    StartTime=`date '+%s'`
+		echo "[$Index].......................run case $curcase......................."
+		export case_name=$curcase
+		
+		if [ "$Type" == "ORG" ]; then
+			python setup.py test
+		else
+			python -m pyinspect -C ./gen_criterion.xml -t setup.py test
+		fi
+	
+		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		
+		let Index++
+		export INDEX=$Index
+	done
 }
 
 target=immutables
@@ -88,8 +121,6 @@ if [ "$Action" == "build" ]; then
 		cp -f function_def.pkl $target/
 	fi
 	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-	
-	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 2. build and SDA
@@ -97,7 +128,9 @@ cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
 if [ "$Action" == "build" ]; then
 	rm -rf build
-	python setup-sda.py build
+	python setup-sda.py install
+	#Analyze "ORG"
+	
 	SdaAnalysis
 fi
 
@@ -105,35 +138,10 @@ fi
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
+	
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
 fi
 
 # 5. run the cases
-Analyze ()
-{
-	Index=1
-	CaseList=`cat case_list.txt`
-	for curcase in $CaseList
-	do
-		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
-			let Index++
-			continue
-		fi	
-	    DelShareMem
-	    difaEngine &
-	    StartTime=`date '+%s'`
-		echo "[$Index].......................run case $curcase......................."
-		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t setup.py test
-	
-		Wait difaEngine
-		EndTime=`date '+%s'`
-		TimeCost=`expr $EndTime - $StartTime`
-		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
-		
-		let Index++
-		export INDEX=$Index
-	done
-}
-
 Analyze
 

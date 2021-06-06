@@ -359,6 +359,7 @@ public:
         Function *MainEntry = m_Ms->GetEntryFunction ();
         if (MainEntry != NULL)
         {
+            printf ("@@@@ Get main function...\r\n");
             m_EntryFQ.InQueue (MainEntry);
         }
 

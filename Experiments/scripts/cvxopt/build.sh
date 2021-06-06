@@ -132,7 +132,7 @@ if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-instm.py install
 	
-	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
+	GenMap $SCRIPTS $CASE_PATH $target
 fi
 
 # 5. run the cases

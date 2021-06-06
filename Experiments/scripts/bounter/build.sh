@@ -72,6 +72,39 @@ GenMap ()
     return
 }
 
+Analyze ()
+{
+	Type=$1
+	Index=1
+	CaseList=`cat case_list.txt`
+	for curcase in $CaseList
+	do
+		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
+			let Index++
+			continue
+		fi	
+	    DelShareMem
+	    difaEngine &
+	    StartTime=`date '+%s'`
+		echo "[$Index].......................run case $curcase......................."
+		export case_name=$curcase
+		
+		if [ "$Type" == "ORG" ]; then
+			python setup.py test
+		else
+			python -m pyinspect -C ./gen_criterion.xml -t setup.py test
+		fi
+	
+		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		
+		let Index++
+		export INDEX=$Index
+	done
+}
+
 target=bounter
 Action=$1
 
@@ -95,7 +128,9 @@ cp criterion.xml $CASE_PATH/
 cd $CASE_PATH
 if [ "$Action" == "build" ]; then
 	rm -rf build
-	python setup-sda.py build
+	python setup-sda.py install
+	#Analyze "ORG"
+	
 	SdaAnalysis
 fi
 
@@ -108,32 +143,7 @@ if [ "$Action" == "build" ]; then
 fi
 
 # 5. run the cases
-Analyze ()
-{
-	Index=1
-	CaseList=`cat case_list.txt`
-	for curcase in $CaseList
-	do
-		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
-			let Index++
-			continue
-		fi	
-	    DelShareMem
-	    difaEngine &
-	    StartTime=`date '+%s'`
-		echo "[$Index].......................run case $curcase......................."
-		export case_name=$curcase
-		python -m pyinspect -C ./gen_criterion.xml -t setup.py test
-	
-		Wait difaEngine
-		EndTime=`date '+%s'`
-		TimeCost=`expr $EndTime - $StartTime`
-		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
-		
-		let Index++
-		export INDEX=$Index
-	done
-}
+
 
 Analyze
 

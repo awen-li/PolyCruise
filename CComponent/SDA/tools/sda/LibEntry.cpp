@@ -218,7 +218,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
         }
 
         const char *FuncName = Func->getName().data ();
-        if (ExternalLib::IsExistSds(FuncName))
+        if (ExternalLib::IsExistSds(FuncName) || strcmp (Func->getName().data(), "main") == 0)
         {
             continue;
         }

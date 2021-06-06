@@ -94,43 +94,6 @@ GenOneTestCases ()
 
 }
 
-target=simplejson
-Action=$1
-
-# 1. build and translate python modules
-cd ../../
-ROOT=`pwd`
-CASE_PATH=$ROOT/Temp/$target
-SCRIPTS=$ROOT/scripts/$target
-
-if [ "$Action" == "build" ]; then
-	rm -rf $CASE_PATH
-	if [ ! -f "$target/function_def.pkl" ]; then
-		python -m pyinspect -E $SCRIPTS/ExpList -g $target
-		cp -f function_def.pkl $target/
-		cp -f $target"_gen_criterion.xml" $target/gen_criterion.xml
-	fi
-	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-fi
-
-# 2. build and SDA
-cp criterion.xml $CASE_PATH/
-cd $CASE_PATH
-if [ "$Action" == "build" ]; then
-	rm -rf build
-	python setup-sda.py build
-	SdaAnalysis
-fi
-
-# 3. build again and install the instrumented software
-if [ "$Action" == "build" ]; then
-	rm -rf build
-	python setup-instm.py install
-	
-	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
-fi
-
-# 5. run the cases
 Analyze ()
 {
 	Index=1
@@ -163,7 +126,13 @@ Analyze ()
 			
 			echo "              => Execute sub-case: $curcase."
 			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case &
+			
+			if [ "$Type" == "ORG" ]; then
+				python $Case
+			else
+				python -m pyinspect -C ./gen_criterion.xml -t $Case &
+			fi
+			
 			unset case_name
 		
 			Wait difaEngine
@@ -178,5 +147,77 @@ Analyze ()
 	done
 }
 
+Analyze ()
+{
+	Type=$1
+	Index=1
+	CaseList=`cat case_list.txt`
+	for curcase in $CaseList
+	do
+		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
+			let Index++
+			continue
+		fi	
+	    DelShareMem
+	    difaEngine &
+	    StartTime=`date '+%s'`
+		echo "[$Index].......................run case $curcase......................."
+		export case_name=$curcase
+		
+		if [ "$Type" == "ORG" ]; then
+			python setup.py test
+		else
+			python -m pyinspect -C ./gen_criterion.xml -t setup.py test
+		fi
+	
+		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		
+		let Index++
+		export INDEX=$Index
+	done
+}
+
+target=simplejson
+Action=$1
+
+# 1. build and translate python modules
+cd ../../
+ROOT=`pwd`
+CASE_PATH=$ROOT/Temp/$target
+SCRIPTS=$ROOT/scripts/$target
+
+if [ "$Action" == "build" ]; then
+	rm -rf $CASE_PATH
+	if [ ! -f "$target/function_def.pkl" ]; then
+		python -m pyinspect -E $SCRIPTS/ExpList -g $target
+		cp -f function_def.pkl $target/
+		cp -f $target"_gen_criterion.xml" $target/gen_criterion.xml
+	fi
+	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
+fi
+
+# 2. build and SDA
+cp criterion.xml $CASE_PATH/
+cd $CASE_PATH
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	python setup-sda.py install
+	Analyze "ORG"
+	
+	SdaAnalysis
+fi
+
+# 3. build again and install the instrumented software
+if [ "$Action" == "build" ]; then
+	rm -rf build
+	python setup-instm.py install
+	
+	GenMap $SCRIPTS $CASE_PATH $target $CASE_PATH
+fi
+
+# 5. run the cases
 Analyze
 
