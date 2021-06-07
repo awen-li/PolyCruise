@@ -32,7 +32,7 @@ DelShareMem ()
 }
 
 
-target=zlib
+target=libarchive
 
 # 1. build and translate python modules
 cd ../../
@@ -42,7 +42,8 @@ SCRIPTS=$ROOT/scripts/$target
 
 cd $CASE_PATH
 
-export CC="clang -O3 -emit-llvm"
+export CC="clang -O3 -emit-llvm -flto"
+export CXX="clang -O3 -emit-llvm -flto"
 export LDSHARED="clang -O3 -flto -shared"
 #export RANLIB=/bin/true
 
@@ -50,12 +51,14 @@ export LDSHARED="clang -O3 -flto -shared"
 make clean && make
 
 rm -rf /tmp/difg/LdaBin*
-SdaAnalysis minigzip.0.0.preopt.bc
+SdaAnalysis libarchive.so.0.0.preopt.bc
 
 
 # 3. build again and install the instrumented software
-export CFLAGS="-O3 -Xclang -load -Xclang llvmSDIpass.so -lDynAnalyze"
+export CFLAGS="-O3 -Xclang -load -Xclang llvmSDIpass.so"
+export CXXFLAGS="-O3 -Xclang -load -Xclang llvmSDIpass.so"
 export CC="clang"
+export CXX="clang"
 export LDFLAGS="-lDynAnalyze"
 export LDSHARED="clang -O3 -flto -shared -pthread -lDynAnalyze"
 #export RANLIB=/bin/true

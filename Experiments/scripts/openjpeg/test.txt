@@ -1,0 +1,11 @@
+
+# pure
+date && ./opj_compress -i sample_1920×1280.ppm -o image.j2k && date
+
+# pin -> libdft
+date && ./pin -follow_execv -t /home/wen/tool/libdft64/tools/obj-intel64/track.so -- ./opj_compress -i sample_1920×1280.ppm -o image.j2k && date
+
+# PolyCruise
+export QUEUE_CAP=50000
+difaEngine -s &
+date && ./opj_compress_PC -i sample_1920×1280.ppm -o image.j2k && date 

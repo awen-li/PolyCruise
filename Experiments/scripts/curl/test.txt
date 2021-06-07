@@ -1,0 +1,6 @@
+date && ./curl https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-ppc64le.sh >> log && date
+
+date && ./pin -follow_execv -t /home/wen/tool/libdft64/tools/obj-intel64/track.so -- ./curl https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-ppc64le.sh >> log && date
+
+difaEngine -s &
+date && ./curl https://repo.anaconda.com/archive/Anaconda3-2021.05-Linux-ppc64le.sh >> log && date 

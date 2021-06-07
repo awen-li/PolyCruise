@@ -1,0 +1,12 @@
+
+# pure
+echo $[$(date +%s%N)/1000000] && ./bmp2tiff sample_5184×3456.bmp outp.tiff && echo $[$(date +%s%N)/1000000]
+
+# pin -> libdft
+echo $[$(date +%s%N)/1000000] && ./pin -follow_execv -t /home/wen/tool/libdft64/tools/obj-intel64/track.so -- ./bmp2tiff sample_5184×3456.bmp outp.tiff  && echo $[$(date +%s%N)/1000000]
+
+# PolyCruise
+export QUEUE_CAP=5000000
+difaEngine -s &
+date +%s%N && ./minigzip_PC bugpoint && date +%s%N
+
