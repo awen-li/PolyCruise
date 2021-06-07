@@ -11,21 +11,33 @@ fi
 
 CASE_GROUP=("DynamicInvocation"  "FieldSensitivity"  "GeneralFlow" "GlobalFlow" "ObjectSensitivity")
 
+CaseNum=0
+FailNum=0
 # iter each case group
 for group in ${CASE_GROUP[@]}
 do
 	echo $'\n'"@@@@@@ Execute group of benchmark $group @@@@@@"
 	G_PATH=$CASE_PATH/$group
-	Cases=`ls $G_PATH | grep "_case_"`
+	Cases=`ls $G_PATH`
 	
-	Index=1
 	for Case in $Cases
 	do
-		echo $'\t'"[$Index] - Execute the case $Case"
+		echo $'\t'"[$CaseNum] - Execute the case $Case"
 		cd $G_PATH/$Case
-		./build.sh | grep "@@@@CASE-TEST"
+		FailFlag=`./build.sh | grep "@@@@CASE-TEST FAIL"`
+		if [ -n "$FailFlag" ]; then
+			echo $FailFlag
+			let FailNum++
+	    fi
 	
-		let Index++
+		let CaseNum++
 	done
+	
+	rm -rf $G_PATH/Temp
 done
+
+echo
+echo
+let Correct=CaseNum-FailNum
+echo "Finish test, (Correct/Total) = ($Correct, $CaseNum)"
 
