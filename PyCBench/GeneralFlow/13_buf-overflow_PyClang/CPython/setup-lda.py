@@ -3,9 +3,9 @@
 import os
 from distutils.core import setup, Extension
 
-os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
-os.environ["CXX"] = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
-os.environ["LDSHARED"] = "clang -flto -pthread -shared -lDynAnalyze"
+os.environ["CC"]  = "clang -emit-llvm"
+os.environ["CXX"] = "clang -emit-llvm"
+os.environ["LDSHARED"] = "clang -flto -shared"
 
 module1 = Extension('DemoTrace',
                     define_macros = [('MAJOR_VERSION', '1'), ('MINOR_VERSION', '0')],
@@ -14,7 +14,7 @@ module1 = Extension('DemoTrace',
                     include_dirs = ['../C/include'],
                     #libraries = ['DemoTrace'],
                     #library_dirs = ['/usr/lib'],
-                    sources = ['Demo.c', '../C/source/Incmp.c'])
+                    sources = ['Demo.c', '../C/source/BinOp.c', '../C/source/IntOf.c'])
 
 setup (name = 'PyDemo',
        version = '1.0',

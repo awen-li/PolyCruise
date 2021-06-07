@@ -1,23 +1,23 @@
 #include <Python.h>
-#include "Incmp.h"
+#include "BinOp.h"
 
-static PyObject *PyInCmp(PyObject *self, PyObject *args)
+static PyObject *pyBinOp(PyObject *self, PyObject *args)
 {
-    char* Cmd;
+    int Oper;
 
-    if (!PyArg_ParseTuple(args, "s", &Cmd))
+    if (!PyArg_ParseTuple(args, "i", &Oper))
     {
         return NULL;
     }
 
-    int Ret = Incmp (Cmd);
+    int Ret = BinOp (Oper);
 
     return Py_BuildValue("i", Ret);
 }
 
 static PyMethodDef DemoMethods[] = 
 {
-    {"pyInCmp", PyInCmp, METH_VARARGS, "PyInCmp"},
+    {"pyBinOp", pyBinOp, METH_VARARGS, "pyBinOp"},
     {NULL, NULL, 0, NULL} 
 };
 
