@@ -1,0 +1,44 @@
+
+  def test_functionality(self):
+      with open('test_empty', 'r') as reader:
+         Shape, Type = reader.read ()
+         a = np.empty(Shape, dtype=Type)
+      ......
+
+  PyObject* array_empty(PyObject*self, PyObject*args,...){
+      ......
+      if (npy_parse_arguments("empty", args, ...
+            "|dtype", &PyArray_DescrConverter, ...) {
+          goto fail;
+      }
+      ......
+  }
+
+  int PyArray_DescrConverter(PyObject*obj, PyArray_Descr**at) {
+      *at = _convert_from_any(obj, 0);
+      return (*at) ? NPY_SUCCEED : NPY_FAIL;
+  }
+
+  static PyArray_Descr *
+  _convert_from_any(PyObject *obj, int align) {
+      ......
+      else if (PyUnicode_Check(obj)) {
+          return _convert_from_str(obj, align);
+      }
+      ......
+  }
+
+  PyArray_Descr* _convert_from_str(PyObject*obj, int align) {
+      char const *type = PyUnicode_AsUTF8AndSize(obj, &len);
+      ...
+      char *dep_tps[] = {"Bytes", "Datetime64", "Str", "Uint"};
+      int ndep_tps = sizeof(dep_tps) / sizeof(dep_tps[0]);
+      for (int i = 0; i < ndep_tps; ++i) {
+          char *dep_tp = dep_tps[i];
+          if (strncmp(type, dep_tp, strlen(dep_tp)) == 0) {
+                .......
+          }
+      }
+  }
+
+  

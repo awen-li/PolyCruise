@@ -849,6 +849,7 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     DifAgent *DA = &DifA;
     Graph *DifGraph = GetGraph (ThreadId, DA->NodeHandle, DA->EdgeHandle);
 
+    DA->EventNum++;
     if (IsEventExist (DifGraph, Event, ThreadId))
     {
         DEBUG ("[DIF][T:%lx]: %s exists....\r\n", Event, Msg);
@@ -976,6 +977,7 @@ VOID DeInitDif ()
 {
     DifAgent *DA = &DifA;
 
+    printf ("Recv events: %lu\r\n", DA->EventNum);
     DWORD GraphNum = GetGraphNum ();
 
     DWORD GraphId = 1;

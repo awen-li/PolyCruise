@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<criterions code_directory="." entry_script="None">
+
+<!-- function: function name for the criteria defition (string), 
+     return: consider the call-site of the function as source (True, False),
+     local: consider the definition of a local variable as source (string or None)
+-->  
+<criterion> <function>Trace</function> <return>False</return> <local>11111111</local> </criterion>
+
+</criterions>

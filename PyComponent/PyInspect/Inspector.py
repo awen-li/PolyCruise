@@ -356,8 +356,14 @@ class Inspector:
                     # 3. trace current event
                     # -> go to other statement tracing
         elif Event == "call" and LiveObj.Callee != None:
-            self.PushCtx (LiveObj.Callee)
-            return EVENT_FENTRY
+            if self.CurCtx.CalleeLo != None:
+                self.PushCtx (LiveObj.Callee)
+                return EVENT_FENTRY
+            else:
+                FuncDef = self.Analyzer.GetFuncDef (LiveObj.Callee)
+                EventId = PyEventTy (FuncDef.Id, 0, EVENT_FENTRY, self.IsSource)
+                PyTrace (EventId, '{'+LiveObj.Callee+'}')
+                self.CurCtx.FuncDef = FuncDef
 
         # other statement tracing
         self.Propogate (LiveObj)

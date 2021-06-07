@@ -14,7 +14,7 @@
 <criterion> <function>fscanf</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>getchar</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>receive</function> <return>True</return> <local>None</local> </criterion>
-<criterion> <function>Source</function> <return>True</return> <local>None</local> </criterion>
+<criterion> <function>recv</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>module.Info</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>module.set_mode</function> <return>True</return> <local>None</local> </criterion>
 <criterion> <function>load_image</function> <return>True</return> <local>None</local> </criterion>

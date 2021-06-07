@@ -63,6 +63,7 @@ typedef struct tag_DifAgent
     DWORD Sources;
 
     DWORD IsFieldSensitive;
+    ULONG EventNum;
 }DifAgent;
 
 

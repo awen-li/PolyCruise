@@ -1,0 +1,133 @@
+id,Star,Languages,ApiUrl,CloneUrl,Description
+1124202,2256,"['Python', 'C', 'Shell']",https://api.github.com/repos/pycrypto/pycrypto,https://github.com/pycrypto/pycrypto.git,The Python Cryptography Toolkit
+96111593,2211,"['C', 'Python', 'Perl']",https://api.github.com/repos/huggingface/neuralcoref,https://github.com/huggingface/neuralcoref.git,✨Fast Coreference Resolution in spaCy with Neural Networks
+17494082,2195,"['C', 'Python', 'Assembly']",https://api.github.com/repos/chipsec/chipsec,https://github.com/chipsec/chipsec.git,Platform Security Assessment Framework
+51317975,2187,"['Python', 'C', 'MATLAB']",https://api.github.com/repos/Netflix/vmaf,https://github.com/Netflix/vmaf.git,Perceptual video quality assessment based on multi-method fusion.
+144098696,2108,"['C', 'Python', 'Shell']",https://api.github.com/repos/xoreaxeaxeax/rosenbridge,https://github.com/xoreaxeaxeax/rosenbridge.git,Hardware backdoors in some x86 CPUs
+7730829,2100,"['Python', 'C', 'C++']",https://api.github.com/repos/psycopg/psycopg2,https://github.com/psycopg/psycopg2.git,PostgreSQL database adapter for the Python programming language
+45838272,2016,"['Python', 'C', 'Shell']",https://api.github.com/repos/openrazer/openrazer,https://github.com/openrazer/openrazer.git,An entirely open source driver and user-space daemon that allows you to manage your Razer peripherals on GNU/Linux
+19227725,1878,"['Python', 'C', 'Makefile']",https://api.github.com/repos/PyMySQL/mysqlclient,https://github.com/PyMySQL/mysqlclient.git,MySQL database connector for Python (with Python 3 support)
+299644773,1814,"['Python', 'C', 'C++']",https://api.github.com/repos/EssayKillerBrain/EssayKiller_V2,https://github.com/EssayKillerBrain/EssayKiller_V2.git,基于开源GPT2.0的初代创作型人工智能 | 可扩展、可进化
+11802259,1806,"['Python', 'C', 'JavaScript']",https://api.github.com/repos/Komodo/KomodoEdit,https://github.com/Komodo/KomodoEdit.git,"Komodo Edit is a fast and free multi-language code editor. Written in JS, Python, C++ and based on the Mozilla platform."
+73847171,1672,"['Python', 'C', 'Shell']",https://api.github.com/repos/oilshell/oil,https://github.com/oilshell/oil.git,A new Unix shell.  Our upgrade path from bash to a better language and runtime.
+10147130,1596,"['Python', 'C', 'Shell']",https://api.github.com/repos/Veil-Framework/Veil-Evasion,https://github.com/Veil-Framework/Veil-Evasion.git,"Veil Evasion is no longer supported, use Veil 3.0!"
+19378935,1504,"['C', 'Python', 'Shell']",https://api.github.com/repos/Legrandin/pycryptodome,https://github.com/Legrandin/pycryptodome.git,A self-contained cryptographic library for Python
+96552939,1448,"['C', 'Python', 'C++']",https://api.github.com/repos/Cisco-Talos/pyrebox,https://github.com/Cisco-Talos/pyrebox.git,"Python scriptable Reverse Engineering Sandbox, a Virtual Machine instrumentation and inspection framework based on QEMU"
+23620921,1390,"['C', 'Python', 'Go']",https://api.github.com/repos/jgarff/rpi_ws281x,https://github.com/jgarff/rpi_ws281x.git,Userspace Raspberry Pi PWM library for WS281X LEDs
+1333666,1364,"['Python', 'C', 'Batchfile']",https://api.github.com/repos/simplejson/simplejson,https://github.com/simplejson/simplejson.git,"simplejson is a simple, fast, extensible JSON encoder/decoder for Python "
+20389482,1359,"['C', 'Python', 'Shell']",https://api.github.com/repos/osmc/osmc,https://github.com/osmc/osmc.git,OSMC (Open Source Media Center) is a free and open source media center distribution
+1062237,1316,"['C', 'Python', 'Shell']",https://api.github.com/repos/libgit2/pygit2,https://github.com/libgit2/pygit2.git,Python bindings for libgit2
+131110697,1231,"['C', 'Python', 'Dockerfile']",https://api.github.com/repos/hasura/skor,https://github.com/hasura/skor.git,Now part of Hasura GraphQL Engine. Listen to postgres events and forward them as JSON payloads to a webhook
+1639379,1224,"['C', 'Python', 'Shell']",https://api.github.com/repos/vishnubob/python-midi,https://github.com/vishnubob/python-midi.git,Python MIDI library
+3003137,1221,"['C', 'Python', 'C++']",https://api.github.com/repos/python-greenlet/greenlet,https://github.com/python-greenlet/greenlet.git,Lightweight in-process concurrent programming
+86431077,1079,"['Python', 'C', 'C++']",https://api.github.com/repos/tensorboy/pytorch_Realtime_Multi-Person_Pose_Estimation,https://github.com/tensorboy/pytorch_Realtime_Multi-Person_Pose_Estimation.git,
+75980044,1066,"['Python', 'C', 'C++']",https://api.github.com/repos/intelxed/xed,https://github.com/intelxed/xed.git,x86 encoder decoder
+20585627,1016,"['C', 'Python', 'C++']",https://api.github.com/repos/adafruit/Adafruit_Python_DHT,https://github.com/adafruit/Adafruit_Python_DHT.git,Python library to read the DHT series of humidity and temperature sensors on a Raspberry Pi or Beaglebone Black.
+1844194,1005,"['C', 'Python', 'CMake']",https://api.github.com/repos/PyTables/PyTables,https://github.com/PyTables/PyTables.git,A Python package to manage extremely large amounts of data
+942931,994,"['C', 'Python', 'Shell']",https://api.github.com/repos/sahib/rmlint,https://github.com/sahib/rmlint.git,Extremely fast tool to remove duplicates and other lint from your filesystem
+290808391,981,"['C', 'Python', 'Makefile']",https://api.github.com/repos/atc1441/ATC_MiThermometer,https://github.com/atc1441/ATC_MiThermometer.git,Custom firmware for the Xiaomi Thermometer LYWSD03MMC and Telink Flasher via USB to Serial converter
+45734719,951,"['C', 'Python', 'Verilog']",https://api.github.com/repos/enjoy-digital/litex,https://github.com/enjoy-digital/litex.git,"Build your hardware, easily!"
+182032,938,"['C', 'Python', 'Makefile']",https://api.github.com/repos/uzbl/uzbl,https://github.com/uzbl/uzbl.git,A web browser that adheres to the unix philosophy.
+3662905,920,"['Python', 'C', 'C++']",https://api.github.com/repos/LinuxCNC/linuxcnc,https://github.com/LinuxCNC/linuxcnc.git,"LinuxCNC controls CNC machines. It can drive milling machines, lathes, 3d printers, laser cutters, plasma cutters, robot arms, hexapods, and more."
+97567276,896,"['Python', 'C', 'Shell']",https://api.github.com/repos/RaRe-Technologies/bounter,https://github.com/RaRe-Technologies/bounter.git,Efficient Counter that uses a limited (bounded) amount of memory regardless of data size.
+41371288,894,"['C', 'Python', 'C++']",https://api.github.com/repos/belangeo/pyo,https://github.com/belangeo/pyo.git,Python DSP module
+32611857,826,"['C', 'Python', 'Makefile']",https://api.github.com/repos/gdabah/distorm,https://github.com/gdabah/distorm.git,Powerful Disassembler Library For x86/AMD64
+127474402,819,"['C', 'Python', 'Shell']",https://api.github.com/repos/MagicStack/immutables,https://github.com/MagicStack/immutables.git,A high-performance immutable mapping type for Python.
+3635640,756,"['C', 'Python', 'Assembly']",https://api.github.com/repos/vmt/udis86,https://github.com/vmt/udis86.git,Disassembler Library for x86 and x86-64
+78277026,750,"['Python', 'C', 'Dockerfile']",https://api.github.com/repos/nnamon/linux-exploitation-course,https://github.com/nnamon/linux-exploitation-course.git,A Course on Intermediate Level Linux Exploitation
+11869469,736,"['Python', 'C', 'Shell']",https://api.github.com/repos/pycurl/pycurl,https://github.com/pycurl/pycurl.git,PycURL - Python interface to libcurl
+8366991,726,"['C', 'Python', 'C++']",https://api.github.com/repos/cvxopt/cvxopt,https://github.com/cvxopt/cvxopt.git,CVXOPT -- Python Software for Convex Optimization
+6257879,720,"['C', 'Python', 'C++']",https://api.github.com/repos/zeromq/zyre,https://github.com/zeromq/zyre.git,Zyre - an open-source framework for proximity-based peer-to-peer applications
+151910762,718,"['C', 'Python', 'Makefile']",https://api.github.com/repos/feiskyer/linux-perf-examples,https://github.com/feiskyer/linux-perf-examples.git,极客时间《Linux 性能优化实战》案例
+84153024,710,"['C', 'Python', 'PLSQL']",https://api.github.com/repos/oracle/python-cx_Oracle,https://github.com/oracle/python-cx_Oracle.git,Python interface to Oracle Database conforming to the Python DB API 2.0 specification.
+592109,704,"['C', 'Python', 'Makefile']",https://api.github.com/repos/axiak/pybloomfiltermmap,https://github.com/axiak/pybloomfiltermmap.git,Fast Python Bloom Filter using Mmap
+97366657,702,"['Python', 'C', 'Shell']",https://api.github.com/repos/zhezhaoa/ngram2vec,https://github.com/zhezhaoa/ngram2vec.git,Four word embedding models implemented in Python. Supporting arbitrary context features
+74190837,663,"['C', 'Python', 'C++']",https://api.github.com/repos/scwuaptx/HITCON-Training,https://github.com/scwuaptx/HITCON-Training.git,For Linux binary Exploitation
+114683429,661,"['C', 'Python', 'C++']",https://api.github.com/repos/StanfordVL/GibsonEnv,https://github.com/StanfordVL/GibsonEnv.git,Gibson Environments: Real-World Perception for Embodied Agents
+5709451,643,"['Python', 'C', 'Shell']",https://api.github.com/repos/farcepest/MySQLdb1,https://github.com/farcepest/MySQLdb1.git,MySQL database connector for Python (legacy version)
+45767969,632,"['Python', 'C', 'Objective-C']",https://api.github.com/repos/naftaliharris/tauthon,https://github.com/naftaliharris/tauthon.git,"Fork of Python 2.7 with new syntax, builtins, and libraries backported from Python 3."
+216051909,617,"['Python', 'C']",https://api.github.com/repos/nfstream/nfstream,https://github.com/nfstream/nfstream.git,NFStream: a Flexible Network Data Analysis Framework.
+44352444,616,"['C', 'Python', 'C++']",https://api.github.com/repos/simondlevy/TinyEKF,https://github.com/simondlevy/TinyEKF.git,Lightweight C/C++ Extended Kalman Filter with Python for prototyping
+62154566,603,"['C', 'Python']",https://api.github.com/repos/Cr4sh/ThinkPwn,https://github.com/Cr4sh/ThinkPwn.git,Lenovo ThinkPad System Management Mode arbitrary code execution 0day exploit
+1851271,600,"['Python', 'C', 'PLpgSQL']",https://api.github.com/repos/Segfault-Inc/Multicorn,https://github.com/Segfault-Inc/Multicorn.git,Data Access Library
+330227,590,"['Python', 'C']",https://api.github.com/repos/sumerc/yappi,https://github.com/sumerc/yappi.git,"Yet Another Python Profiler, but this time thread&coroutine&greenlet aware."
+43035979,589,"['Python', 'C', 'C++']",https://api.github.com/repos/JPaulMora/Pyrit,https://github.com/JPaulMora/Pyrit.git,"The famous WPA precomputed cracker, Migrated from Google."
+85620426,586,"['Python', 'C', 'JavaScript']",https://api.github.com/repos/mariusmotea/diyHue,https://github.com/mariusmotea/diyHue.git,Philips Hue emulator that is able to control multiple types of lights
+10390556,585,"['C', 'Python', 'Shell']",https://api.github.com/repos/WojciechMula/pyahocorasick,https://github.com/WojciechMula/pyahocorasick.git,Python module (C extension and plain python) implementing Aho-Corasick algorithm
+1117948,582,"['C', 'Python', 'Shell']",https://api.github.com/repos/pydata/bottleneck,https://github.com/pydata/bottleneck.git,Fast NumPy array functions written in C
+247605959,571,"['Python', 'C', 'Cuda']",https://api.github.com/repos/huaiyukeji/verification_code,https://github.com/huaiyukeji/verification_code.git,验证码研究破解心得记录。包含网易易盾，阿里云验证码，极验验证码，通用汉字识别，梦幻西游验证等主流验证码破解。包含点按验证码、点选验证、语序点选等等。已更新极验验证码、企业公示网/工商/文书采集系统、极验打码接口。
+131264017,564,"['Python', 'C', 'Shell']",https://api.github.com/repos/nikitakit/self-attentive-parser,https://github.com/nikitakit/self-attentive-parser.git,High-accuracy NLP parser with models for 11 languages.
+1585489,563,"['Python', 'C', 'CoffeeScript']",https://api.github.com/repos/swdunlop/AndBug,https://github.com/swdunlop/AndBug.git,Android Debugging Library
+142346399,545,"['Python', 'C', 'Scilab']",https://api.github.com/repos/yikangshen/Ordered-Neurons,https://github.com/yikangshen/Ordered-Neurons.git,"Code for the paper ""Ordered Neurons: Integrating Tree Structures into Recurrent Neural Networks"""
+32794055,544,"['C', 'Python', 'C++']",https://api.github.com/repos/riverloopsec/killerbee,https://github.com/riverloopsec/killerbee.git,IEEE 802.15.4/ZigBee Security Research Toolkit
+11846030,536,"['C', 'Python', 'SWIG']",https://api.github.com/repos/pygraphviz/pygraphviz,https://github.com/pygraphviz/pygraphviz.git,Python interface to Graphviz graph drawing package
+115265915,531,"['Java', 'C', 'Python']",https://api.github.com/repos/guanchao/apk_auto_enforce,https://github.com/guanchao/apk_auto_enforce.git,APK一键自动化加固脚本
+116659368,527,"['C', 'Python', 'Makefile']",https://api.github.com/repos/RedisTimeSeries/RedisTimeSeries,https://github.com/RedisTimeSeries/RedisTimeSeries.git,Time Series data structure for Redis
+2554994,524,"['C', 'Python', 'M4']",https://api.github.com/repos/cherokee/webserver,https://github.com/cherokee/webserver.git,Cherokee Web Server
+50410511,500,"['C', 'Python']",https://api.github.com/repos/openvenues/pypostal,https://github.com/openvenues/pypostal.git,Python bindings to libpostal for fast international address parsing/normalization
+100175701,483,"['Python', 'C', 'Shell']",https://api.github.com/repos/RUB-SysSec/kAFL,https://github.com/RUB-SysSec/kAFL.git,Code for the USENIX 2017 paper: kAFL: Hardware-Assisted Feedback Fuzzing for OS Kernels
+10027254,470,"['Python', 'C']",https://api.github.com/repos/benhoyt/scandir,https://github.com/benhoyt/scandir.git,"Better directory iterator and faster os.walk(), now in the Python 3.5 stdlib"
+86309539,470,"['Python', 'C']",https://api.github.com/repos/ITAYC0HEN/A-journey-into-Radare2,https://github.com/ITAYC0HEN/A-journey-into-Radare2.git,A series of tutorials about radare2 framework from https://www.megabeets.net
+3003791,460,"['Python', 'C', 'Makefile']",https://api.github.com/repos/gwik/geventhttpclient,https://github.com/gwik/geventhttpclient.git,"A high performance, concurrent http client library for python with gevent"
+125129047,450,"['C', 'Python', 'Makefile']",https://api.github.com/repos/ww9210/Linux_kernel_exploits,https://github.com/ww9210/Linux_kernel_exploits.git,Repo for FUZE project. I will also publish some Linux kernel LPE exploits for various real world kernel vulnerabilities here. the samples are uploaded for education purposes for red and blue teams.
+132508149,443,"['Python', 'C', 'Shell']",https://api.github.com/repos/chaoyuaw/pytorch-coviar,https://github.com/chaoyuaw/pytorch-coviar.git,Compressed Video Action Recognition
+4386648,440,"['Python', 'C', 'C++']",https://api.github.com/repos/earwig/mwparserfromhell,https://github.com/earwig/mwparserfromhell.git,A Python parser for MediaWiki wikicode
+3084599,437,"['C', 'Python', 'Protocol Buffer']",https://api.github.com/repos/alonho/pytrace,https://github.com/alonho/pytrace.git,"pytrace is a fast python tracer. it records function calls, arguments and return values. can be used for debugging and profiling."
+15502383,437,"['Python', 'C', 'Makefile']",https://api.github.com/repos/rogerbinns/apsw,https://github.com/rogerbinns/apsw.git,Another Python SQLite wrapper
+16303018,433,"['Python', 'C', 'C++']",https://api.github.com/repos/theopolis/uefi-firmware-parser,https://github.com/theopolis/uefi-firmware-parser.git,"Parse BIOS/Intel ME/UEFI firmware related structures: Volumes, FileSystems, Files, etc"
+8832136,427,"['Python', 'C', 'Shell']",https://api.github.com/repos/JamezQ/Palaver,https://github.com/JamezQ/Palaver.git,Linux Speech Recognition
+92969077,424,"['Python', 'C', 'Shell']",https://api.github.com/repos/Screetsec/BruteSploit,https://github.com/Screetsec/BruteSploit.git,"BruteSploit is a collection of method for automated Generate, Bruteforce and Manipulation wordlist with interactive shell. That can be used during a penetration test to enumerate and maybe can be used in CTF for manipulation,combine,transform and permutation some words or file text :p"
+1273406,420,"['Python', 'C', 'Makefile']",https://api.github.com/repos/ilanschnell/bitarray,https://github.com/ilanschnell/bitarray.git,efficient arrays of booleans for Python
+59882037,420,"['Python', 'C', 'Assembly']",https://api.github.com/repos/larryhastings/gilectomy,https://github.com/larryhastings/gilectomy.git,"Gilectomy branch of CPython.  Use ""gilectomy"" branch in git.  Read the important, short README below!"
+59082072,419,"['C', 'Python', 'C++']",https://api.github.com/repos/openpbs/openpbs,https://github.com/openpbs/openpbs.git,"An HPC workload manager and job scheduler for desktops, clusters, and clouds."
+36989629,414,"['Python', 'C', 'Makefile']",https://api.github.com/repos/muodov/kociemba,https://github.com/muodov/kociemba.git,A pure Python and pure C ports of Kociemba's algorithm for solving Rubik's cube
+180590388,409,"['Python', 'C', 'C++']",https://api.github.com/repos/trezor/trezor-firmware,https://github.com/trezor/trezor-firmware.git,:lock: Trezor Firmware Monorepo
+107785854,396,"['C', 'Python', 'Rust']",https://api.github.com/repos/centricular/gstwebrtc-demos,https://github.com/centricular/gstwebrtc-demos.git,Superseded by https://gitlab.freedesktop.org/gstreamer/gst-examples/-/tree/master/webrtc - Demo apps for using gstreamer's webrtc implementation
+51589487,380,"['Python', 'C', 'Perl']",https://api.github.com/repos/postgrespro/pg_probackup,https://github.com/postgrespro/pg_probackup.git,Backup and recovery manager for PostgreSQL
+27896013,380,"['Python', 'C']",https://api.github.com/repos/moble/quaternion,https://github.com/moble/quaternion.git,Add built-in support for quaternions to numpy
+1751860,360,"['C', 'Python', 'C++']",https://api.github.com/repos/JHUISI/charm,https://github.com/JHUISI/charm.git,Charm: A Framework for Rapidly Prototyping Cryptosystems
+69877175,356,"['C', 'Python', 'NSIS']",https://api.github.com/repos/raspberrypi/usbboot,https://github.com/raspberrypi/usbboot.git,"Raspberry Pi USB booting code, moved from tools repository"
+196559763,355,"['Python', 'C', 'Shell']",https://api.github.com/repos/hpyproject/hpy,https://github.com/hpyproject/hpy.git,HPy: a better API for Python
+13468979,350,"['C', 'Python', 'Makefile']",https://api.github.com/repos/ghaering/pysqlite,https://github.com/ghaering/pysqlite.git,Python DB-API module for SQLite 3.
+11520411,348,"['Python', 'C', 'C++']",https://api.github.com/repos/Embroidermodder/Embroidermodder,https://github.com/Embroidermodder/Embroidermodder.git,Free machine embroidery software supporting a variety of formats.
+96650,347,"['Python', 'C', 'Shell']",https://api.github.com/repos/william-os4y/fapws3,https://github.com/william-os4y/fapws3.git,Fast Asynchronous Python Web Server (based on libev)
+46493241,330,"['Python', 'C', 'Objective-C']",https://api.github.com/repos/trezor/trezor-core,https://github.com/trezor/trezor-core.git,":lock: Don't use this repo, use the new monorepo instead:"
+1614732,330,"['C', 'Python', 'Makefile']",https://api.github.com/repos/benoitc/http-parser,https://github.com/benoitc/http-parser.git,HTTP request/response parser for python in C
+295432590,327,"['C', 'Python', 'Shell']",https://api.github.com/repos/blackarrowsec/redteam-research,https://github.com/blackarrowsec/redteam-research.git,Collection of PoC and offensive techniques used by the BlackArrow Red Team
+99347468,326,"['C', 'Python', 'Makefile']",https://api.github.com/repos/atlas0fd00m/rfcat,https://github.com/atlas0fd00m/rfcat.git,RfCat - swiss-army knife of ISM band radio
+32031545,320,"['Python', 'C', 'Assembly']",https://api.github.com/repos/saelo/armpwn,https://github.com/saelo/armpwn.git,Repository to train/learn memory corruption on the ARM platform.
+6604361,317,"['C', 'Python', 'Arc']",https://api.github.com/repos/mdtraj/mdtraj,https://github.com/mdtraj/mdtraj.git,An open library for the analysis of molecular dynamics trajectories
+11922470,310,"['C', 'Python', 'TeX']",https://api.github.com/repos/kholia/dedrop,https://github.com/kholia/dedrop.git,Looking inside the (Drop) box. Security Analysis of Dropbox. Updated WOOT '13 paper and other goodies.
+32142949,307,"['Python', 'C', 'C++']",https://api.github.com/repos/thaines/helit,https://github.com/thaines/helit.git,"My machine learning/computer vision library for all of my recent papers, plus algorithms that I just like."
+38590109,299,"['C', 'Python', 'C++']",https://api.github.com/repos/systemd/python-systemd,https://github.com/systemd/python-systemd.git,Python wrappers for systemd functionality
+4768243,297,"['C', 'Python']",https://api.github.com/repos/docopt/docopt.c,https://github.com/docopt/docopt.c.git,C-code generator for docopt language.
+107630,289,"['Python', 'C', 'C++']",https://api.github.com/repos/munificent/magpie,https://github.com/munificent/magpie.git,The Magpie programming language
+49774773,280,"['C', 'Python', 'Makefile']",https://api.github.com/repos/blankwall/MacDBG,https://github.com/blankwall/MacDBG.git,Simple easy to use C and python debugging framework for OSX
+50975191,278,"['C', 'Python', 'C++']",https://api.github.com/repos/Samsung/ADBI,https://github.com/Samsung/ADBI.git,Android Dynamic Binary Instrumentation tool for tracing Android native layer
+126182850,269,"['C', 'Python', 'Makefile']",https://api.github.com/repos/keirf/Greaseweazle,https://github.com/keirf/Greaseweazle.git,Tools and USB interface for accessing a floppy drive at the raw flux level
+96785425,268,"['Python', 'C', 'HTML']",https://api.github.com/repos/RUB-SysSec/Microcode,https://github.com/RUB-SysSec/Microcode.git,Microcode Updates for the USENIX 2017 paper: Reverse Engineering x86 Processor Microcode
+86040574,259,"['C', 'Python', 'C++']",https://api.github.com/repos/realitix/vulkan,https://github.com/realitix/vulkan.git,The ultimate Python binding for Vulkan API
+2960310,240,"['Python', 'C', 'Assembly']",https://api.github.com/repos/m-labs/misoc,https://github.com/m-labs/misoc.git,A high performance and small footprint system-on-chip based on Migen
+48184998,209,"['C', 'Python', 'C++']",https://api.github.com/repos/greatscottgadgets/greatfet,https://github.com/greatscottgadgets/greatfet.git,GreatFET firmware and host software
+8004546,200,"['C', 'Python', 'Ruby']",https://api.github.com/repos/jbremer/darm,https://github.com/jbremer/darm.git,A light-weight and efficient disassembler written in C for the ARMv7 instruction set.
+111303,199,"['Python', 'C', 'GAP']",https://api.github.com/repos/simos/keyboardlayouteditor,https://github.com/simos/keyboardlayouteditor.git,Keyboard Layout Editor
+85602919,180,"['C', 'Python']",https://api.github.com/repos/holbertonschool/Hack-The-Virtual-Memory,https://github.com/holbertonschool/Hack-The-Virtual-Memory.git,"This is a series of small articles / tutorials based around virtual memory. The goal is to learn some CS basics, but in a different and more practical way."
+48296121,169,"['Python', 'C', 'CSS']",https://api.github.com/repos/libfuse/python-fuse,https://github.com/libfuse/python-fuse.git,Python 2.x/3.x bindings for libfuse 2.x
+213240778,150,"['C', 'Python', 'C++']",https://api.github.com/repos/acids-ircam/ddsp_pytorch,https://github.com/acids-ircam/ddsp_pytorch.git,Implementation of Differentiable Digital Signal Processing (DDSP) in Pytorch
+3765324,140,"['Python', 'C', 'HTML']",https://api.github.com/repos/davidmalcolm/gcc-python-plugin,https://github.com/davidmalcolm/gcc-python-plugin.git,GCC plugin that embeds CPython inside the compiler
+5417789,140,"['C', 'Python']",https://api.github.com/repos/jsommers/pytricia,https://github.com/jsommers/pytricia.git,A library for fast IP address lookup in Python.
+130531346,140,"['Python', 'C', 'C++']",https://api.github.com/repos/sixstars/starctf2018,https://github.com/sixstars/starctf2018.git,Official repository containing files related to *ctf 2018
+259841110,140,"['Python', 'C']",https://api.github.com/repos/adamchainz/time-machine,https://github.com/adamchainz/time-machine.git,Travel through time in your tests.
+11237265,140,"['Python', 'C']",https://api.github.com/repos/osirislab/CTF-Challenges,https://github.com/osirislab/CTF-Challenges.git,A repository of challenges from various CTF competitions.
+3618722,130,"['C', 'Python', 'Shell']",https://api.github.com/repos/sneakybeaky/mod_redis,https://github.com/sneakybeaky/mod_redis.git,An Apache HTTPD module for speaking to redis via HTTP
+125632486,130,"['C', 'Python', 'Perl']",https://api.github.com/repos/PraneethKarnena/DDoS-Scripts,https://github.com/PraneethKarnena/DDoS-Scripts.git,"This repo consists of various DDoS scripts, collected from internet. Layer-4 and Layer-7 levels can be targeted using these scripts."
+36017520,130,"['Python', 'C', 'Makefile']",https://api.github.com/repos/sektioneins/sandbox_toolkit,https://github.com/sektioneins/sandbox_toolkit.git,Toolkit for binary iOS / OS X sandbox profiles
+122162,120,"['Python', 'C']",https://api.github.com/repos/bmander/graphserver,https://github.com/bmander/graphserver.git,An open source multimodal trip planning engine
+2220007,120,"['Python', 'C', 'Shell']",https://api.github.com/repos/xattr/xattr,https://github.com/xattr/xattr.git,Python wrapper for extended filesystem attributes
+5394742,110,"['Jupyter Notebook', 'Python', 'C']",https://api.github.com/repos/gibiansky/experiments,https://github.com/gibiansky/experiments.git,Small experiments with attached code
+11846580,100,"['Python', 'C', 'Makefile']",https://api.github.com/repos/Groundworkstech/pybfd,https://github.com/Groundworkstech/pybfd.git,A Python interface to the GNU Binary File Descriptor (BFD) library.
+73573659,100,"['C', 'Python']",https://api.github.com/repos/codekansas/tinier-nn,https://github.com/codekansas/tinier-nn.git,:iphone: Binarized Neural Network TF training code + C matrix / eval library.
+5680154,100,"['Python', 'C', 'C++']",https://api.github.com/repos/amarack/python-rl,https://github.com/amarack/python-rl.git,Some Reinforcement Learning in Python
+77155696,90,"['C', 'Python', 'C++']",https://api.github.com/repos/polmorenoc/opendr,https://github.com/polmorenoc/opendr.git,Modern OpenDR
+283265725,80,"['C', 'Python']",https://api.github.com/repos/jcrist/quickle,https://github.com/jcrist/quickle.git,A quicker pickle :cucumber:
+27934955,70,"['C', 'Python']",https://api.github.com/repos/mehcode/python-xmlsec,https://github.com/mehcode/python-xmlsec.git,Python bindings for the XML Security Library.

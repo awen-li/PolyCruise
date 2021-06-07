@@ -1,0 +1,5 @@
+deleak IntOf 4
+dedivzero BinOp 8
+debuf-overflow BinOp 11
+deleak BinOp 6
+deleak pyinspect 15

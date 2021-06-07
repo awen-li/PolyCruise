@@ -1,0 +1,43 @@
+
+ def test_zeros_obj(self):
+    ......
+    with open('test_zeros', 'r') as reader:
+        shape = reader.read ()
+    d = np.zeros(shape, dtype=int)
+    ......    
+
+ static PyObject *
+ array_zeros(PyObject *self, PyObject*args, ...){
+    PyArray_Dims shape = {NULL, 0};
+    npy_parse_arguments("zeros", args, len_args, kwnames,
+                        "shape", &shape,...);
+    ......
+    PyArray_Zeros(shape.len, shape.ptr, ...);
+    ......
+ }
+
+ NPY_NO_EXPORT PyObject *
+ PyArray_Zeros(int nd, npy_intp const *dims, ...){
+    ......
+    PyArray_NewFromDescr_int(&PyArray_Type,type, nd, dims,...);
+    ......
+ }
+
+ NPY_NO_EXPORT PyObject *
+ PyArray_NewFromDescr_int(PyTypeObject*subtype, int nd, ...){
+    ......
+    if (descr->subarray) {
+        npy_intp newdims[2*NPY_MAXDIMS];
+        npy_intp *newstrides = NULL;
+        memcpy(newdims, dims, nd*sizeof(npy_intp));
+        if (strides) {
+            newstrides = newdims + NPY_MAXDIMS;
+            memcpy(newstrides, strides, nd*sizeof(npy_intp));
+        }
+    }
+    ......
+ }
+
+
+
+
