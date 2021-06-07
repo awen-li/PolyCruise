@@ -1,6 +1,14 @@
 
 export CASE_PATH=`pwd`
 
+if [ "$1" == "clean" ]; then
+    find ./ -name DIFG* | xargs rm -rf
+    find ./ -name build | xargs rm -rf
+    find ./ -name Temp | xargs rm -rf
+    find ./ -name gmon.out | xargs rm -rf
+    exit 0
+fi
+
 CASE_GROUP=("DynamicInvocation"  "FieldSensitivity"  "GeneralFlow" "GlobalFlow" "ObjectSensitivity")
 
 # iter each case group
