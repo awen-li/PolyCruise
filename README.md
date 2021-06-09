@@ -13,9 +13,9 @@ before build the framework, corresponding versions of LLVM and Python need to be
 cd PolyCruise && ./build.sh
 
 # Usage
-To evaluation our approach, we implement cross-language analysis for Python-C programs.
-This is an example to show how to analyze a Python-C program step by step.
-![example](https://github.com/Daybreak2019/LDI/blob/master/Script/1_case_PyClang/build.sh)
+To evaluation our approach, we developed a micro-benchmark called ![PyCBench](https://github.com/Daybreak2019/LDI/tree/master/PyCBench).
+To test PolyCruise on all the micro-benchmarks, please execute the following commands:
+cd PyCBench && ./RunTest.sh
 
 
 
