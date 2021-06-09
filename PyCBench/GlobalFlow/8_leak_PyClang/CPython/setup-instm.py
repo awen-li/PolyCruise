@@ -19,7 +19,7 @@ module1 = Extension('DemoTrace',
 setup (name = 'PyDemo',
        version = '1.0',
        description = 'package for python tracing',
-       author = 'Wen Li',
-       author_email = 'li.wen@wsu.edu',
+       author = 'Wen xx',
+       author_email = 'xx.wen@xxx.edu',
        ext_modules = [module1])
 
