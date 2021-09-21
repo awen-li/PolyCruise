@@ -851,7 +851,6 @@ private:
     { 
         IRBuilder<> Builder(Inst);
 
-        //errs()<<"\t InstrumentCite: "<<*Inst<<"\r\n";
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
 
@@ -1048,12 +1047,17 @@ private:
     inline void AddCallTrace (Function* F, BasicBlock *BBlock, string Tag)
     {
         Instruction *Site = BBlock->getFirstNonPHI();
+
+        //errs()<<"@@@@@@@@@@@@@@@@@@ CallTrace: "<<Tag+string (F->getName())<<" ----- "<< *Site<<"\r\n";
         
         IRBuilder<> Builder(Site);
         string Format = Tag + string (F->getName().data());
         Value *TFormat = Builder.CreateGlobalStringPtr(Format);
 
-        Builder.CreateCall(m_TaceFunc, {0, TFormat});
+        Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
+        Value *Ev = ConstantInt::get(I64ype, 0, false);
+
+        Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
 
         return;
     }
@@ -1070,14 +1074,20 @@ private:
                 continue;
             }
 
-            Instruction *PreInst = NULL;
             for (auto ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
             {
                 Instruction *Inst = &*ItI;
                 LLVMInst LI (Inst);
 
+                if (LI.IsInstrinsicDbgInst() || LI.IsUnReachable() || LI.IsAlloca ())
+                {
+                    continue;
+                }
+
                 if (LI.IsCall())
                 {
+                    Pf.Reset ();
+                    
                     Pf.AppendFormat ("[C]...CallSite:");
                     string Callee = LI.GetCallName ();
                     if (Callee != "")
@@ -1089,14 +1099,9 @@ private:
                         Pf.AppendFormat ("PtsCall");
                     }
 
-                    assert (PreInst != NULL);
-                    AddTrack (0, PreInst, &Pf);
-                    InstrumNum++;
-
-                    Pf.Reset ();
+                    AddTrack (0, Inst, &Pf);
+                    //errs()<<"@@@@@@@@@@@@@@@@@@ CallInst: "<<Pf.m_ArgBuf<<" ----- "<< *Inst<<"\r\n";
                 }
-
-                PreInst = Inst;
             }   
 
             AddCallTrace (Func, &Func->front(), "[C]<Entry>: ");
@@ -1104,6 +1109,7 @@ private:
             InstrumNum += 2;
         }  
 
+        //errs ()<<"@@ InstrmCallTrace ....................END "<<"\r\n";
         return InstrumNum;
     }
     

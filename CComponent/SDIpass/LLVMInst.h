@@ -64,6 +64,11 @@ public:
         return (m_InstOp == Instruction::Ret);
     }
 
+    inline bool IsAlloca ()
+    {
+        return (m_InstOp == Instruction::Alloca);
+    }
+
     inline bool IsCall ()
     {
         if (m_InstOp == Instruction::Call ||
@@ -73,6 +78,11 @@ public:
         }
 
         return false;
+    }
+
+    inline bool IsUnReachable ()
+    {
+        return (m_InstOp == Instruction::Unreachable);
     }
 
     inline bool IsAdd ()
@@ -148,7 +158,7 @@ public:
         if (m_CallFunc != NULL)
         {
             string FuncName = m_CallFunc->getName().data ();
-            if (FuncName.find ("llvm.lifetime") == FuncName.npos)
+            if (FuncName.find ("llvm.lifetime") != FuncName.npos)
             {
                 return true;
             }
