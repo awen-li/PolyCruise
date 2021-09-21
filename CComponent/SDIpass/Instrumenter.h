@@ -365,15 +365,21 @@ public:
         m_ThreadId = NULL;
     } 
 
-    unsigned RunInstrm ()
+    unsigned RunInstrm (bool CallTrace=false)
     {
         unsigned InstNum = 0;
-        
-        LoadLdaBin ();
- 
-        InstNum += VisitFunction ();
-        InstNum += InitInstrumenter ();
 
+        if (CallTrace == false)
+        {        
+            LoadLdaBin ();
+            InstNum += VisitFunction ();
+        }
+        else
+        {
+            InstNum += InstrmCallTrace ();
+        }
+
+        InstNum += InitInstrumenter ();
         return InstNum;
     }
     
@@ -1037,6 +1043,68 @@ private:
         }
                 
         return true;
+    }
+
+    inline void AddCallTrace (Function* F, BasicBlock *BBlock, string Tag)
+    {
+        Instruction *Site = BBlock->getFirstNonPHI();
+        
+        IRBuilder<> Builder(Site);
+        string Format = Tag + string (F->getName().data());
+        Value *TFormat = Builder.CreateGlobalStringPtr(Format);
+
+        Builder.CreateCall(m_TaceFunc, {0, TFormat});
+
+        return;
+    }
+
+    inline unsigned InstrmCallTrace    ()
+    {
+        unsigned InstrumNum = 0;
+        ParaFt Pf;
+        for (Module::iterator it = m_Module->begin(), eit = m_Module->end(); it != eit; ++it) 
+        {
+            Function *Func = &*it;
+            if (Func->isIntrinsic() || Func->isDeclaration ())
+            {
+                continue;
+            }
+
+            Instruction *PreInst = NULL;
+            for (auto ItI = inst_begin(*Func), Ed = inst_end(*Func); ItI != Ed; ++ItI) 
+            {
+                Instruction *Inst = &*ItI;
+                LLVMInst LI (Inst);
+
+                if (LI.IsCall())
+                {
+                    Pf.AppendFormat ("=>CallSite:");
+                    string Callee = LI.GetCallName ();
+                    if (Callee != "")
+                    {
+                        Pf.AppendFormat (Callee);
+                    }
+                    else
+                    {
+                        Pf.AppendFormat ("PtsCall");
+                    }
+
+                    assert (PreInst != NULL);
+                    AddTrack (0, PreInst, &Pf);
+                    InstrumNum++;
+
+                    Pf.Reset ();
+                }
+
+                PreInst = Inst;
+            }   
+
+            AddCallTrace (Func, &Func->front(), "<Entry>: ");
+            AddCallTrace (Func, &Func->back(), "<Exit>: ");
+            InstrumNum += 2;
+        }  
+
+        return InstrumNum;
     }
     
     inline unsigned VisitFunction ()

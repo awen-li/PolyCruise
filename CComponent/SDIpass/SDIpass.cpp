@@ -82,16 +82,26 @@ struct SDIpass : public ModulePass
         {
             return false;
         }
-        
+
         Instrumenter Instrm (&M);
-        if (Instrm.RunInstrm())
+
+        char *FullInstm = getenv ("FULL_INSTRUMENTATION");
+        if (FullInstm == NULL)
         {
-            errs()<<"instrument module: " <<M.getName()<<"\r\n";
-            return true;
+            if (Instrm.RunInstrm())
+            {
+                errs()<<"instrument module: " <<M.getName()<<"\r\n";
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {
-            return false;
+            Instrm.RunInstrm(true);
+            return true;
         }
    }
 };
