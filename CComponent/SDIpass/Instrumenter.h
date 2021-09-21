@@ -1078,7 +1078,7 @@ private:
 
                 if (LI.IsCall())
                 {
-                    Pf.AppendFormat ("=>CallSite:");
+                    Pf.AppendFormat ("[C]...CallSite:");
                     string Callee = LI.GetCallName ();
                     if (Callee != "")
                     {
@@ -1099,8 +1099,8 @@ private:
                 PreInst = Inst;
             }   
 
-            AddCallTrace (Func, &Func->front(), "<Entry>: ");
-            AddCallTrace (Func, &Func->back(), "<Exit>: ");
+            AddCallTrace (Func, &Func->front(), "[C]<Entry>: ");
+            AddCallTrace (Func, &Func->back(), "[C]<Exit>: ");
             InstrumNum += 2;
         }  
 

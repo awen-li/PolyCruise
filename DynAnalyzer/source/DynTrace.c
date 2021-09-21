@@ -11,12 +11,20 @@
 
 #ifdef __cplusplus
 extern "C"{
-#endif 
+#endif
+
+static int gFullTraceFlag = 0;
 
 
 void TRC_trace0 (ULONG EventId, const char* Msg)
 {
-	QNode *Node = InQueue ();
+    if (gFullTraceFlag)
+    {
+        printf("%s\r\n", Msg);
+        return;
+    }
+
+    QNode *Node = InQueue ();
     if (Node == NULL)
     {
         printf ("Queue Full\r\n");
@@ -37,9 +45,19 @@ void TRC_trace0 (ULONG EventId, const char* Msg)
 
 void TRC_trace (ULONG EventId, const char* Format, ...)
 {
-	va_list ap;
-	
-	QNode *Node = InQueue ();
+    va_list ap;
+
+    if (gFullTraceFlag)
+    {
+        char Msg[1024];
+        va_start(ap, Format);
+        (void)vsnprintf (Msg, sizeof(Msg), Format, ap);
+        va_end(ap);
+        printf("%s\r\n", Msg);
+        return;
+    }
+
+    QNode *Node = InQueue ();
     if (Node == NULL)
     {
         printf ("Queue Full\r\n");
@@ -86,6 +104,12 @@ void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId,  char *ThrPara)
 
 void TRC_init ()
 {
+    char *FullInstm = getenv ("FULL_INSTRUMENTATION");
+    if (FullInstm != NULL)
+    {
+        gFullTraceFlag = 1;
+    }
+    
     return;
 }
 

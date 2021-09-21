@@ -103,7 +103,10 @@ class Inspector:
         #print ("Python---> %lx %s" %(EventId, Msg))
         PyTrace (EventId, Msg)
 
-        _settrace(self.Tracing)
+        if os.environ.get ("FULL_INSTRUMENTATION") != None:
+            _settrace(self.TracingFull)
+        else:
+            _settrace(self.Tracing)
         return self
 
     def __exit__(self, *_):
@@ -477,4 +480,29 @@ class Inspector:
         
         return self.Tracing
 
+
+    def TracingFull(self, Frame, Event, Arg):
+        if self.IsSingleCase and self.SetUp == False:
+            Step = os.environ.get ("case_step")
+            if Step == "setup":
+                self.SetUp = True
+            else:
+                return self.Tracing
+        
+        self.TracedStmts += 1
+        Code = Frame.f_code
+        self.CoName = Code.co_name
+
+        _, ScriptName = os.path.split(Code.co_filename) 
+        if ScriptName in self.Scripts:
+            return self.Tracing
+            
+        LineNo  = Frame.f_lineno
+        LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
+        if self.IsLiveObjValid (LiveObj, Event) == False:
+            return self.Tracing
+
+        Msg = "[Python]: " + Code.co_filename + ": " + Code.co_name
+        PyTrace (0, Msg)
+        return self.Tracing
 
