@@ -1088,7 +1088,7 @@ private:
                 {
                     Pf.Reset ();
                     
-                    Pf.AppendFormat ("[C]...CallSite:");
+                    Pf.AppendFormat ("[C][CS]:");
                     string Callee = LI.GetCallName ();
                     if (Callee != "")
                     {
@@ -1104,8 +1104,8 @@ private:
                 }
             }   
 
-            AddCallTrace (Func, &Func->front(), "[C]<Entry>: ");
-            AddCallTrace (Func, &Func->back(), "[C]<Exit>: ");
+            AddCallTrace (Func, &Func->front(), "[C][IN]:");
+            AddCallTrace (Func, &Func->back(), "[C][OUT]:");
             InstrumNum += 2;
         }  
 

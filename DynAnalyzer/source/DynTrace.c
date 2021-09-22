@@ -14,13 +14,31 @@ extern "C"{
 #endif
 
 static int gFullTraceFlag = 0;
+static char* SinksDebug = "strcpy strncpy __strncpy_chk strcat memcpy memmove memset sprintf llvm.memcpy.i32 llvm.memcpy.p0i8.p0i8.i32 llvm.memcpy.i64 llvm.memcpy.p0i8.p0i8.i64 llvm.memmove.i32 "\
+                          "llvm.memmove.p0i8.p0i8.i32 llvm.memmove.i64 llvm.memmove.p0i8.p0i8.i64 llvm.memset.p0i8.i64 llvm.memset.p0i8.i32 malloc log10 log strlen strncmp memcmp strncasecmp "\
+                          "execl execlp execle execv execvp execvpe system popen pow "\
+                          "printf __printf_chk fputs fputc putc putchar _IO_putc fprintf vfprintf write fwrite fcntl send syslog log_msg log_oom verbose schedlog fwrite_unlocked fputc_unlocked putc_unlocked putchar_unlocked";
 
+static inline void TraceCheck (char *Msg)
+{
+    printf("%s\r\n", Msg);
+    if (strncmp ("[C][CS]:", Msg, 8) != 0)
+    {
+        return;
+    }
+
+    char *CallFunc = Msg + 8;
+    if (strstr (SinksDebug, CallFunc) != NULL)
+    {
+        printf ("@@@@ Reach sink point: %s \r\n", CallFunc);
+    }
+}
 
 void TRC_trace0 (ULONG EventId, const char* Msg)
 {
     if (gFullTraceFlag)
     {
-        printf("%s\r\n", Msg);
+        TraceCheck ((char *)Msg);
         return;
     }
 
@@ -53,7 +71,7 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
         va_start(ap, Format);
         (void)vsnprintf (Msg, sizeof(Msg), Format, ap);
         va_end(ap);
-        printf("%s\r\n", Msg);
+        TraceCheck (Msg);
         return;
     }
 
