@@ -19,6 +19,8 @@ typedef struct tag_Plugin
     char Name[64];
     char Init[64];
     char Module[64];
+    char PgData[64];
+    
     DWORD Active;
     DWORD DataHandle;
 

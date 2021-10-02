@@ -12,7 +12,7 @@ export LDFLAGS = -fPIC -shared -lDynAnalyze
 
 export INCLUDE = $(SDI_PATH)/DynAnalyzer/include
 
-SUBDIRS = debuf-overflow  decfi  dedivzero  deincmp  deinject  deint-overflow  deleak
+SUBDIRS = debuf-overflow  decfi  dedivzero  deincmp  deinject  deint-overflow  deleak detypeerr
 
 $(SUBDIRS):init
 	for subdir in $(SUBDIRS);\
