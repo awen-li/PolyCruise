@@ -1,0 +1,17 @@
+setup.py 
+build.py 
+setup-lda.py
+setup-instm.py
+pavement.py
+versioneer.py
+version.py
+conftest.py
+runtests.py
+test_warnings.py
+test_typing.py
+numpy_support.py
+_pytesttester.py
+-Dnumpy/doc
+-Dnumpy/numpy/distutils
+-Dnumpy/numpy/compat
+-Dnumpy/tools

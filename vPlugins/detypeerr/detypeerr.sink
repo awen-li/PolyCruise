@@ -2,6 +2,8 @@ DemoAdd._add
 Session.send
 str.decode
 str.encode
+unicode.decode
+unicode.encode
 
 
 

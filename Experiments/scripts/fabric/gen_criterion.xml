@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<criterions>
+  <criterion>
+    <function>parse</function>
+    <return>True</return>
+    <local>11111111</local>
+  </criterion>
+</criterions>
