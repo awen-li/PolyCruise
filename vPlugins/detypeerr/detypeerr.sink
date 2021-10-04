@@ -1,5 +1,7 @@
 DemoAdd._add
-
+Session.send
+str.decode
+str.encode
 
 
 
