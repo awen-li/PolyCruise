@@ -29,22 +29,14 @@ static inline unsigned PathCallValid (char *Call)
     return FALSE;
 }
 
-static inline void SetInstCall (Plugin *Plg, unsigned Falg)
-{
-    TypeErrSt *Ts = (TypeErrSt *)Plg->PgData;
-    Ts->InstanceCall = Falg;
-
-    printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ SetInstCall !!!!!! \r\n");
-
-    return;
-}
-
 static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 {
     if (R_EID2ETY(DstNode->EventId) !=  EVENT_CALL)
     {
         return FALSE;        
     }
+
+    TypeErrSt *Ts = (TypeErrSt *)Plg->PgData;
 
     EventMsg *EM   = &DstNode->EMsg;
     LNode *ValNode = EM->Def.Header;
@@ -59,7 +51,7 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 
         if (PathCallValid (Val->Name) == TRUE)
         {
-            SetInstCall (Plg, TRUE);
+            Ts->InstanceCall = TRUE;
             ValNode = ValNode->Nxt;
             continue;
         }
@@ -69,8 +61,9 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
         while (SinkNode != NULL)
         {
             char *Function = (char *)SinkNode->Data;
-            if (strcmp (Function, Val->Name) == 0)
+            if (strcmp (Function, Val->Name) == 0 && Ts->InstanceCall == TRUE)
             {
+                Ts->InstanceCall = FALSE;
                 return TRUE;
             }
 
