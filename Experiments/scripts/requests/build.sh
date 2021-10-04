@@ -80,11 +80,52 @@ fi
 # 4. generate file maping
 GenMap $SCRIPTS $CASE_PATH $target
 
+GenOneTestCases ()
+{
+	Case=$1
+	
+	rm -rf case_list.txt
+	export case_dump=case_list.txt
+
+	python -m pytest $Case
+	unset case_dump
+
+}
+
 # 5. run the cases
 Analyze ()
 {
-	cd $CASE_PATH
-	python -m pyinspect -C ./gen_criterion.xml -t tests/test_requests.py &
+    GenOneTestCases tests/test_requests.py
+    
+	Type=$1
+	Index=1
+	CaseList=`cat case_list.txt`
+	for curcase in $CaseList
+	do
+		if [ -n $INDEX ] && [ $Index != $INDEX ]; then
+			let Index++
+			continue
+		fi	
+	    DelShareMem
+	    difaEngine &
+	    StartTime=`date '+%s'`
+		echo "[$Index].......................run case $curcase......................."
+		export case_name=$curcase
+		
+		if [ "$Type" == "ORG" ]; then
+			python setup.py test
+		else
+			python -m pyinspect -C ./gen_criterion.xml -t setup.py test 
+		fi
+	
+		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+		
+		let Index++
+		export INDEX=$Index
+	done
 }
 
 Analyze
