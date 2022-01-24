@@ -19,7 +19,8 @@ After cloning the code from GitHub, using the following command to build the who
 
 ```cd PolyCruise && ./build.sh```
 
-# 3. Usage
+## 3. Usage
+#### 3.1 Use PolyCruise on PyCBench
 To evaluation our approach, we developed a micro-benchmark called ![PyCBench](https://github.com/Daybreak2019/LDI/tree/master/PyCBench).
 
 To test PolyCruise on all the micro-benchmarks, please execute the following commands:
@@ -27,6 +28,7 @@ To test PolyCruise on all the micro-benchmarks, please execute the following com
 cd PolyCruise/PyCBench && ./RunTest.sh
 ```
 
+#### 3.2 Use PolyCruise on Real-world Python-C programs
 
 
         
