@@ -1,21 +1,31 @@
-# PolyCruise: an extensible framework for dynamic data flow analysis across language.
+# PolyCruise: A Cross-Language Dynamic Information Flow Analysis.
 
 
 # Introduction
-PolyCruise is an extensible dynamic analysis framework targeting multilingual programs.  In the framework, we develop a novel approach called language-independent symbolic  dependence analysis (SDA) to guide the instrumentation of multilingual components. Moreover, the framework supports online dynamic information flow analysis across  language  boundaries and provides C plug-in support capabilities for vulnerability detection.
+We present PolyCruise, a framework that enables holistic dynamic information flow analysis (DIFA) across heterogeneous languages hence security applications empowered by DIFA (e.g., vulnerability discovery) for multilingual software. PolyCruise combines a light language-specific analysis that computes symbolic dependencies in each language unit with a language-agnostic online data flow analysis guided by those dependencies, in a way that overcomes language heterogeneity.
 
 # Installation
-## requiremtns
-Our framework is tested on Ubuntu18.04, LLVM7.0 and Python3.7.
-before build the framework, corresponding versions of LLVM and Python need to be installed.
+## 1. requiremtns
+#### 1.1 Setup the environment manually
+PolyCruise is tested on Ubuntu18.04, LLVM7.0 and Python3.7 (and Python3-dev).
+An avaiable package to install LLVM7.0 with support of gold plugin can be found [here](https://github.com/Daybreak2019/PCA/tree/master/llvm7).
 
-## build the framework
-cd PolyCruise && ./build.sh
+#### 1.2 Reuse the environment from docker image
+We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready.
+Please use the command "docker pull daybreak2019/polycruise:1.0" to pull the image to local storage.
 
-# Usage
+## 2. build PolyCruise
+After cloning the code from GitHub, using the following command to build the whole project.
+
+```cd PolyCruise && ./build.sh```
+
+# 3. Usage
 To evaluation our approach, we developed a micro-benchmark called ![PyCBench](https://github.com/Daybreak2019/LDI/tree/master/PyCBench).
+
 To test PolyCruise on all the micro-benchmarks, please execute the following commands:
-cd PyCBench && ./RunTest.sh
+```
+cd PolyCruise/PyCBench && ./RunTest.sh
+```
 
 
 
