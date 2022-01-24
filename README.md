@@ -12,7 +12,7 @@ An avaiable package to install LLVM7.0 with support of gold plugin can be found 
 
 #### 1.2 Reuse the environment from docker image
 We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready.
-Please use the command "docker pull daybreak2019/polycruise:1.0" to pull the image to local storage.
+Please use the command ```docker pull daybreak2019/polycruise:1.0``` to pull the image to local storage.
 
 ## 2. build PolyCruise
 After cloning the code from GitHub, using the following command to build the whole project.
