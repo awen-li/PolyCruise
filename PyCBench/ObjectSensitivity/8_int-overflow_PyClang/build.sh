@@ -19,7 +19,7 @@ echo "@@@@@@@@@ C component.........."
 cd $CASE_PATH/CPython
 rm -rf build
 python setup-lda.py build
-sda -file build/lib.linux-x86_64-3.7/DemoTrace.cpython-37m-x86_64-linux-gnu.so.0.0.preopt.bc -criterion ../criterion.xml
+sda -file `find build/ -name "*preopt.bc"` -criterion ../criterion.xml
 rm -rf build
 python setup-instm.py build
 cd $CASE_PATH
@@ -34,6 +34,6 @@ python -m pyinspect -E $CASE/ExpList -c -d $CASE
 echo "@@@@@@@@@ runing the case.........."
 export BIN_OP="8"
 cd Temp/$CASE/
-cp CPython/build/lib.linux-x86_64-3.7/DemoTrace.cpython-37m-x86_64-linux-gnu.so Python/PyDemo.so
+cp `find CPython/ -name "*linux-gnu.so"` Python/PyDemo.so
 python -m pyinspect -C criterion.xml -i Python -t Python/Demo.py
 

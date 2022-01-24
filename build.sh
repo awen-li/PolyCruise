@@ -87,7 +87,7 @@ echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
-PYTHON_PATH=/usr/lib/python$PyVersion/
+PYTHON_PATH=/usr/lib/python$PyVersion
 if [ -d "$PYTHON_PATH" ]; then
     cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH
 fi
@@ -96,9 +96,14 @@ Anaconda=`which anaconda`
 if [ -n "$Anaconda" ]; then
     PYTHON_PATH=/usr/lib/anaconda3/lib/python$PyVersion
     if [ -d "$PYTHON_PATH" ]; then
-    	cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH
+    	cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH/
     fi
 fi
+#Python sys.path set
+PyPath=`python -c 'import sys; print(sys.path)'`
+export PYTHONPATH=$PYTHON_PATH/site-packages:$PYTHONPATH
+echo "@@@@ Original PY_path is $PyPath  ----> $PYTHONPATH" 
+
 
  
 #7. install plugins

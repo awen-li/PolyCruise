@@ -7,7 +7,7 @@ int BinOp (int Oper)
 {
     int Value = Oper;
 
-    int New = strlen (Buffer)/Oper;
+    int New = strlen (Buffer)/Value;
 
     
     return New;

@@ -15,6 +15,6 @@ setup(
     description="PyInspect is a dynamic analysis tool accross Python and C.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/Daybreak2019/LDI",
+    url="https://github.com/Daybreak2019/PolyCruise.git",
     packages=['PyInspect']
 )
