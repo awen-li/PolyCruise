@@ -82,8 +82,41 @@ To test PolyCruise on all the micro-benchmarks, please execute the following com
 cd PolyCruise/PyCBench && ./RunTest.sh
 ```
 
-#### 3.3 Use PolyCruise on Real-world Python-C programs
+-[Example-information leakage](https://github.com/Daybreak2019/PolyCruise/tree/master/PyCBench/DynamicInvocation/1_leak_PyClang):
+```
+[OUTPUT]:
+@@@@@@@@@@@@@@@@@@@[66][deleak]Reach sink,  EventId = 5 -- <Function:Getpasswd,  Inst:21> 
+                [G (7FFFF7E700E3,0)] [P (E0AB40,0)] 
+                 ---->case: deleak Getpasswd 21 
+===> Add source [9:2]2540004000000007 -> 0x7ffff7f44cd0 
+Infor:  show->pwdtesthello
 
+@@@@@@@@@@@@@@@@@@@[66][deleak]Reach sink,  EventId = 5 -- <Function:Trace,  Inst:21> 
+                [U (v8,0)] [U (New,0)] 
+                 ---->case: deleak Trace 21 
+----> __exit__................, TracedStmts =  535
+@@@@@ Ready to exit, total memory: 1166724 (K)!
+Run successful.....
+entry CheckCases ... CaseResults
+LoadCases -> deleak:Getpasswd:21
+LoadCases -> deleak:Trace:21
+@@@@CASE-TEST PASS -> deleak-Getpasswd:21
+@@@@CASE-TEST PASS -> deleak-Trace:21
+@@@@@ GenSsPath -> Souece[2], Sink[2]......
+[1 ][deleak] Path: [F (Getpasswd,0)] [P (E0AB40,0)] 
+                [C]PwdInfo -> 
+                [C]Pass -> 
+                [C]Getpasswd: [F (printf,0)] 
+[2 ][deleak] Path: [F (Demo.__init__,0)] [A (value,0)] [U (v2,0)] 
+                [PY]DemoTr -> 
+                [PY]Demo.__init__ -> 
+                [PY]Trace: [F (print,0)] 
+```
+
+
+## 4. Vulnerabilities detected on real-world programs
+
+Refer the [Link](https://github.com/baltsers/polycruise) for details.
 
         
 
