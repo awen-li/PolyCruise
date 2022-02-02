@@ -55,6 +55,11 @@ GenMap ()
     else
         echo "...................start generating Pymap.ini ............................."
     	if [ ! -n "$INSTALL_PATH" ]; then
+    	    Dirty=`find /usr/lib/python3.7/site-packages/ -name "$target" | grep dirty`
+            if [ -n "$Dirty" ]; then
+                rm -rf $Dirty
+            fi
+                
     		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
@@ -109,6 +114,10 @@ fi
 export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
 
 if [ "$Action" == "build" ]; then
+    if [ ! -d "$target" ]; then
+    	git clone https://github.com/Daybreak2019/cvxopt.git
+    fi
+    
 	rm -rf $CASE_PATH
 	if [ ! -f "$target/function_def.pkl" ]; then
 		python -m pyinspect -g $target

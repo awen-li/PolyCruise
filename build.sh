@@ -15,7 +15,7 @@ echo "Environment is checking ok!"
 }
 
 EnvVerify
-export SDI_PATH=`pwd`
+export POLYC_PATH=`pwd`
 
 #0. temp data directory
 export DATA_DIR="/tmp/difg"
@@ -24,7 +24,7 @@ mkdir -p $DATA_DIR
 #1. build CComponent
 echo ""
 echo "@@@@@@@@@@@@@@@ build CComponent:SDA @@@@@@@@@@@@@@@"
-cd $SDI_PATH/CComponent/SDA
+cd $POLYC_PATH/CComponent/SDA
 ./build.sh
 cp build/bin/sda /usr/bin
 if [ -d "~/.local/bin" ]; then
@@ -36,7 +36,7 @@ fi
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build CComponent:SDIpass @@@@@@@@@@@@@@@"
-SDI=$SDI_PATH/CComponent/SDIpass
+SDI=$POLYC_PATH/CComponent/SDIpass
 SDIpass=$LLVM_PATH/llvm-7.0.0.src/lib/Transforms/SDIpass
 if [ ! -d $SDIpass ]
 then
@@ -53,7 +53,7 @@ cp $LLVM_PATH/build/lib/llvmSDIpass.so /usr/lib/
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build DynAnalyzer @@@@@@@@@@@@@@@"
-cd $SDI_PATH/DynAnalyzer
+cd $POLYC_PATH/DynAnalyzer
 make -f makefile.so clean && make -f makefile.so CC=clang
 make -f makefile.so clean && make -f makefile.so CC=clang++
 cp libDynA* /usr/lib/
@@ -64,14 +64,14 @@ if [ -d "~/.local/bin" ]; then
 	cp difaEngine ~/.local/bin/
 fi
 
-cd $SDI_PATH
+cd $POLYC_PATH
 cp Experiments/function_sds.xml $DATA_DIR/
 
 #4. buld PyComponent:PyTrace
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build PyComponent:PyTrace @@@@@@@@@@@@@@@"
-cd $SDI_PATH/PyComponent/PyTrace
+cd $POLYC_PATH/PyComponent/PyTrace
 ./makePyTrace.sh
 
 
@@ -79,7 +79,7 @@ cd $SDI_PATH/PyComponent/PyTrace
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build PyComponent:PyInspect @@@@@@@@@@@@@@@"
-cd $SDI_PATH/PyComponent
+cd $POLYC_PATH/PyComponent
 pip3 install .
 
 #6. install pyinspect tool
@@ -89,14 +89,14 @@ echo "@@@@@@@@@@@@@@@ Install pyinspect tool @@@@@@@@@@@@@@@"
 PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
 PYTHON_PATH=/usr/lib/python$PyVersion
 if [ -d "$PYTHON_PATH" ]; then
-    cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH
+    cp $POLYC_PATH/PyComponent/pyinspect.py $PYTHON_PATH
 fi
 # anaconda environment
 Anaconda=`which anaconda`
 if [ -n "$Anaconda" ]; then
     PYTHON_PATH=/usr/lib/anaconda3/lib/python$PyVersion
     if [ -d "$PYTHON_PATH" ]; then
-    	cp $SDI_PATH/PyComponent/pyinspect.py $PYTHON_PATH/
+    	cp $POLYC_PATH/PyComponent/pyinspect.py $PYTHON_PATH/
     fi
 fi
 #Python sys.path set
@@ -110,7 +110,7 @@ echo "@@@@ Original PY_path is $PyPath  ----> $PYTHONPATH"
 echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ Install vPlugins @@@@@@@@@@@@@@@"
-vPlugins=$SDI_PATH/vPlugins
+vPlugins=$POLYC_PATH/vPlugins
 cd $vPlugins
 make clean && make
 cp plugins.ini $DATA_DIR/
