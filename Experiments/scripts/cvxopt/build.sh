@@ -27,7 +27,7 @@ PythonInstallPath ()
 	IsAnaconda=`echo $PyBin | grep anaconda`
 	
 	PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
-	if [ -n "$IsAnaconda" ]; then
+	if [ ! -n "$IsAnaconda" ]; then
 	    echo "/usr/lib/python$PyVersion"
 	else
 	    echo "/usr/lib/anaconda3/lib/python$PyVersion"
