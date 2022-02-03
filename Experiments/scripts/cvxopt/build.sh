@@ -21,6 +21,19 @@ Wait ()
 	sleep 1
 }
 
+PythonInstallPath ()
+{
+	PyBin=`which python`
+	IsAnaconda=`echo $PyBin | grep anaconda`
+	
+	PyVersion=`python -c 'import platform; major, minor, patch = platform.python_version_tuple(); print(str(major)+"."+str(minor))'`
+	if [ -n "$IsAnaconda" ]; then
+	    echo "/usr/lib/python$PyVersion"
+	else
+	    echo "/usr/lib/anaconda3/lib/python$PyVersion"
+	fi
+}
+
 SdaAnalysis ()
 {
 	rm -rf /tmp/difg/LdaBin*
@@ -54,13 +67,14 @@ GenMap ()
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
+        PythonPath=$(PythonInstallPath)
     	if [ ! -n "$INSTALL_PATH" ]; then
-    	    Dirty=`find /usr/lib/python3.7/site-packages/ -name "$target" | grep dirty`
+    	    Dirty=`find $PythonPath/site-packages/ -name "$target" | grep dirty`
             if [ -n "$Dirty" ]; then
                 rm -rf $Dirty
             fi
                 
-    		INSTALL_PATH=`find /usr/lib/anaconda3/lib/python3.7/ -name $target`
+    		INSTALL_PATH=`find $PythonPath/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
     			exit 0
