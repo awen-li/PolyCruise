@@ -10,7 +10,7 @@ export LD = clang
 export CFLAGS  = -fPIC -g
 export LDFLAGS = -fPIC -shared -lDynAnalyze
 
-export INCLUDE = $(SDI_PATH)/DynAnalyzer/include
+export INCLUDE = $(POLYC_PATH)/DynAnalyzer/include
 
 SUBDIRS = debuf-overflow  decfi  dedivzero  deincmp  deinject  deint-overflow  deleak detypeerr
 
