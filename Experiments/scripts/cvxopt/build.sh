@@ -42,7 +42,7 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
-		sda -file $bc -criterion ../../criterion.xml
+		sda -file $bc -criterion c_criterion.xml -guard=0
 	done
 }
 
@@ -84,27 +84,6 @@ GenMap ()
     fi
 
     return
-}
-
-GenAllTestCases ()
-{
-	CaseDir=$1
-	
-	export case_dump=case_list.txt
-	python -m unittest discover -s $CaseDir
-	unset case_dump
-}
-
-GenOneTestCases ()
-{
-	Case=$1
-	
-	rm -rf case_list.txt
-	export case_dump=case_list.txt
-
-	python -m unittest $Case
-	unset case_dump
-
 }
 
 target=cvxopt

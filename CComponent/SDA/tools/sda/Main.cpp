@@ -35,11 +35,15 @@ InputFilename("file", cl::desc("<input bitcode file>"), cl::init("-"), cl::value
 static cl::opt<std::string>
 InputCriterion("criterion", cl::desc("<definition of criterion in xml >"), cl::init("-"), cl::value_desc("criterion"));
 
-
 static cl::opt<std::string>
 PreProcess("pre", cl::desc("<preprocess before analysis >"), cl::init("0"), cl::value_desc("switch"));
 
+static cl::opt<std::string>
+GuardAll("guard", cl::desc("<try to compute SDA to all APIs in the target>"), cl::init("1"), cl::value_desc("switch"));
+
+
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
+void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <sring> *EntryAPIs);
 VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS);
 VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */);
 
@@ -97,24 +101,31 @@ VOID RunPasses (vector<string> &ModulePathVec)
     Stat::StartTime ("LoadModule");
     ModuleManage ModuleMng (ModulePathVec);
     Stat::EndTime ("LoadModules");
- 
 
     StField Sf;
     Sf.AddStFields ("struct.bz_stream", 0);
     Sf.AddStFields ("struct.bz_stream", 8);
     Sf.AddStFields ("struct.EState", 0);
 
-    set <Function*> Entry;
-    GetLibEntry (&ModuleMng, &Entry);
-
     set <Source *> SS;
+    set <string> EntryAPIs;
     if (InputCriterion != "")
     {
         std::string Criterion = InputCriterion;
-        LoadCriterion ((char*)Criterion.c_str(), &ModuleMng, &SS);
+        LoadCriterion ((char*)Criterion.c_str(), &ModuleMng, &SS, &EntryAPIs);
     }
-    
+
     Sda sda (&ModuleMng, &SS, &Sf);
+    set <Function*> Entry;
+    if (GuardAll = "1")
+    {
+        GetLibEntry (&ModuleMng, &Entry);
+    }
+    else
+    {
+        GetAPIEntry (&ModuleMng, &Entry, &EntryAPIs);
+    }
+
     for (auto It = Entry.begin (); It != Entry.end (); It++)
     {
         sda.AddEntry (*It);

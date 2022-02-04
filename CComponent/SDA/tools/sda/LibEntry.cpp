@@ -41,7 +41,7 @@ static inline VOID TranslateSS (ModuleManage *Mm, set <string> *SStr, set <Sourc
         <return>True</return> 
         <local>None</local> 
    </criterion> */
-VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
+VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS, set <string> *EntryAPIs)
 {
 
     FILE *fp = fopen(XmlDoc, "r");
@@ -54,7 +54,6 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
     fclose(fp);
 
     DWORD No = 0;
-    set <string> SStr;
     mxml_node_t* XmlNode = mxmlFindElement(tree, tree, "criterion", NULL, NULL, MXML_DESCEND);
     while (XmlNode != NULL)
     {     
@@ -68,12 +67,12 @@ VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS)
         XmlNode = mxmlFindElement(XmlNode, tree, "criterion", NULL, NULL, MXML_DESCEND);
         No++;
 
-        SStr.insert (FuncName);
+        EntryAPIs->insert (FuncName);
     }
 
     mxmlDelete(tree);
 
-    TranslateSS (Mm, &SStr, SS);
+    TranslateSS (Mm, EntryAPIs, SS);
     printf ("LoadCriterion %s success [%u/%u]\r\n", XmlDoc, (unsigned)SS->size(), No);
     
     return;
@@ -200,7 +199,6 @@ static inline unsigned GetCalledFunc (ModuleManage *Mm, set <Function*> *CalledF
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
 {
     set <Function*> CalledFunc;
-    set <Function*> DeclFunc;
 
     unsigned FuncNum = GetCalledFunc (Mm, &CalledFunc);
     for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
@@ -229,4 +227,29 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
     printf ("GetLibEntry: %u / %u \r\n", (DWORD)Entry->size (), FuncNum);
     return;
 }
+
+void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <sring> *EntryAPIs)
+{
+    for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
+    {
+        Function *Func  = *It;
+        if (Func->isDeclaration() || Func->isIntrinsic())
+        {
+            continue;
+        }
+
+        const char *FuncName = Func->getName().data ();
+        if (EntryAPIs->find (FuncName) == EntryAPIs->end ())
+        {
+            continue;
+        }
+       
+        Entry->insert (Func);
+        errs()<<"Add entry function: "<<Func->getName ()<<"\r\n";
+    }
+    printf ("GetLibEntry: %u / %u \r\n", (DWORD)Entry->size (), FuncNum);
+    return;
+
+}
+
 
