@@ -68,12 +68,7 @@ GenMap ()
     else
         echo "...................start generating Pymap.ini ............................."
         PythonPath=$(PythonInstallPath)
-    	if [ ! -n "$INSTALL_PATH" ]; then
-    	    Dirty=`find $PythonPath/site-packages/ -name "$target" | grep dirty`
-            if [ -n "$Dirty" ]; then
-                rm -rf $Dirty
-            fi
-                
+    	if [ ! -n "$INSTALL_PATH" ]; then              
     		INSTALL_PATH=`find $PythonPath/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
     			echo "!!!!!!!!INSTALL_PATH of $target is NULL, need to specify a install path............."
