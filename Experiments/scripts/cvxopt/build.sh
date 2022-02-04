@@ -153,34 +153,33 @@ if [ "$Action" == "build" ]; then
 	rm -rf build
 	rm -rf `find $PythonPath -name $target`
 	
-	python setup-instm.py install	
+	python setup-instm.py install
+	#rename
+        TargetPath=`find $PythonPath -name $target`
+        cp -rf $TargetPath $PythonPath/site-packages/$target
+        rm -rf $TargetPath
+        	
 	GenMap $SCRIPTS $CASE_PATH $target
 fi
 
 # 5. run the cases
 Analyze ()
 {
-	Index=1
-	if [ ! -n "$INDEX" ]; then
-		export INDEX=$Index
-	fi
-	
-	CaseDir=tests
-	ALL_TESTS=`find $CaseDir -name "*tt.py"`
-	
-	for Case in $ALL_TESTS
-	do
-	    StartTime=`date '+%s'`
-	    
-	    DelShareMem
-		difaEngine &
-		python -m pyinspect -C py_criterion.xml -t $Case
-		
-		Wait difaEngine
-		EndTime=`date '+%s'`
-		TimeCost=`expr $EndTime - $StartTime`
-		echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
-	done
+    ALL_TESTS=`find $CASE_PATH -name "*tt.py"`
+
+    for Case in $ALL_TESTS
+    do
+        StartTime=`date '+%s'`
+            
+        DelShareMem
+        difaEngine &
+        python -m pyinspect -C py_criterion.xml -t $Case
+
+        Wait difaEngine
+        EndTime=`date '+%s'`
+        TimeCost=`expr $EndTime - $StartTime`
+        echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+    done
 }
 
 Analyze
