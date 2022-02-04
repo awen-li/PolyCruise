@@ -43,8 +43,8 @@ GuardAll("guard", cl::desc("<try to compute SDA to all APIs in the target>"), cl
 
 
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
-void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <sring> *EntryAPIs);
-VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS);
+void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <string> *EntryAPIs);
+VOID LoadCriterion (char *XmlDoc, ModuleManage *Mm, set <Source*> *SS, set <string> *EntryAPIs);
 VOID LoadFuncSds (char *XmlDoc /* /tmp/difg/function_sds.xml */);
 
 
@@ -117,13 +117,14 @@ VOID RunPasses (vector<string> &ModulePathVec)
 
     Sda sda (&ModuleMng, &SS, &Sf);
     set <Function*> Entry;
-    if (GuardAll = "1")
+    if (GuardAll == "1")
     {
         GetLibEntry (&ModuleMng, &Entry);
     }
     else
     {
         GetAPIEntry (&ModuleMng, &Entry, &EntryAPIs);
+        sda.SetGuard(0);
     }
 
     for (auto It = Entry.begin (); It != Entry.end (); It++)

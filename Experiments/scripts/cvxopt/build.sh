@@ -124,7 +124,9 @@ cd $CASE_PATH
 if [ "$Action" == "build" ]; then
 	rm -rf build
 	python setup-sda.py build
+	export DIS_GLBTAINT=1
 	SdaAnalysis
+	unset DIS_GLBTAINT
 fi
 
 # 3. build again and install the instrumented software

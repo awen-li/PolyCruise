@@ -228,7 +228,7 @@ void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry)
     return;
 }
 
-void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <sring> *EntryAPIs)
+void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <string> *EntryAPIs)
 {
     for (auto It = Mm->func_begin (); It != Mm->func_end (); It++)
     {
@@ -247,7 +247,7 @@ void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <sring> *EntryAP
         Entry->insert (Func);
         errs()<<"Add entry function: "<<Func->getName ()<<"\r\n";
     }
-    printf ("GetLibEntry: %u / %u \r\n", (DWORD)Entry->size (), FuncNum);
+    printf ("GetLibEntry: %u \r\n", (DWORD)Entry->size ());
     return;
 
 }

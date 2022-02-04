@@ -283,10 +283,14 @@ private:
 
     unsigned m_FuncExeNum;
     unsigned m_TotalInstNum;
+
+    unsigned m_GuardAll;
 public:
     
     Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
     {
+        m_GuardAll   = 1; /* default */
+        
         m_FuncExeNum = 0;
         m_TotalInstNum = 0;
         
@@ -318,6 +322,12 @@ public:
             delete ExtLib;
             ExtLib = NULL;
         }
+    }
+
+    void SetGuard (unsigned GuardAll)
+    {
+        m_GuardAll = GuardAll;
+        return;
     }
 
     sii_iterator begin ()
@@ -1127,6 +1137,11 @@ private:
             
             if (TaintedBits == 0)
             {
+                if (m_GuardAll == 0)
+                {
+                    continue;
+                }
+                
                 EqualProcess (&LI);
                 
                 if (!LI.IsCall ())
