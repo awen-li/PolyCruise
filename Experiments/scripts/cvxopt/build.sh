@@ -110,7 +110,10 @@ GenOneTestCases ()
 target=cvxopt
 Action=$1
 
-## cvxopt dependence
+cd ../../
+ROOT=`pwd`
+
+####### cvxopt dependence #######
 if [ ! -d "$ROOT/SuiteSparse" ]; then
     wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
     tar -xf SuiteSparse-4.5.3.tar.gz
@@ -119,8 +122,6 @@ export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
 export PythonPath=$(PythonInstallPath)
 
 # 1. build and translate python modules
-cd ../../
-ROOT=`pwd`
 CASE_PATH=$ROOT/Temp/$target
 SCRIPTS=$ROOT/scripts/$target
 
