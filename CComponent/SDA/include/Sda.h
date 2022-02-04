@@ -464,6 +464,11 @@ private:
 
     inline Value* IsInGlvSet (Value *Val)
     {
+        if (getenv ("DIS_GLBTAINT") != NULL)
+        {
+            return NULL;
+        }
+        
         auto It = m_GlvAlias.find (Val);
         if (It != m_GlvAlias.end ())
         {
@@ -477,6 +482,11 @@ private:
 
     inline void InitGlv ()
     {
+        if (getenv ("DIS_GLBTAINT") != NULL)
+        {
+            return;
+        }
+        
         errs ()<<"@@@@ Start InitGlv....... \r\n";
     
         /* global variables */
@@ -542,6 +552,11 @@ private:
 
     inline void AddGlvUseEntry (Value *Glv)
     {
+        if (getenv ("DIS_GLBTAINT") != NULL)
+        {
+            return;
+        }
+        
         auto GlvIt = m_GlvUse2Entry.find (Glv);
         if (GlvIt == m_GlvUse2Entry.end ())
         {
