@@ -67,7 +67,6 @@ GenMap ()
     	cp $pyMap $CASE_PATH
     else
         echo "...................start generating Pymap.ini ............................."
-        PythonPath=$(PythonInstallPath)
     	if [ ! -n "$INSTALL_PATH" ]; then              
     		INSTALL_PATH=`find $PythonPath/ -name $target`
     		if [ ! -n "$INSTALL_PATH" ]; then
@@ -111,16 +110,19 @@ GenOneTestCases ()
 target=cvxopt
 Action=$1
 
-# 1. build and translate python modules
-cd ../../
-ROOT=`pwd`
-CASE_PATH=$ROOT/Temp/$target
-SCRIPTS=$ROOT/scripts/$target
+## cvxopt dependence
 if [ ! -d "$ROOT/SuiteSparse" ]; then
     wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
     tar -xf SuiteSparse-4.5.3.tar.gz
 fi
 export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
+export PythonPath=$(PythonInstallPath)
+
+# 1. build and translate python modules
+cd ../../
+ROOT=`pwd`
+CASE_PATH=$ROOT/Temp/$target
+SCRIPTS=$ROOT/scripts/$target
 
 if [ "$Action" == "build" ]; then
     if [ ! -d "$target" ]; then
@@ -148,8 +150,9 @@ fi
 # 3. build again and install the instrumented software
 if [ "$Action" == "build" ]; then
 	rm -rf build
-	python setup-instm.py install
+	rm -rf `find $PythonPath -name $target`
 	
+	python setup-instm.py install	
 	GenMap $SCRIPTS $CASE_PATH $target
 fi
 
@@ -162,42 +165,20 @@ Analyze ()
 	fi
 	
 	CaseDir=tests
-	ALL_TESTS=`find $CaseDir -name "*.py"`
+	ALL_TESTS=`find $CaseDir -name "*tt.py"`
 	
 	for Case in $ALL_TESTS
 	do
-		if [ $Index != $INDEX ]; then
-			let Index++
-			continue
-		fi
+	    StartTime=`date '+%s'`
+	    
+	    DelShareMem
+		difaEngine &
+		python -m pyinspect -C py_criterion.xml -t $Case
 		
-		echo
-		echo "[$Index].......................run case $Case......................."
-		
-		GenOneTestCases $Case
-		CaseList=`cat case_list.txt`
-        
-		for curcase in $CaseList
-		do
-
-		    DelShareMem
-		    difaEngine &
-		    StartTime=`date '+%s'`
-			
-			echo "              => Execute sub-case: $curcase."
-			export case_name=$curcase
-			python -m pyinspect -C ./gen_criterion.xml -t $Case &
-			unset case_name
-		
-			Wait difaEngine
-			EndTime=`date '+%s'`
-			TimeCost=`expr $EndTime - $StartTime`
-			echo "[$Index]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
-		done
-		
-		let Index++
-		export INDEX=$Index
-		#exit 0
+		Wait difaEngine
+		EndTime=`date '+%s'`
+		TimeCost=`expr $EndTime - $StartTime`
+		echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
 	done
 }
 
