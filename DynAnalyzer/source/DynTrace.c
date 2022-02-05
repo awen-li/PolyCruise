@@ -34,11 +34,28 @@ static inline void TraceCheck (char *Msg)
     }
 }
 
+static int g_TraceSt = FALSE;
+
+void TRC_Start ()
+{
+    g_TraceSt = TRUE;
+}
+
+void TRC_Stop ()
+{
+    g_TraceSt = FALSE;
+}
+
 void TRC_trace0 (ULONG EventId, const char* Msg)
 {
     if (gFullTraceFlag)
     {
         TraceCheck ((char *)Msg);
+        return;
+    }
+
+    if (g_TraceSt == FALSE)
+    {
         return;
     }
 
@@ -75,6 +92,11 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
         return;
     }
 
+    if (g_TraceSt == FALSE)
+    {
+        return;
+    }
+
     QNode *Node = InQueue ();
     if (Node == NULL)
     {
@@ -101,6 +123,11 @@ void TRC_trace (ULONG EventId, const char* Format, ...)
 void TRC_thread (ULONG EventId, char* ThreadEntry, ULONG *ThrId,  char *ThrPara)
 {
 	va_list ap;
+
+	if (g_TraceSt == FALSE)
+    {
+        return;
+    }
 	
 	QNode *Node = InQueue ();
     if (Node == NULL)

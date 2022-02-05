@@ -99,6 +99,7 @@ if [ -n "$Anaconda" ]; then
     	cp $POLYC_PATH/PyComponent/pyinspect.py $PYTHON_PATH/
     fi
 fi
+
 #Python sys.path set
 PyPath=`python -c 'import sys; print(sys.path)'`
 export PYTHONPATH=$PYTHON_PATH/site-packages:$PYTHONPATH

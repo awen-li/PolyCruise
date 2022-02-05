@@ -40,14 +40,15 @@ static PyObject *PyTrace(PyObject *self, PyObject *args)
 {
     unsigned long EventId;
     const char *Msg;
-	
+
     if (!PyArg_ParseTuple(args, "ks", &EventId, &Msg))
-	{
+    {
         return NULL;
-	}
-	
-	TRC_trace0 (EventId, Msg);
-	
+    }
+
+    TRC_Start ();
+    TRC_trace0 (EventId, Msg);
+
     Py_RETURN_NONE;
 }
 
@@ -71,12 +72,31 @@ static PyObject *PyTraceExit(PyObject *self, PyObject *args)
 }
 
 
+void TRC_Start ();
+static PyObject *PyTraceStart(PyObject *self, PyObject *args)
+{
+    TRC_Start ();
+	
+    Py_RETURN_NONE;
+}
+
+void TRC_Stop ();
+static PyObject *PyTraceStop(PyObject *self, PyObject *args)
+{
+    TRC_Stop ();
+	
+    Py_RETURN_NONE;
+}
+
+
 static PyMethodDef TraceMethods[] = 
 {
     {"PyTrace",     PyTrace,     METH_VARARGS, "Python tracing method."},
     {"PyEventTy",   PyEventTy,   METH_VARARGS, "Python Event type."},
     {"PyTraceInit", PyTraceInit, METH_VARARGS, "Python trace init."},
     {"PyTraceExit", PyTraceExit, METH_VARARGS, "Python trace exit."},
+    {"PyTraceStart", PyTraceStart, METH_VARARGS, "Python trace exit."},
+    {"PyTraceStop",  PyTraceStop, METH_VARARGS, "Python trace exit."},
     {NULL, NULL, 0, NULL} 
 };
 

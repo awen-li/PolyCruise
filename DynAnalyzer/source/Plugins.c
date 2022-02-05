@@ -447,8 +447,13 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList, DWORD ThreadId)
 
     /* Visit all sources, and get context of source: (incremental) */
     DWORD SrcNum = QueryDataNum (SrcHandle);
+    if (SrcNum == 0)
+    {
+        return;
+    }
+    
     Req.dwDataType = SrcHandle;
-    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n", SrcNum);
+    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg begin-> Source num: %u @@@@@@@@@@@@@@@@\r\n", SrcNum);
     while (SrcNum > 0)
     {
         Req.dwDataId = SrcNum;
@@ -461,7 +466,7 @@ VOID VisitDifg (DWORD SrcHandle, List* PluginList, DWORD ThreadId)
         SrcNum--;
     }
 
-    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg -> Source num: %u @@@@@@@@@@@@@@@@\r\n\r\n", SrcNum);
+    DEBUG ("@@@@@@@@@@@@@@@@ VisitDifg end-> Source num: %u @@@@@@@@@@@@@@@@\r\n\r\n", SrcNum);
     return;
 }
 

@@ -255,7 +255,7 @@ static inline DWORD IsNodeFm (DifNode *CurNode, DifNode *FmNode)
             Variable *UV = (Variable *)Use->Data;
             assert (UV != NULL);
 
-            DEBUG ("===> fm: %s, use: %s \r\n", UV->Name, DV->Name);
+            //DEBUG ("===> fm: %s, use: %s \r\n", UV->Name, DV->Name);
             if (strcmp (UV->Name, DV->Name) == 0)
             {
                 return TRUE;
@@ -287,7 +287,7 @@ static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
             continue;
         }
 
-        DEBUG ("\t===>Prenode definition: %s \r\n", DV->Name);
+        //DEBUG ("\t===>Prenode definition: %s \r\n", DV->Name);
 
         UseNo = 0;
         LNode *Use = CurNode->EMsg.Use.Header;
@@ -296,7 +296,7 @@ static inline DWORD IsNodeDD (DifNode *CurNode, DifNode *PreNode, UseMap *Um)
             Variable *UV = (Variable *)Use->Data;
             assert (UV != NULL);
 
-            DEBUG ("\t===>Curnode use: %s \r\n", UV->Name);
+            //DEBUG ("\t===>Curnode use: %s \r\n", UV->Name);
             if (Um->UseMap[UseNo] == 0 &&
                 strcmp (UV->Name, DV->Name) == 0)
             {
@@ -381,6 +381,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
     Node *FEntryNode = (Node *)(FDifG->Header->Data);
     Edge* E = AddDifEdge (DifGraph, CurNd, FEntryNode);
     SetEdgeType (E, EDGE_CF);
+    DEBUG ("AddInterCFGEdge: %lx  --->   %lx \r\n", (GN_2_DIFN(CurNd))->EventId, (GN_2_DIFN(FEntryNode))->EventId);
 
     DifNode* CallNode = GN_2_DIFN (CurNd);
     DWORD EdgeNum = 0;
@@ -402,6 +403,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
         {
             E = AddDifEdge (DifGraph, CurNd, RefNode);
             SetEdgeType (E, EDGE_DIF);
+            DEBUG(" AddInterDIFEdge1: %lx  --->   %lx \r\n", (GN_2_DIFN(CurNd))->EventId, (GN_2_DIFN(RefNode))->EventId);
             EdgeNum++;
         }
         
@@ -417,6 +419,7 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
             assert (CalleeNode->Data != NULL);
             E = AddDifEdge (DifGraph, CurNd, (Node *)CalleeNode->Data);
             SetEdgeType (E, EDGE_DIF);
+            DEBUG ("AddInterDIFEdge2: %lx  --->   %lx \r\n", (GN_2_DIFN(CurNd))->EventId, (GN_2_DIFN((Node *)CalleeNode->Data))->EventId);
         }
     }
     
@@ -428,7 +431,7 @@ static inline VOID AddRetEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
 {
     Edge* E = AddDifEdge (DifGraph, LastNd, CurNd);
     SetEdgeType (E, EDGE_RET);
-
+    DEBUG ("AddRetEdge: %lx  --->   %lx \r\n", (GN_2_DIFN(LastNd))->EventId, (GN_2_DIFN(CurNd))->EventId);
     return;
 }
 
@@ -466,7 +469,6 @@ static inline VOID UpdataAddrMaping (Variable *Def, Variable *Use)
     DbAck Ack;
 
     ULONG Base = GetBaseAddr (Use);
-    DEBUG ("\t--> Base %lX\r\n", Base);
 
     Req.dwDataType = DifA.AddrMapHandle;
     Req.dwKeyLen   = sizeof (ULONG);
@@ -481,7 +483,7 @@ static inline VOID UpdataAddrMaping (Variable *Def, Variable *Use)
     //*NewBase = strtol(Use->Name, NULL, 16);
     *NewBase = Base; /* field insensitive */
 
-    DEBUG ("Maping: %lX  to %lX\r\n", Gep, *NewBase);
+    //DEBUG ("Base %lX, Maping: %lX  to %lX\r\n", Base, Gep, *NewBase);
     
     return;
 }
@@ -672,7 +674,7 @@ static inline Node* IsGlvAccess (Variable *Glv)
     {
         return NULL;
     }
-    DEBUG ("USE global variable: %s - %lx \r\n", Glv->Name, GlvAddr);
+    //DEBUG ("USE global variable: %s - %lx \r\n", Glv->Name, GlvAddr);
 
     Req.dwDataType = DifA.GlvHandle;
     Req.dwKeyLen   = sizeof (ULONG);
@@ -699,13 +701,13 @@ static inline VOID AddGlvAccessEdge (Graph *DifGraph, Node *CurNd)
         assert (Gv != NULL);
         
         Node *GlvcNd = IsGlvAccess (Gv);
-        DEBUG ("AddGlvAccessEdge ----  %p -> %p \r\n", GlvcNd, CurNd);
         if (GlvcNd == NULL || (GlvcNd == CurNd))
         {
             UseHdr = UseHdr->Nxt;
             continue;
         }
 
+        DEBUG ("AddGlvAccessEdge ----  %p -> %p \r\n", GlvcNd, CurNd);
         Edge* E = AddDifEdge (DifGraph, GlvcNd, CurNd);
         SetEdgeType (E, EDGE_DIF);
 
@@ -774,7 +776,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
     }
     else
     {
-        DEBUG ("[DIF]FDifG exists, start to compute dependence \r\n");
+        //DEBUG ("[DIF]FDifG exists, start to compute dependence \r\n");
         LNode *LN = FDifG->Tail;
         Node *TempN = (Node *)LN->Data;
 
@@ -807,7 +809,7 @@ static inline VOID InsertNode2Graph (Graph *DifGraph, Node *N)
         LN = FDifG->Header->Nxt;
         while (DDfound == FALSE && LN != NULL)
         {
-            DEBUG ("===> Add dif edge for formal parameters \r\n");
+            //DEBUG ("===> Add dif edge for formal parameters \r\n");
             TempN = (Node *)LN->Data;
             if (IsNodeFm (DifN, GN_2_DIFN (TempN)))
             {
@@ -852,14 +854,14 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     DA->EventNum++;
     if (IsEventExist (DifGraph, Event, ThreadId))
     {
-        DEBUG ("[DIF][T:%lx]: %s exists....\r\n", Event, Msg);
+        //DEBUG ("[DIF][T:%lx]: %s exists....\r\n", Event, Msg);
         return;
     }
     
     Node *N = AddDifNode (DifGraph, Event);
     DifNode* DifN = GN_2_DIFN (N);
     DifN->EventId = Event;
-    DEBUG ("[DIF][T:%X][%lx]%u: %s \r\n", ThreadId, DifN->EventId, N->Id, Msg);
+    DEBUG ("[DIF][T:%X][%lx]%u: %s <Event:%u>\r\n", ThreadId, DifN->EventId, N->Id, Msg, R_EID2ETY (Event));
 
     if (R_EID2SSD (Event))
     {
@@ -878,7 +880,6 @@ VOID DifEngine (ULONG Event, DWORD ThreadId, char *Msg)
     }
 
     DWORD EventType = R_EID2ETY (Event);
-    DEBUG ("[DIF]EventType = %u \r\n", EventType);
     switch (EventType)
     {
         case EVENT_THRC:

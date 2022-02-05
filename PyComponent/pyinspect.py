@@ -89,7 +89,7 @@ class xmlParse ():
         self.Parse (CriteCfg)
 
     def InitCrite (self, Func, Return, Local):
-        #print ("Init critesion: %s:%s:%s" %(Func, Return, Local))
+        print ("@@@ Init critesion: %s:%s:%s" %(Func, Return, Local))
         self.Critn.Insert (Func, Return, Local)
 
     def ParseCrite (self, Crite):

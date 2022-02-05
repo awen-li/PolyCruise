@@ -105,6 +105,8 @@ class Inspector:
 
         if os.environ.get ("FULL_INSTRUMENTATION") != None:
             _settrace(self.TracingFull)
+            Msg = "[Python]: " + self.CurCtx.Func
+            PyTrace (0, Msg)
         else:
             _settrace(self.Tracing)
         return self
@@ -256,15 +258,19 @@ class Inspector:
         CallSiteObj = self.CurCtx.CalleeLo
         if CallSiteObj == None:
             return
+
+        if self.Debug == True:
+            print ("CallSiteObj.Callee poped: ", CallSiteObj.Callee)
         
         TaintedFormal, Callee = self.Actual2Formal (CallSiteObj)
-        IsSource = self.Crtn.IsCriterion (CallSiteObj.Callee)
+        IsSource = self.Crtn.IsCriterion (Callee)
         if IsSource != False:
             self.InsertSymb (CallSiteObj.Def)
         else:
-            if self.Crtn.GetSrcArgs (CallSiteObj.Callee) != None:
+            if self.Crtn.GetSrcArgs (Callee) != None:
                 IsSource = True
-                #print ("****************<> Add source with Args: ", CallSiteObj.Callee)
+                if self.Debug == True:
+                    print ("****************<> Add source with Args: ", Callee)
                     
         FCallerDef = self.CurCtx.FuncDef
         EventId = PyEventTy (FCallerDef.Id, CallSiteObj.LineNo, EVENT_CALL, IsSource)
@@ -329,6 +335,8 @@ class Inspector:
                     if self.Debug == True:
                         print ("---> FuncDef = LineCall: ", LiveObj.Callee, ", CallCtx = ", self.CallCtx)
                 else:
+                    if self.Debug == True:
+                        print ("---> FuncDef = LineCall: ", LiveObj.Callee, ", CallCtx = None")
                     self.CallCtx = None
                     IsCrn = self.Crtn.IsCriterion (LiveObj.Callee)
                     if IsCrn != False:
@@ -427,6 +435,7 @@ class Inspector:
 
         _, ScriptName = os.path.split(Code.co_filename) 
         if ScriptName in self.Scripts:
+            PyTraceStop ()
             return self.Tracing
             
         #print (Code.co_filename, ":", Frame.f_lineno, ":", Event)
@@ -487,7 +496,7 @@ class Inspector:
             if Step == "setup":
                 self.SetUp = True
             else:
-                return self.Tracing
+                return self.TracingFull
         
         self.TracedStmts += 1
         Code = Frame.f_code
@@ -495,14 +504,17 @@ class Inspector:
 
         _, ScriptName = os.path.split(Code.co_filename) 
         if ScriptName in self.Scripts:
-            return self.Tracing
+            return self.TracingFull
             
         LineNo  = Frame.f_lineno
         LiveObj = self.Analyzer.HandleEvent (Code.co_filename, Frame, Event, LineNo)
         if self.IsLiveObjValid (LiveObj, Event) == False:
-            return self.Tracing
+            return self.TracingFull
 
-        Msg = "[Python]: " + Code.co_filename + ": " + Code.co_name
+        if LiveObj.Callee == None or LiveObj.Callee in ['str']:
+            return self.TracingFull        
+
+        Msg = "[Python]:" + Event + " = " + ScriptName + ": " +  str(LineNo) + " : " + Code.co_name + "-> " + str(LiveObj.Callee)
         PyTrace (0, Msg)
-        return self.Tracing
+        return self.TracingFull
 
