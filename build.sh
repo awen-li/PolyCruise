@@ -80,7 +80,7 @@ echo ""
 echo ""
 echo "@@@@@@@@@@@@@@@ build PyComponent:PyInspect @@@@@@@@@@@@@@@"
 cd $POLYC_PATH/PyComponent
-pip3 install .
+pip3 install . --upgrade
 
 #6. install pyinspect tool
 echo ""

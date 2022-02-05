@@ -8,4 +8,4 @@ cp $POLYC_PATH/DynAnalyzer/libDynAnalyze.so /usr/lib/
 
 python setup.py build
 
-pip3 install .
+pip3 install . --upgrade
