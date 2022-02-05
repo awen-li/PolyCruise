@@ -525,7 +525,7 @@ private:
 
     inline bool AddVarFormat (ParaFt *Pf, Value *Val)
     {
-        if (Pf->IsArgExist(Val) || Pf->IsFull())
+        if (Pf->IsArgExist(Val))
         {
             return false;
         }
