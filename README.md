@@ -12,7 +12,7 @@ An avaiable package to install LLVM7.0 with support of gold plugin can be found 
 
 #### 1.2 Reuse the environment from docker image
 We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready.
-Please use the command ```docker pull daybreak2019/polycruise:1.0``` to pull the image to local storage.
+Please use the command ```docker pull daybreak2019/polycruise:1.1``` to pull the image to local storage.
 
 ## 2. build PolyCruise
 After cloning the code from GitHub, using the following command to build the whole project.
@@ -21,9 +21,12 @@ After cloning the code from GitHub, using the following command to build the who
 
 ## 3. Usage
 #### 3.1 Steps of applying PolyCruise on Python programs with C bindings.
-- S1: Rewrite python modules to SSA forms.
+- S1: Rewrite python modules to SSA forms and collect function definitions in Python.
 Use pyinspect with '-c' (compile) and '-d' (destination) for SSA translation:
 ```
+# gen all defs in the project
+python -m pyinspect -g <project-dir>
+# recompile and rewrite the project
 python -m pyinspect -c -d <project-dir>
 ```
 
@@ -61,9 +64,13 @@ os.environ["CC"]  = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
 os.environ["CXX"] = "clang -emit-llvm -Xclang -load -Xclang llvmSDIpass.so"
 os.environ["LDSHARED"] = "clang -flto -pthread -shared -lDynAnalyze"
 ```
-Then build the whole project again for static instrumentation:
+Then install the project with instrumentation:
 ```
 python setup-instrm.py install
+
+#after installation, we maintain a maping between the source to installing path
+find <install-path> -name "*.py" > "<your-path>/<your-project>.ini"
+python -m pyinspect -M <your-project>.ini <your-source-list>
 ```
 
 - S4: Run the cases of the target:
@@ -71,8 +78,6 @@ python setup-instrm.py install
 difaEngine &
 python -m pyinspect -C <your-criterion.xml> -t <your-case> &
 ```
-
-An example to cover all the steps above can be found [here](https://github.com/Daybreak2019/PolyCruise/blob/master/PyCBench/DynamicInvocation/1_leak_PyClang/build.sh).
 
 #### 3.2 Run PolyCruise on PyCBench
 To evaluation our approach, we developed a micro-benchmark called ![PyCBench](https://github.com/Daybreak2019/LDI/tree/master/PyCBench).
@@ -113,6 +118,18 @@ LoadCases -> deleak:Trace:21
                 [PY]Trace: [F (print,0)] 
 ```
 
+
+#### 3.3 Run PolyCruise on Real-world programs
+To run PolyCruise on a real-world program (e.g., [cvxopt](https://github.com/Daybreak2019/cvxopt)), we need to setup the environment (dependences solving) for it first, and
+this task can sometimes be tedious and time-consuming.
+
+When all dependences are sovled, we can follow the steps in Section 3.1 to prepare a script to integrate all necessary commands.  
+As an example, we provide a script of [cvxopt](https://github.com/Daybreak2019/PolyCruise/blob/master/Experiments/scripts/cvxopt/build.sh) for reference.
+Then we can use the following command to run PolyCruise on cvxopt:
+```
+cd PolyCruise/Experiments/scripts/cvxopt
+./build.sh build
+```
 
 ## 4. Vulnerabilities detected on real-world programs
 
