@@ -124,7 +124,7 @@ export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
 # build the target with PolyCruise
 ################################################
 if [ "$Action" == "build" ]; then
-    BuildTarget ()
+    BuildTarget
 fi
 
 ################################################
