@@ -41,6 +41,9 @@ PreProcess("pre", cl::desc("<preprocess before analysis >"), cl::init("0"), cl::
 static cl::opt<std::string>
 GuardAll("guard", cl::desc("<try to compute SDA to all APIs in the target>"), cl::init("1"), cl::value_desc("switch"));
 
+static cl::opt<std::string>
+DisGlobal("disglobal", cl::desc("<disable the SDA on global variables>"), cl::init("0"), cl::value_desc("switch"));
+
 
 void GetLibEntry (ModuleManage *Mm, set <Function*> *Entry);
 void GetAPIEntry (ModuleManage *Mm, set <Function*> *Entry, set <string> *EntryAPIs);
@@ -115,7 +118,13 @@ VOID RunPasses (vector<string> &ModulePathVec)
         LoadCriterion ((char*)Criterion.c_str(), &ModuleMng, &SS, &EntryAPIs);
     }
 
-    Sda sda (&ModuleMng, &SS, &Sf);
+    unsigned DisGlb = 0;
+    if (DisGlobal == "1")
+    {
+        DisGlb = 1;
+    }
+    
+    Sda sda (&ModuleMng, &SS, &Sf, DisGlb);
     set <Function*> Entry;
     if (GuardAll == "1")
     {

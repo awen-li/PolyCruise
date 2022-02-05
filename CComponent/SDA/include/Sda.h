@@ -285,11 +285,13 @@ private:
     unsigned m_TotalInstNum;
 
     unsigned m_GuardAll;
+    unsigned m_DisGlobal;
 public:
     
-    Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf)
+    Sda(ModuleManage *Ms, set<Source *> *SS, StField *Sf, unsigned DisGlb=0)
     {
         m_GuardAll   = 1; /* default */
+        m_DisGlobal  = DisGlb;
         
         m_FuncExeNum = 0;
         m_TotalInstNum = 0;
@@ -474,7 +476,7 @@ private:
 
     inline Value* IsInGlvSet (Value *Val)
     {
-        if (getenv ("DIS_GLBTAINT") != NULL)
+        if (m_DisGlobal)
         {
             return NULL;
         }
@@ -492,7 +494,7 @@ private:
 
     inline void InitGlv ()
     {
-        if (getenv ("DIS_GLBTAINT") != NULL)
+        if (m_DisGlobal)
         {
             return;
         }
@@ -562,7 +564,7 @@ private:
 
     inline void AddGlvUseEntry (Value *Glv)
     {
-        if (getenv ("DIS_GLBTAINT") != NULL)
+        if (m_DisGlobal)
         {
             return;
         }

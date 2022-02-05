@@ -13,6 +13,8 @@ CASE_GROUP=("DynamicInvocation"  "FieldSensitivity"  "GeneralFlow" "GlobalFlow" 
 
 CaseNum=0
 FailNum=0
+unset DIS_GLBTAINT
+unset DUMPGRAPH
 # iter each case group
 for group in ${CASE_GROUP[@]}
 do

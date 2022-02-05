@@ -20,7 +20,7 @@ SdaAnalysis ()
 	BC_FILES=`find ./build -name *.preopt.bc`
 	for bc in $BC_FILES
 	do
-		sda -file $bc -criterion c_criterion.xml -guard=0
+		sda -file $bc -criterion c_criterion.xml -guard=0 -disglobal=1
 	done
 }
 
@@ -47,83 +47,108 @@ GenMap ()
     return
 }
 
-target=cvxopt
-Action=$1
-
-cd ../../
-ROOT=`pwd`
-
-####### cvxopt dependence #######
-if [ ! -d "$ROOT/SuiteSparse" ]; then
-    wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
-    tar -xf SuiteSparse-4.5.3.tar.gz
-fi
-export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
-export PythonPath=$(PythonInstallPath)
-
-# 1. build and translate python modules
-CASE_PATH=$ROOT/Temp/$target
-SCRIPTS=$ROOT/scripts/$target
-
-if [ "$Action" == "build" ]; then
+BuildTarget ()
+{
+    # clean
+    if [ -d "$CASE_PATH" ]; then
+        rm -rf $CASE_PATH
+    fi
+	
+    ################################################
+    # 1. build and translate python modules
+    ################################################
+    #1.1 clone the code from github
     if [ ! -d "$target" ]; then
     	git clone https://github.com/Daybreak2019/cvxopt.git
     fi
     
-	rm -rf $CASE_PATH
-	if [ ! -f "$target/function_def.pkl" ]; then
-		python -m pyinspect -g $target
-		cp -f function_def.pkl $target/
-		#cp -f $target"_gen_criterion.xml" $target/gen_criterion.xml
-	fi
-	python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
-fi
+    #1.2 collect all definitions of functions in pythob module
+    if [ ! -f "$target/function_def.pkl" ]; then
+        python -m pyinspect -g $target
+        cp -f function_def.pkl $target/
+    fi
+	
+    #1.3 rewrite python modules
+    python -m pyinspect -c -E $SCRIPTS/ExpList -d $target
 
-# 2. build and SDA
-cp criterion.xml $CASE_PATH/
-cd $CASE_PATH
-if [ "$Action" == "build" ]; then
-	rm -rf build
-	python setup-sda.py build
-	export DIS_GLBTAINT=1
-	SdaAnalysis
-	unset DIS_GLBTAINT
-fi
+    ################################################
+    # 2. build the whole project and conduct SDA
+    ################################################
+    cd $CASE_PATH
+    python setup-sda.py build
+    SdaAnalysis
 
-# 3. build again and install the instrumented software
-if [ "$Action" == "build" ]; then
+    ################################################
+    # 3.  build again with instrumentation
+    ################################################
     rm -rf build
     rm -rf `find $PythonPath -name $target`
-	
+    
+	#3.1 build with instrumentation
     python setup-instm.py install
     #rename
     TargetPath=`find $PythonPath -name $target`
     cp -rf $TargetPath $PythonPath/site-packages/$target
     rm -rf $TargetPath
-        	
-    GenMap $SCRIPTS $CASE_PATH $target
-fi
-
-# 5. run the cases
-Analyze ()
-{
-    cp $SCRIPTS/plugins.ini /tmp/difg/ -rf
-    cd $CASE_PATH
-    ALL_TESTS=`ls *tt.py`
-
-    for Case in $ALL_TESTS
-    do
-        StartTime=`date '+%s'`
     
-        python -m pyinspect -C py_criterion.xml -t $Case
-        
-        difaEngine
-
-        EndTime=`date '+%s'`
-        TimeCost=`expr $EndTime - $StartTime`
-        echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
-    done
+    #3.2 generation the mapping between installing and source paths  	
+    GenMap $SCRIPTS $CASE_PATH $target
 }
 
-Analyze
+############################################################
+# cvxopt: version = 1.2.6
+# python version: 3.7
+# OS: Ubuntu18.04
+# LLVM: 7.0
+############################################################
+target=cvxopt
+Action=$1
+
+cd ../../
+export ROOT=`pwd`
+export CASE_PATH=$ROOT/Temp/$target
+export SCRIPTS=$ROOT/scripts/$target
+export PythonPath=$(PythonInstallPath)
+
+################################################
+# dependence of cvxopt
+################################################
+if [ ! -d "$ROOT/SuiteSparse" ]; then
+    wget http://faculty.cse.tamu.edu/davis/SuiteSparse/SuiteSparse-4.5.3.tar.gz
+    tar -xf SuiteSparse-4.5.3.tar.gz
+fi
+export CVXOPT_SUITESPARSE_SRC_DIR=$ROOT/SuiteSparse
+
+
+################################################
+# build the target with PolyCruise
+################################################
+if [ "$Action" == "build" ]; then
+    BuildTarget ()
+fi
+
+################################################
+# Run the cases
+################################################
+cp $SCRIPTS/plugins.ini /tmp/difg/ -rf
+cd $CASE_PATH
+ALL_TESTS=`ls *tt.py`
+
+for Case in $ALL_TESTS
+do
+    StartTime=`date '+%s'`
+        
+    echo
+    echo
+    echo "********************* Running the script ---- <$Case> ---- *********************"
+        
+    python -m pyinspect -C py_criterion.xml -t $Case
+        
+    difaEngine
+
+    EndTime=`date '+%s'`
+    TimeCost=`expr $EndTime - $StartTime`
+    echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
+done
+
 
