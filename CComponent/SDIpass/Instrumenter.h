@@ -30,14 +30,13 @@
 using namespace llvm;
 using namespace std;
 
-#define MAX_ARG_NUM (8)
 #define IS_TAINTED(TaintBit, BitNo) (TaintBit & (1 << (32-BitNo)))
 
 
 struct ParaFt
 {
     string m_Format;
-    Value *m_ArgBuf[MAX_ARG_NUM];
+    vector<Value *>m_ArgBuf;
     unsigned m_ArgNum;
 
     inline void AppendFormat (string Ft)
@@ -62,11 +61,6 @@ struct ParaFt
         m_Format += Ft; 
 
         return;
-    }
-
-    inline bool IsFull ()
-    {
-        return (bool) (m_ArgNum >= MAX_ARG_NUM);
     }
 
     inline bool IsNameExist (string Name)
@@ -103,11 +97,9 @@ struct ParaFt
 
     inline void AddArg (Value *Arg)
     {
-        if (m_ArgNum < MAX_ARG_NUM)
-        {
-            m_ArgBuf [m_ArgNum++] = Arg;
-        }
-
+        m_ArgBuf.push_back (Arg);
+        m_ArgNum++;
+        
         return;
     }
 
@@ -115,6 +107,7 @@ struct ParaFt
     {
         m_Format = "";
         m_ArgNum = 0;
+        m_ArgBuf.clear ();
     }
 };
 
@@ -853,70 +846,19 @@ private:
 
         Type *I64ype = IntegerType::getInt64Ty(m_Module->getContext());
         Value *Ev = ConstantInt::get(I64ype, EventId, false);
-
         Value *TFormat = Builder.CreateGlobalStringPtr(Pf->m_Format);
-        switch (Pf->m_ArgNum)
+
+        std::vector<Value *> ValueAry;
+        unsigned Index= 0;
+        
+        ValueAry.push_back (Ev);
+        ValueAry.push_back (TFormat);
+        while (Index < Pf->m_ArgNum)
         {
-            case 0:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat});
-                break;
-            }
-            case 1:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0]});
-                break;
-            }
-            case 2:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, Pf->m_ArgBuf[0], Pf->m_ArgBuf[1]});
-                break;
-            }
-            case 3:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2]});
-                break;
-            }
-            case 4:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3]});
-                break;
-            }
-            case 5:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4]});
-                break;
-            }
-            case 6:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
-                                   Pf->m_ArgBuf[5]});
-                break;
-            }
-            case 7:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
-                                   Pf->m_ArgBuf[5], Pf->m_ArgBuf[6]});
-                break;
-            }
-            case 8:
-            {
-                Builder.CreateCall(m_TaceFunc, {Ev, TFormat, 
-                                   Pf->m_ArgBuf[0], Pf->m_ArgBuf[1], Pf->m_ArgBuf[2], Pf->m_ArgBuf[3], Pf->m_ArgBuf[4],
-                                   Pf->m_ArgBuf[5], Pf->m_ArgBuf[6], Pf->m_ArgBuf[7]});
-                break;
-            }
-            default:
-            {
-                errs()<<*Inst;
-                printf ("!!!!Assert: ArgNum = %u, Maxsupport=%u\r\n", Pf->m_ArgNum, MAX_ARG_NUM);
-            }
+            ValueAry.push_back (Pf->m_ArgBuf[Index]);
+            Index++;
         }
+        Builder.CreateCall(m_TaceFunc, ValueAry);
 
         return;
     }

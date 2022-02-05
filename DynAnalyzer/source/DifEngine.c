@@ -422,6 +422,25 @@ static inline VOID AddInterCfEdge (Graph *DifGraph, Node *LastNd, Node *CurNd)
             DEBUG ("AddInterDIFEdge2: %lx  --->   %lx \r\n", (GN_2_DIFN(CurNd))->EventId, (GN_2_DIFN((Node *)CalleeNode->Data))->EventId);
         }
     }
+
+    /* cross-lang */
+    DifNode* DifFEntryNode = GN_2_DIFN (FEntryNode);
+    if (R_EID2LANG(DifFEntryNode->EventId) != R_EID2LANG (CallNode->EventId))
+    {
+        LNode *CalleeNode = FDifG->Header->Nxt;
+        while (CalleeNode != NULL)
+        {
+            Node *TNode = (Node *)CalleeNode->Data;
+            DifNode* difTNode = GN_2_DIFN (TNode);
+            if (difTNode->EMsg.Use.NodeNum != 0)
+            {
+                E = AddDifEdge (DifGraph, CurNd, TNode);
+                SetEdgeType (E, EDGE_DIF);
+                DEBUG ("AddInterDIFEdge2: %lx  --->   %lx \r\n", (GN_2_DIFN(CurNd))->EventId, (GN_2_DIFN((Node *)CalleeNode->Data))->EventId);
+            }
+            CalleeNode = CalleeNode->Nxt;
+        }
+    }
     
     return;
 }

@@ -418,7 +418,7 @@ static inline VOID ProcSource (Node *Source, List* PluginList, DWORD ThreadId)
    
                 //PrintEMsg(DstNode->Id, DstN->EventId, &DstN->EMsg);
                 InvokePlugins (PluginList, SrcN, DstN, ThreadId);
-                DEBUG ("Go on DSTnode -> EventId = %u (%p) ", R_EID2ETY(DstN->EventId), DstN);
+                DEBUG ("Go on DSTnode -> EventId = %lx (F-%x) \r\n", DstN->EventId, GetFuncId (DstN));
                 ListInsert(LastVisit, DstNode);
 
                 ListChange = TRUE;

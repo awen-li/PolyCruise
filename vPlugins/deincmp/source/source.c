@@ -71,6 +71,8 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
         return FALSE;        
     }
 
+    DEBUG ("DeInCmp: %lx \r\n", SrcNode->EventId);
+
     EventMsg *EM   = &DstNode->EMsg;
     LNode *ValNode = EM->Def.Header;
     while (ValNode != NULL)
@@ -100,7 +102,7 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
                 {
                     List *StrlenList = GetStrlenList (Plg->DataHandle, DstNode);
                     DEBUG ("=====>[Incmp] get strlenList[%u]... \r\n", StrlenList->NodeNum);
-                    if (StrlenList != NULL)
+                    if (StrlenList->NodeNum != 0)
                     {
                         LNode *Header = StrlenList->Header;
                         while (Header != NULL)
@@ -122,6 +124,20 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
                     }
                     else
                     {
+                        unsigned UseNum = DstNode->EMsg.Use.NodeNum;
+                        LNode *UseHdr = DstNode->EMsg.Use.Header;
+
+                        DEBUG ("=====>[Incmp] UseNum = %u, EventId = %lx \r\n", UseNum, DstNode->EventId);
+                        while (UseHdr != NULL)
+                        {
+                            Variable *V = (Variable *)UseHdr->Data;
+                            if (V->Type == VT_GLOBAL && UseNum == 2)
+                            {
+                                return TRUE;
+                            }
+                            UseHdr = UseHdr->Nxt;
+                        }
+                        
                         return FALSE;
                     }
                 }             

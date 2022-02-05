@@ -34,7 +34,7 @@ static inline void TraceCheck (char *Msg)
     }
 }
 
-static int g_TraceSt = FALSE;
+static int g_TraceSt = TRUE;
 
 void TRC_Start ()
 {

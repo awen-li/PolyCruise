@@ -47,21 +47,39 @@ static inline DWORD Detect (Plugin *Plg, DifNode *SrcNode, DifNode *DstNode)
 
     LNode *ValNode = DstNode->EMsg.Use.Header;
     LNode *DefNode = SrcNode->EMsg.Def.Header;
+    Variable *FuncVal = NULL;
     while (ValNode != NULL)
     {
         Variable *Val = (Variable *)ValNode->Data;
-        if (Val->Type != VT_INTEGER)
-        {
-            ValNode = ValNode->Nxt;
-            continue;
-        }
-
-        if (IsDD (DefNode, Val))
+        if (Val->Type == VT_INTEGER && IsDD (DefNode, Val))
         {
             return TRUE;
         }
 
+        if (Val->Type == VT_FUNCTION)
+        {
+            FuncVal = Val;
+        }
+
         ValNode = ValNode->Nxt;
+    }
+
+    if (FuncVal == NULL)
+    {
+        return FALSE;
+    }
+
+    List *SinkList  = &Plg->SinkList;
+    LNode *SinkNode = SinkList->Header;
+    while (SinkNode != NULL)
+    {
+        char *Function = (char *)SinkNode->Data;
+        if (strcmp (Function, FuncVal->Name) == 0)
+        {
+            return TRUE;
+        }
+
+        SinkNode = SinkNode->Nxt;
     }
 
     return FALSE;
