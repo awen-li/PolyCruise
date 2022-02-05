@@ -9,6 +9,22 @@
 #include "Event.h"
 #include "Queue.h"
 
+void TRC_Start ();
+static PyObject *PyTraceStart(PyObject *self, PyObject *args)
+{
+    TRC_Start ();
+	
+    Py_RETURN_NONE;
+}
+
+void TRC_Stop ();
+static PyObject *PyTraceStop(PyObject *self, PyObject *args)
+{
+    TRC_Stop ();
+	
+    Py_RETURN_NONE;
+}
+
 void TRC_trace0 (ULONG EventId, const char* Msg);
 
 /* unsigned long PyEventTy (unsigned FuncId, unsigned InstId, 
@@ -67,23 +83,6 @@ void TRC_exit (void);
 static PyObject *PyTraceExit(PyObject *self, PyObject *args)
 {
     TRC_exit ();
-	
-    Py_RETURN_NONE;
-}
-
-
-void TRC_Start ();
-static PyObject *PyTraceStart(PyObject *self, PyObject *args)
-{
-    TRC_Start ();
-	
-    Py_RETURN_NONE;
-}
-
-void TRC_Stop ();
-static PyObject *PyTraceStop(PyObject *self, PyObject *args)
-{
-    TRC_Stop ();
 	
     Py_RETURN_NONE;
 }
