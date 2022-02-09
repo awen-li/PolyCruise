@@ -130,6 +130,7 @@ fi
 ################################################
 # Run the cases
 ################################################
+mv /tmp/difg/plugins.ini /tmp/difg/plugins.ini-back
 cp $SCRIPTS/plugins.ini /tmp/difg/ -rf
 cd $CASE_PATH
 ALL_TESTS=`ls *tt.py`
@@ -151,4 +152,6 @@ do
     echo "[$Case]@@@@@ time cost: $TimeCost [$StartTime, $EndTime]"
 done
 
+# recover the environment
+move /tmp/difg/plugins.ini-back /tmp/difg/plugins.ini
 
