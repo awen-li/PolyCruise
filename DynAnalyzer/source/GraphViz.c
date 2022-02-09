@@ -261,6 +261,13 @@ VOID WiteGraph (char *GName)
         return;
     }
 
+    DWORD NodeNum = GetGraphNodeNum ();
+    printf("Graph nodeNum => %u \r\n", NodeNum);
+    if (NodeNum > 100)
+    {
+        return;
+    }
+
     snprintf (GvName, sizeof (GvName), "%s.dot", GName);
     FILE *F = fopen (GvName, "w");
     if (F == NULL)
@@ -269,13 +276,6 @@ VOID WiteGraph (char *GName)
     }
     
     WriteHeader(F, GName);
-
-    DWORD NodeNum = GetGraphNodeNum ();
-    printf("Graph nodeNum => %u \r\n", NodeNum);
-    if (NodeNum > 100)
-    {
-        return;
-    }
 
     DWORD NodeId = 1;
     while (NodeId <= NodeNum)

@@ -153,5 +153,5 @@ do
 done
 
 # recover the environment
-move /tmp/difg/plugins.ini-back /tmp/difg/plugins.ini
+mv /tmp/difg/plugins.ini-back /tmp/difg/plugins.ini
 
