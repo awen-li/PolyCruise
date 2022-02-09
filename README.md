@@ -127,6 +127,7 @@ When all dependences are sovled, we can follow the steps in Section 3.1 to prepa
 As an example, we provide a script of [cvxopt](https://github.com/Daybreak2019/PolyCruise/blob/master/Experiments/scripts/cvxopt/build.sh) for reference.
 Then we can use the following command to run PolyCruise on cvxopt:
 ```
+# the parameter build indicate the script to compile and instrument cvxopt before running the tests
 cd PolyCruise/Experiments/scripts/cvxopt
 ./build.sh build
 ```
