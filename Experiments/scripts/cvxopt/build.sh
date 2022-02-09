@@ -47,6 +47,14 @@ GenMap ()
     return
 }
 
+DelShareMem ()
+{
+	ShareId=`ipcs -m | grep 0xc3b3c5d0 | awk '{print $2}'`
+	if [ -n "$ShareId" ]; then
+		ipcrm -m $ShareId
+	fi	
+}
+
 BuildTarget ()
 {
     # clean
@@ -142,7 +150,8 @@ do
     echo
     echo
     echo "********************* Running the script ---- <$Case> ---- *********************"
-        
+    DelShareMem
+       
     python -m pyinspect -C py_criterion.xml -t $Case
         
     difaEngine
