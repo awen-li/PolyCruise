@@ -134,7 +134,7 @@ cd PolyCruise/Experiments/scripts/cvxopt
 
 ## 4. Vulnerabilities detected on real-world programs
 
-Refer the [Link](https://github.com/baltsers/polycruise) for details.
+Refer to the [Link](https://github.com/baltsers/polycruise) for details.
 
         
 
