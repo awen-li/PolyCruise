@@ -134,7 +134,9 @@ cd PolyCruise/Experiments/scripts/cvxopt
 
 ## 4. Vulnerabilities detected on real-world programs
 
-Refer to the [Link](https://github.com/Daybreak2019/PolyCruise/tree/master/Experiments/PoC) for details.
+PolyCruise enabled the discovery of the first batch of 8 cross-language CVEs: CVE-2021-33430, CVE-2021-34141, CVE-2021-41495, CVE-2021-41496, CVE-2021-41497, CVE-2021-41498, CVE-2021-41499, CVE-2021-41500.
+
+Refer to the [list of discovered vulnerabilities and PoCs here](https://github.com/Daybreak2019/PolyCruise/tree/master/Experiments/PoC) for details.
 
         
 
