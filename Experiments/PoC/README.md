@@ -1,7 +1,9 @@
 # Vulnerabilities detected by polycruise (cross-language DIFA)
 We evaluate polycruise on several popular open-source projects developed mainly in Python and C languages.
-Eventually, 11 vulnerabilities in 5 projects below are validated to be exploitable, and corresponding PoCs are attached.
+Eventually, 11 vulnerabilities in 5 projects below are validated to be exploitable (corresponding PoCs are attached) and 8 CVEs are assigned.
 
+![CVEs](https://github.com/Daybreak2019/PolyCruise/blob/master/Experiments/PoC/CVEs.png)
+***
 ## [Bounter](https://github.com/RaRe-Technologies/bounter): [Vendor]RaRe-Technologies
 #### [Vulnerability-1]: Null pointer reference
 **Affected version**: version < 1.10 <br>
