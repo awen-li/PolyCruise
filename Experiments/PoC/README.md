@@ -53,6 +53,11 @@ Eventually, 11 vulnerabilities in 5 projects below are validated to be exploitab
 **Description**: In the f2py module, when creating a high-dimension array through the **array API** (deliberately construct negative numbers in shape), an unexpected error occurs and causes Python to crash down. This allows attackers to conduct DoS attacks by carefully constructing an array with negative values in shape.<br>
 **Exploitation**: PoC: [array_attr_19000.py](https://github.com/Daybreak2019/PolyCruise/tree/master/Experiments/PoC/numpy/vulnerability-3/array_attr_19000.py) and [Output](https://github.com/Daybreak2019/PolyCruise/tree/master/Experiments/PoC/numpy/vulnerability-3/output.txt).<br>
 **CVE**: [CVE-2021-41496](https://nvd.nist.gov/vuln/detail/CVE-2021-41496)
+#### [Vulnerability-4]: Incomplete string comparison
+**Affected version**: version < 1.19 <br>
+**Description**: In numpy.empty API, when checking the deprecated types with string comparison, no termintor is considered. [call-path]:numpy.empty(Python) -> PyArray_DescrAlignConverter -> _convert_from_any -> _convert_from_str -> strncmp. <br>
+**Exploitation**: pending.<br>
+**CVE**: [CVE-2021-34141](https://nvd.nist.gov/vuln/detail/CVE-2021-34141)
 ## [Pyo](https://github.com/belangeo/pyo)
 #### [Vulnerability-1]: Buffer overflow
 **Affected version**: version < < 1.03 <br>
