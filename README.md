@@ -5,13 +5,13 @@
 We present PolyCruise, a framework that enables holistic dynamic information flow analysis (DIFA) across heterogeneous languages hence security applications empowered by DIFA (e.g., vulnerability discovery) for multilingual software. PolyCruise combines a light language-specific analysis that computes symbolic dependencies in each language unit with a language-agnostic online data flow analysis guided by those dependencies, in a way that overcomes language heterogeneity.
 
 # Installation
-## 1. requiremtns
+## 1. requirements
 #### 1.1 Setup the environment manually
 PolyCruise is tested on Ubuntu18.04, LLVM7.0 and Python3.7 (and Python3-dev).
 An avaiable package to install LLVM7.0 with support of gold plugin can be found [here](https://github.com/Daybreak2019/PCA/tree/master/llvm7).
 
 #### 1.2 Reuse the environment from docker image
-We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready.
+We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready (i.e., all the dependencies required for running PolyCruise itself; for subject systems, currently only the dependencies for one real-world subject Cvxopt are included).
 Please use the command ```docker pull daybreak2019/polycruise:1.1``` to pull the image to local storage.
 
 ## 2. build PolyCruise
@@ -120,8 +120,7 @@ LoadCases -> deleak:Trace:21
 
 
 #### 3.3 Run PolyCruise on Real-world programs
-To run PolyCruise on a real-world program (e.g., [cvxopt](https://github.com/Daybreak2019/cvxopt)), we need to setup the environment (dependences solving) for it first, and
-this task can sometimes be tedious and time-consuming.
+To run PolyCruise on a real-world program (e.g., [cvxopt](https://github.com/Daybreak2019/cvxopt)), we need to setup the environment (dependences solving) for it first, and this task can sometimes be tedious and time-consuming.
 
 When all dependences are sovled, we can follow the steps in Section 3.1 to prepare a script to integrate all necessary commands.  
 As an example, we provide a script of [cvxopt](https://github.com/Daybreak2019/PolyCruise/blob/master/Experiments/scripts/cvxopt/build.sh) for reference.
