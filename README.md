@@ -10,7 +10,7 @@ We present PolyCruise, a framework that enables holistic dynamic information flo
 PolyCruise is tested on Ubuntu18.04, LLVM7.0 and Python3.7 (and Python3-dev).
 An avaiable package to install LLVM7.0 with support of gold plugin can be found [here](https://github.com/Daybreak2019/PCA/tree/master/llvm7).
 
-#### 1.2 Reuse the environment from docker image
+#### 1.2 Reuse the environment from docker image (strongly recommanded)
 We build a [docker image](https://hub.docker.com/repository/docker/daybreak2019/polycruise/tags?page=1&ordering=last_updated) with all dependences ready (i.e., all the dependencies required for running PolyCruise itself; for subject systems, currently only the dependencies for one real-world subject Cvxopt are included).
 Please use the command ```docker pull daybreak2019/polycruise:1.1``` to pull the image to local storage.
 
