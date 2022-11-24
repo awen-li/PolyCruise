@@ -1377,7 +1377,8 @@ class ASTVisitor(NodeTransformer):
 
     def visit_setcomp(self, node):
         assign = Assign(targets=[self._new_tmp_name(Store())],
-                        value=Set(elts=[]),
+                        value=Call(func=Name(id='set', ctx=Load()),
+                            args=[], keywords=[]),
                         lineno=self._new_lineno(),
                         col_offset=self._col_offset)
         fix_missing_locations(assign)
