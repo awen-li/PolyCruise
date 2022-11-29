@@ -996,13 +996,14 @@ class ASTVisitor(NodeTransformer):
         return Name(id=assign.targets[0].id, ctx=Load())
 
     def visit_bytes(self, node):
-        bytes = Bytes(s=node.s,
-                      lineno=self._new_lineno(),
-                      col_offset=self._col_offset)
-        fix_missing_locations(bytes)
-        #self._add_to_codelist(bytes)
-        return bytes
-        #raise NotImplementedError('bytes')
+        assign = Assign(targets=[self._new_tmp_name(Store())],
+                value=Bytes(s=node.s),
+                lineno=self._new_lineno(),
+                col_offset=self._col_offset)
+        fix_missing_locations(assign)
+        self._add_to_codelist(assign)
+        self._add_to_lineno2ids(self._lineno, self._get_ids(assign))
+        return Name(id=assign.targets[0].id, ctx=Load())
 
     def visit_num(self, node):
         assign = Assign(targets=[self._new_tmp_name(Store())],
